@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+/* === Retro Debug Menu Theme === */
+@theme {
+  --color-navy-950: #080a19;
+  --color-navy-900: #0c1228;
+  --color-navy-800: #121c37;
+  --color-navy-700: #1c2848;
+  --color-navy-600: #263560;
+  --color-gold-300: #e8d88c;
+  --color-gold-400: #dcbe64;
+  --color-gold-500: #c8a532;
+  --color-gold-600: #aa821e;
+}
+
+@font-face {
+  font-family: 'Cambria';
+  src: local('Cambria');
+}
+
+@font-face {
+  font-family: 'Luxi Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/luxisr.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Luxi Sans';
+  font-style: italic;
+  font-weight: 400;
+  src: url('/fonts/luxisri.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Luxi Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/luxisb.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Luxi Sans';
+  font-style: italic;
+  font-weight: 700;
+  src: url('/fonts/luxisbi.ttf') format('truetype');
+}
+
+:root {
+  --font-cambria: 'Crimson Text', 'Cambria', 'Times New Roman', serif;
+  --font-arial-black: 'Arial Black', 'Montserrat Black', sans-serif;
+  --font-lucida: 'Luxi Sans', sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #080a19;
+  color: #e0e0e0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Gold gradient border utility */
+.border-gold {
+  border: 1px solid transparent;
+  border-image: linear-gradient(180deg, #e8d88c, #aa821e) 1;
+}
+.border-gold-dashed {
+  border: 2px dashed #c8a532;
+}
+.border-gold-dashed:hover {
+  border-color: #e8d88c;
+}
+.border-b-gold {
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, #e8d88c, #aa821e) 1;
+  border-image-slice: 0 0 1 0;
+}
+
+/* Gold gradient border on form inputs — retro sharp corners */
+input:not([type="checkbox"]):not([type="file"]),
+select,
+textarea {
+  border: 1px solid transparent;
+  border-image: linear-gradient(180deg, #e8d88c, #aa821e) 1;
+  border-radius: 0;
+}
+input:not([type="checkbox"]):not([type="file"]):hover,
+select:hover,
+textarea:hover {
+  border-image: linear-gradient(180deg, #fff2b3, #dcbe64) 1;
+}
+input:not([type="checkbox"]):not([type="file"]):focus,
+select:focus,
+textarea:focus {
+  border-image: none;
+  border-color: #3b82f6;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* === Borderless / Full Art mode === */
+
+/* Hide border-frame structural zones + metadata */
+.card-borderless [data-zone-key="ArtBorder"],
+.card-borderless [data-zone-key="BackgroundColor"],
+.card-borderless [data-zone-key="BottomBar"],
+.card-borderless [data-zone-key="CryptidInfoBar"] {
+  display: none !important;
+}
+
+/* CardArt expands to full card — push it behind all other zones */
+.card-borderless [data-zone-key="CardArt"] {
+  z-index: 0 !important;
+}
+
+/* All content zones above the expanded art */
+.card-borderless [data-zone-key="Banner"],
+.card-borderless [data-zone-key="SetSymbol"],
+.card-borderless [data-zone-key="CardTop"],
+.card-borderless [data-zone-key="Credits"],
+.card-borderless [data-zone-key="Boost 1"],
+.card-borderless [data-zone-key="Boost 2"] {
+  z-index: 1 !important;
+}
+
+/* Semi-transparent text container for readability (zone 32 = attack/text container in Basic layouts) */
+.card-borderless [data-zone-id="32"] {
+  background: rgba(0, 0, 0, 0.3) !important;
+  z-index: 1 !important;
+  top: 220px !important;
+  height: 86px !important;
+}
+
+/* Semi-transparent text container for Aura/Terra text boxes (zone 57 = Aura, zone 71 = Terra) */
+.card-borderless [data-zone-id="57"],
+.card-borderless [data-zone-id="71"] {
+  background: rgba(0, 0, 0, 0.3) !important;
+  outline-color: rgba(1, 1, 1, 1) !important;
+  z-index: 1 !important;
+}
+
+/* White text outline for effect text inside the text container */
+.card-borderless [data-zone-id="32"] *,
+.card-borderless [data-zone-id="57"] *,
+.card-borderless [data-zone-id="71"] * {
+  text-shadow: -0.5px -0.5px 0 #FFF, 0.5px -0.5px 0 #FFF,
+               -0.5px 0.5px 0 #FFF, 0.5px 0.5px 0 #FFF;
+}
+
+/* White text outline for readability on zones overlaid on art */
+.card-borderless [data-zone-key="CardName"],
+.card-borderless [data-zone-key="TypesTribes"],
+.card-borderless [data-zone-key="SpellbookLimit"],
+.card-borderless [data-zone-key="LP"],
+.card-borderless [data-zone-key="Copyright"],
+.card-borderless [data-zone-key="Artist"],
+.card-borderless [data-zone-key="Boost 1"],
+.card-borderless [data-zone-key="Boost 2"] {
+  text-shadow: -0.5px -0.5px 0 #FFF, 0.5px -0.5px 0 #FFF,
+               -0.5px 0.5px 0 #FFF, 0.5px 0.5px 0 #FFF;
+}
+
+/* Export-only positioning adjustments — compensate for html-to-image
+   rendering differences vs live DOM preview. Uses translateY to offset
+   relative to current position (not override absolute top). */
+.card-exporting [data-zone-key="CryptidInfoBar"] > * {
+  transform: translateY(0.5px) !important;
+}
+.card-exporting [data-zone-key="StrongAgainst"] > span {
+  transform: translateY(1px) !important;
+}
+.card-exporting [data-zone-key="AttackDivider"] {
+  transform: translateY(1px) !important;
+}
+.card-exporting [data-zone-key="FlavorText"] > * {
+  transform: translateY(0.5px) !important;
+}

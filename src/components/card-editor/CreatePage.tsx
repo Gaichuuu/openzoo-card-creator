@@ -1,0 +1,111 @@
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { CardEditor } from './CardEditor';
+import { useCardStore } from '@/lib/store';
+import { fetchCard } from '@/lib/galleryService';
+
+export function CreatePage() {
+  const [searchParams] = useSearchParams();
+  const remixId = searchParams.get('remix');
+  const [loading, setLoading] = useState(!!remixId);
+  const [error, setError] = useState<string | null>(null);
+  const loadSnapshot = useCardStore((s) => s.loadSnapshot);
+  const snapshotVersion = useCardStore((s) => s._snapshotVersion);
+
+  // When entering the editor without a remix ID, reset to a blank card
+  // so stale state from a previous session doesn't carry over.
+  const resetCard = useCardStore((s) => s.resetCard);
+  useEffect(() => {
+    if (!remixId) {
+      resetCard();
+    }
+  }, [remixId, resetCard]);
+
+  useEffect(() => {
+    if (!remixId) return;
+    let cancelled = false;
+
+    fetchCard(remixId)
+      .then(async (card) => {
+        if (cancelled) return;
+        if (!card) {
+          setError('Card not found');
+          setLoading(false);
+          return;
+        }
+        // Convert remote card art to data URL before loading snapshot so
+        // html-to-image can capture it (remote URLs fail due to CORS, and
+        // blob URLs can't be re-fetched by html-to-image's SVG serializer).
+        // Data URLs are self-contained — same format as locally uploaded images.
+        let cardArtUrl = card.cardArtUrl;
+        if (cardArtUrl && cardArtUrl.startsWith('http')) {
+          try {
+            const r = await fetch(cardArtUrl);
+            const blob = await r.blob();
+            if (cancelled) return;
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            if (cancelled) return;
+            cardArtUrl = dataUrl;
+          } catch {
+            // CORS not configured on Firebase Storage — card art will show
+            // in preview (CSS background-image ignores CORS) but won't be
+            // included in PNG export or re-publish.
+            console.warn(
+              'Could not fetch card art for remix (CORS). ' +
+              'Run: gsutil cors set cors.json gs://openzoo.firebasestorage.app'
+            );
+          }
+        }
+        if (cancelled) return;
+        loadSnapshot({
+          cardType: card.cardType,
+          layoutType: card.layoutType,
+          cardData: card.cardData,
+          cardName: card.cardName,
+          tribe: card.tribe,
+          spellbookLimit: card.spellbookLimit,
+          primaryElement: card.primaryElement,
+          secondaryElement: card.secondaryElement,
+          traits: card.traits,
+          terras: card.terras,
+          strongAgainst: card.strongAgainst,
+          cardArtUrl,
+          effectBlocks: card.effectBlocks,
+          locale: card.locale,
+          borderless: card.borderless,
+        });
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('Failed to load card');
+          setLoading(false);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [remixId, loadSnapshot]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-navy-950 text-gold-400">
+        Loading card...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-navy-950 text-red-400">
+        {error}
+      </div>
+    );
+  }
+
+  return <CardEditor key={snapshotVersion} />;
+}
