@@ -23,6 +23,7 @@ dist-ssr
 *.sw?
 
 # Internal data
+.claude/
 CLAUDE.md
 /data/
 /src/cards/
