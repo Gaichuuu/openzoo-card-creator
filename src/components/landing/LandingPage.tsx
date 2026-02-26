@@ -1,29 +1,34 @@
 import { Link } from 'react-router-dom';
+import { Card3DHero } from './Card3DHero';
 
 export function LandingPage() {
   return (
     <div className="flex flex-col h-screen bg-navy-950">
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-center space-y-8">
-          <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-40 mx-auto" />
+      <div className="flex flex-1 items-center justify-center px-8">
+        <div className="flex items-center gap-12">
+          <Card3DHero />
 
-          <p className="text-gold-300 text-xl font-semibold">
-            The only TCG where your surroundings matter!
-          </p>
+          <div className="text-center space-y-4">
+            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-40 mx-auto" />
 
-          <div className="flex justify-center gap-4">
-            <Link
-              to="/create"
-              className="px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors text-lg border-gold"
-            >
-              Create a Card
-            </Link>
-            <Link
-              to="/gallery"
-              className="px-8 py-4 bg-navy-800 hover:bg-navy-700 text-gold-300 font-semibold transition-colors text-lg border-gold"
-            >
-              Browse Gallery
-            </Link>
+            <p className="text-gold-300 text-xl pb-10">
+              The only TCG where your surroundings matter!
+            </p>
+
+            <div className="flex justify-center gap-4">
+              <Link
+                to="/create"
+                className="px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors text-lg border-gold"
+              >
+                Create a Card
+              </Link>
+              <Link
+                to="/gallery"
+                className="px-8 py-4 bg-navy-800 hover:bg-navy-700 text-gold-300 font-semibold transition-colors text-lg border-gold"
+              >
+                Browse Gallery
+              </Link>
+            </div>
           </div>
         </div>
       </div>

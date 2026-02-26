@@ -7,6 +7,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   Timestamp,
   type QueryConstraint,
 } from 'firebase/firestore';
@@ -17,10 +18,9 @@ import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element } from '@/types/card';
 import type { LayoutType } from '@/types/layout';
 import type { EffectBlock } from '@/types/effects';
-// Locale type used in docToSavedCard cast
+
 type Locale = 'en' | 'ja';
 
-/** Generate a unique card ID. */
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -32,12 +32,6 @@ interface PublishOptions {
   remixedFromName: string;
 }
 
-/**
- * Publish a card to the gallery.
- * - Extracts base64 data URLs from cardData and uploads to Storage
- * - Uploads thumbnail to Storage
- * - Writes the Firestore document
- */
 export async function publishCard(
   snapshot: CardSnapshot,
   thumbnailDataUrl: string,
@@ -45,10 +39,8 @@ export async function publishCard(
 ): Promise<string> {
   const cardId = generateId();
 
-  // Clone cardData so we can mutate it
   const cardData = { ...snapshot.cardData };
 
-  // Extract and upload any base64 data URLs from cardData values (card art)
   for (const key of Object.keys(cardData)) {
     const value = cardData[key];
     if (value && value.startsWith('data:image/')) {
@@ -59,7 +51,6 @@ export async function publishCard(
     }
   }
 
-  // Upload card art if it's a data URL
   let cardArtUrl = snapshot.cardArtUrl || '';
   if (cardArtUrl.startsWith('data:image/')) {
     const blob = dataUrlToBlob(cardArtUrl);
@@ -68,7 +59,6 @@ export async function publishCard(
     cardArtUrl = await getDownloadURL(storageRef);
   }
 
-  // Upload thumbnail
   let thumbnailUrl = '';
   if (thumbnailDataUrl) {
     const blob = dataUrlToBlob(thumbnailDataUrl);
@@ -109,12 +99,10 @@ export async function publishCard(
   return cardId;
 }
 
-/** Strip any non-serializable fields from an EffectBlock for Firestore. */
 function blockToPlain(block: EffectBlock): Record<string, unknown> {
   return { ...block };
 }
 
-/** Convert a Firestore document to a SavedCard. */
 function docToSavedCard(data: Record<string, unknown>): SavedCard {
   return {
     id: data.id as string,
@@ -150,7 +138,6 @@ interface FetchFilters {
   tag?: string;
 }
 
-/** Fetch cards from the gallery, with optional filters. */
 export async function fetchCards(filters?: FetchFilters): Promise<SavedCard[]> {
   const constraints: QueryConstraint[] = [];
 
@@ -170,9 +157,24 @@ export async function fetchCards(filters?: FetchFilters): Promise<SavedCard[]> {
   return snap.docs.map((d) => docToSavedCard(d.data()));
 }
 
-/** Fetch a single card by ID. */
 export async function fetchCard(id: string): Promise<SavedCard | null> {
   const snap = await getDoc(doc(db, 'cards', id));
   if (!snap.exists()) return null;
   return docToSavedCard(snap.data());
+}
+
+export async function fetchRandomCard(): Promise<SavedCard | null> {
+  try {
+    const q = query(
+      collection(db, 'cards'),
+      orderBy('createdAt', 'desc'),
+      limit(20),
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    const docs = snap.docs.map((d) => docToSavedCard(d.data()));
+    return docs[Math.floor(Math.random() * docs.length)];
+  } catch {
+    return null;
+  }
 }
