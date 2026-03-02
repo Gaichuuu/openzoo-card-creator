@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toPng } from 'html-to-image';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import { TAG_COLORS } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
-import { CARD_W, CARD_H, BLEED, downloadDataUrl } from '@/lib/exportUtils';
+import { downloadDataUrl, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
 
 interface CardDetailModalProps {
   card: SavedCard;
@@ -12,23 +11,8 @@ interface CardDetailModalProps {
 }
 
 function savedCardToSnapshot(card: SavedCard): CardSnapshot {
-  return {
-    cardType: card.cardType,
-    layoutType: card.layoutType,
-    cardData: card.cardData,
-    cardName: card.cardName,
-    tribe: card.tribe,
-    spellbookLimit: card.spellbookLimit,
-    primaryElement: card.primaryElement,
-    secondaryElement: card.secondaryElement,
-    traits: card.traits,
-    terras: card.terras,
-    strongAgainst: card.strongAgainst,
-    cardArtUrl: card.cardArtUrl,
-    effectBlocks: card.effectBlocks,
-    locale: card.locale,
-    borderless: card.borderless,
-  };
+  const { id, thumbnailUrl, creatorName, tags, remixedFrom, remixedFromName, createdAt, updatedAt, ...snapshot } = card;
+  return snapshot;
 }
 
 export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
@@ -36,17 +20,20 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
   const hiddenCardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   const [printReady, setPrintReady] = useState(() => localStorage.getItem('openzoo-print-ready') === '1');
-
-  // 3D tilt state
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50, go: 0 });
   const [hovering, setHovering] = useState(false);
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
     document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleKey);
+    };
   }, [onClose]);
 
   function handleRemix() {
@@ -79,106 +66,17 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
     if (!hiddenCardRef.current || exporting) return;
     setExporting(true);
     try {
-      // Wait for images to load in the hidden renderer
       await new Promise((r) => setTimeout(r, 500));
       hiddenCardRef.current.classList.add('card-exporting');
       const filename = (card.cardName || 'openzoo-card').replace(/\\n/g, ' ');
       const isBorderless = !!card.borderless;
 
-      if (!printReady) {
-        // Regular PNG export
-        const dataUrl = await toPng(hiddenCardRef.current, {
-          pixelRatio: 4,
-          quality: 1,
-          width: CARD_W,
-          height: CARD_H,
-          style: { transform: 'none', borderRadius: isBorderless ? '0' : undefined },
-        });
-        downloadDataUrl(dataUrl, `${filename}.png`);
-      } else if (isBorderless) {
-        const pr = 4;
-        const bPx = BLEED * pr;
-        const printW = (CARD_W + 2 * BLEED) * pr;
-        const printH = (CARD_H + 2 * BLEED) * pr;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = printW;
-        canvas.height = printH;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        if (card.cardArtUrl) {
-          const artImg = new Image();
-          artImg.crossOrigin = 'anonymous';
-          artImg.src = card.cardArtUrl;
-          await new Promise<void>((res, rej) => { artImg.onload = () => res(); artImg.onerror = rej; });
-          const aw = artImg.naturalWidth;
-          const ah = artImg.naturalHeight;
-          const scale = Math.max(printW / aw, printH / ah);
-          const dw = aw * scale;
-          const dh = ah * scale;
-          ctx.drawImage(artImg, (printW - dw) / 2, (printH - dh) / 2, dw, dh);
-        } else {
-          const grad = ctx.createLinearGradient(0, 0, 0, printH);
-          grad.addColorStop(0, 'rgb(100,100,100)');
-          grad.addColorStop(1, 'rgb(60,60,60)');
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, printW, printH);
-        }
-
-        const cardDataUrl = await toPng(hiddenCardRef.current, {
-          pixelRatio: pr,
-          quality: 1,
-          width: CARD_W,
-          height: CARD_H,
-          style: { transform: 'none', borderRadius: '0' },
-          filter: (node) => {
-            if (node instanceof HTMLElement) {
-              const key = node.getAttribute('data-zone-key');
-              if (key === 'CardArt' || key === 'Art'
-                || key === 'CardBackground' || key === 'BackgroundColor'
-                || key === 'ArtBorder' || key === 'BottomBar'
-                || key === 'CryptidInfoBar') return false;
-            }
-            return true;
-          },
-        });
-        const cardImg = new Image();
-        cardImg.src = cardDataUrl;
-        await new Promise<void>((r, e) => { cardImg.onload = () => r(); cardImg.onerror = e; });
-        ctx.drawImage(cardImg, bPx, bPx);
-
-        downloadDataUrl(canvas.toDataURL('image/png'), `${filename}-print.png`);
+      if (printReady) {
+        const dataUrl = await exportPrintReadyPng(hiddenCardRef.current, isBorderless, card.cardArtUrl, true);
+        downloadDataUrl(dataUrl, `${filename}-print.png`);
       } else {
-        const rootZone = hiddenCardRef.current.firstElementChild as HTMLElement | null;
-        const borderColor = rootZone
-          ? getComputedStyle(rootZone).backgroundColor
-          : 'rgb(221, 12, 34)';
-
-        const cardDataUrl = await toPng(hiddenCardRef.current, {
-          pixelRatio: 4,
-          quality: 1,
-          width: CARD_W,
-          height: CARD_H,
-          style: { transform: 'none', borderRadius: '0' },
-        });
-
-        const pr = 4;
-        const canvas = document.createElement('canvas');
-        canvas.width = (CARD_W + 2 * BLEED) * pr;
-        canvas.height = (CARD_H + 2 * BLEED) * pr;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        ctx.fillStyle = borderColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const img = new Image();
-        img.src = cardDataUrl;
-        await new Promise<void>((r, e) => { img.onload = () => r(); img.onerror = e; });
-        ctx.drawImage(img, BLEED * pr, BLEED * pr, CARD_W * pr, CARD_H * pr);
-
-        downloadDataUrl(canvas.toDataURL('image/png'), `${filename}-print.png`);
+        const dataUrl = await exportStandardPng(hiddenCardRef.current, isBorderless);
+        downloadDataUrl(dataUrl, `${filename}.png`);
       }
     } catch (err) {
       console.error('PNG export failed:', err);
@@ -207,36 +105,49 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
       onClick={onClose}
     >
-      {/* Free-floating flex: 3D card + details panel side by side */}
+      {/* Modal */}
       <div className="flex gap-6 items-start mx-4 pointer-events-none">
-        {/* 3D Card */}
+        {/* Card */}
         <div
           style={{ perspective: '800px' }}
           className="shrink-0 pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {card.thumbnailUrl ? (
-            <div
-              onMouseMove={handleCardMouseMove}
-              onMouseEnter={handleCardMouseEnter}
-              onMouseLeave={handleCardMouseLeave}
-              style={{
-                transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) scale(${hovering ? 1.05 : 1})`,
-                transformStyle: 'preserve-3d',
-                transition: hovering
-                  ? 'transform 0.15s ease-out'
-                  : 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                position: 'relative',
-                cursor: 'default',
-              }}
-            >
+          <div
+            onMouseMove={card.thumbnailUrl ? handleCardMouseMove : undefined}
+            onMouseEnter={card.thumbnailUrl ? handleCardMouseEnter : undefined}
+            onMouseLeave={card.thumbnailUrl ? handleCardMouseLeave : undefined}
+            style={{
+              transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) scale(${hovering ? 1.05 : 1})`,
+              transformStyle: 'preserve-3d',
+              transition: hovering
+                ? 'transform 0.15s ease-out'
+                : 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+              position: 'relative',
+              cursor: 'default',
+              height: '80vh',
+              aspectRatio: '238/333',
+            }}
+          >
+            {/* Skeleton placeholder */}
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-navy-800 rounded-3xl animate-pulse" />
+            )}
+            {card.thumbnailUrl ? (
               <img
                 src={card.thumbnailUrl}
                 alt={card.cardName}
+                onLoad={() => setImgLoaded(true)}
                 className="border border-navy-600 rounded-3xl"
-                style={{ display: 'block', maxHeight: '80vh', width: 'auto', pointerEvents: 'none' }}
+                style={{ display: 'block', width: '100%', height: '100%', pointerEvents: 'none', opacity: imgLoaded ? 1 : 0 }}
               />
-              {/* Glare overlay */}
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-navy-800 rounded-3xl">
+                No preview
+              </div>
+            )}
+            {/* Glare overlay */}
+            {imgLoaded && (
               <div
                 style={{
                   position: 'absolute',
@@ -251,12 +162,8 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
                   pointerEvents: 'none',
                 }}
               />
-            </div>
-          ) : (
-            <div className="w-64 h-90 flex items-center justify-center text-gray-400 bg-navy-800 rounded-3xl">
-              No preview
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Details panel */}
@@ -358,7 +265,6 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
         </div>
       </div>
 
-      {/* Hidden card renderer for PNG export */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
         <CardRenderer
           ref={hiddenCardRef}

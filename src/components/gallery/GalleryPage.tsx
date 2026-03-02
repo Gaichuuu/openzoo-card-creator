@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { SavedCard } from '@/types/card';
-import { fetchCards } from '@/lib/galleryService';
+import { fetchCards, fetchCard } from '@/lib/galleryService';
 import { GalleryCard, GalleryCardSkeleton } from './GalleryCard';
 import { CardDetailModal } from './CardDetailModal';
-import type { CardType, Element } from '@/types/card';
 import { CARD_TAGS } from '@/types/card';
+import { CARD_TYPES, ELEMENTS } from '@/data/constants';
 
-const CARD_TYPES: CardType[] = ['Beastie', 'Spell', 'Artifact', 'Potion', 'Aura', 'Terra', 'Special Aura', 'Special Terra'];
-const ELEMENTS: Element[] = ['Cosmic', 'Dark', 'Earth', 'Flame', 'Forest', 'Frost', 'Light', 'Lightning', 'Neutral', 'Spirit', 'Water'];
+const GALLERY_ELEMENTS = ELEMENTS.filter((e) => e !== 'Special');
 
 export function GalleryPage() {
+  const { cardId } = useParams<{ cardId?: string }>();
+  const navigate = useNavigate();
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SavedCard | null>(null);
+  const [loadingCard, setLoadingCard] = useState(false);
   const [filterType, setFilterType] = useState<string>('');
   const [filterElement, setFilterElement] = useState<string>('');
   const [filterTag, setFilterTag] = useState<string>('');
@@ -30,13 +32,35 @@ export function GalleryPage() {
       .catch(() => { setError(true); setLoading(false); });
   }, [filterType, filterElement, filterTag]);
 
+  useEffect(() => {
+    if (!cardId) {
+      setSelectedCard(null);
+      setLoadingCard(false);
+      return;
+    }
+    const existing = cards.find((c) => c.id === cardId);
+    if (existing) {
+      setSelectedCard(existing);
+      setLoadingCard(false);
+      return;
+    }
+    let stale = false;
+    setLoadingCard(true);
+    fetchCard(cardId).then((card) => {
+      if (stale) return;
+      if (card) setSelectedCard(card);
+      else navigate('/gallery', { replace: true });
+    }).finally(() => { if (!stale) setLoadingCard(false); });
+    return () => { stale = true; };
+  }, [cardId, cards, navigate]);
+
   const filteredCards = searchName
     ? cards.filter((c) => c.cardName.toLowerCase().includes(searchName.toLowerCase()))
     : cards;
 
   return (
     <div className="min-h-screen bg-navy-950 text-white">
-      {/* Header + Filters (single sticky row) */}
+      {/* Header + Filters */}
       <div className="sticky top-0 z-10 bg-navy-950 px-6 py-3 flex items-center gap-4 border-b-gold">
         <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
           <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-7" />
@@ -61,7 +85,7 @@ export function GalleryPage() {
             className="bg-navy-800 text-white text-sm px-3 py-1.5"
           >
             <option value="">Aura</option>
-            {ELEMENTS.map((e) => (
+            {GALLERY_ELEMENTS.map((e) => (
               <option key={e} value={e}>{e}</option>
             ))}
           </select>
@@ -81,9 +105,9 @@ export function GalleryPage() {
             type="text"
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
-            placeholder="Search by name..."
+            placeholder="Search..."
             maxLength={50}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5 w-44"
+            className="bg-navy-800 text-white text-sm px-3 py-1.5 w-64"
           />
 
           {(filterType || filterElement || filterTag || searchName) && (
@@ -100,18 +124,20 @@ export function GalleryPage() {
           to="/create"
           className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-colors border-gold shrink-0"
         >
-          Create a Card
+          Card Creator
         </Link>
       </div>
 
       {/* Grid */}
       <div className="p-6">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
-            {Array.from({ length: 16 }, (_, i) => (
-              <GalleryCardSkeleton key={i} />
-            ))}
-          </div>
+          !cardId && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+              {Array.from({ length: 16 }, (_, i) => (
+                <GalleryCardSkeleton key={i} />
+              ))}
+            </div>
+          )
         ) : error ? (
           <div className="text-center text-red-400 py-12">Failed to load cards. Check your connection and try again.</div>
         ) : filteredCards.length === 0 ? (
@@ -124,19 +150,40 @@ export function GalleryPage() {
               <GalleryCard
                 key={card.id}
                 card={card}
-                onClick={() => setSelectedCard(card)}
+                onClick={() => navigate(`/gallery/${card.id}`)}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Detail modal */}
-      {selectedCard && (
+      {/* Modal */}
+      {selectedCard ? (
         <CardDetailModal
           card={selectedCard}
-          onClose={() => setSelectedCard(null)}
+          onClose={() => navigate('/gallery')}
         />
+      ) : loadingCard && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => navigate('/gallery')}
+        >
+          <div className="flex gap-6 items-start mx-4 pointer-events-none">
+            <div className="shrink-0 rounded-3xl bg-navy-800 animate-pulse" style={{ maxHeight: '80vh', aspectRatio: '238/333', width: 'auto', height: '80vh' }} />
+            <div className="bg-navy-900 p-5 w-72 space-y-4 pointer-events-auto border-gold">
+              <div className="h-5 w-40 bg-navy-700 rounded animate-pulse" />
+              <div className="flex gap-2">
+                <div className="h-5 w-16 bg-navy-700 rounded animate-pulse" />
+                <div className="h-5 w-16 bg-navy-700 rounded animate-pulse" />
+              </div>
+              <div className="h-4 w-32 bg-navy-700 rounded animate-pulse" />
+              <div className="space-y-2 pt-2">
+                <div className="h-9 w-full bg-navy-700 rounded animate-pulse" />
+                <div className="h-9 w-full bg-navy-700 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
