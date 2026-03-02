@@ -2,6 +2,8 @@
 
 Web-based card creator for the OpenZoo open-source trading card game. Design custom cards in the browser and export print-ready PNGs.
 
+**Website:** https://openzootcg.com/
+
 ## Features
 
 - **Editor** — upload card art, live preview, inline text formatting
@@ -83,7 +85,7 @@ cp .deploy.env.example .deploy.env
 ### Deploy
 
 ```bash
-bash scripts/deploy.sh
+npm run deploy
 ```
 
 This will:
