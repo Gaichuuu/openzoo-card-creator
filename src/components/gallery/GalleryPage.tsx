@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import type { SavedCard } from '@/types/card';
+import type { SavedCard, CardType, Element, CardTag } from '@/types/card';
 import { fetchCards, fetchCard } from '@/lib/galleryService';
 import { GalleryCard, GalleryCardSkeleton } from './GalleryCard';
 import { CardDetailModal } from './CardDetailModal';
@@ -17,9 +17,9 @@ export function GalleryPage() {
   const [error, setError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SavedCard | null>(null);
   const [loadingCard, setLoadingCard] = useState(false);
-  const [filterType, setFilterType] = useState<string>('');
-  const [filterElement, setFilterElement] = useState<string>('');
-  const [filterTag, setFilterTag] = useState<string>('');
+  const [filterType, setFilterType] = useState<CardType | ''>('');
+  const [filterElement, setFilterElement] = useState<Element | ''>('');
+  const [filterTag, setFilterTag] = useState<CardTag | ''>('');
   const [searchName, setSearchName] = useState('');
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export function GalleryPage() {
         <div className="flex flex-wrap gap-2 items-center flex-1 min-w-0">
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={(e) => setFilterType(e.target.value as CardType | '')}
             className="bg-navy-800 text-white text-sm px-3 py-1.5"
           >
             <option value="">Types</option>
@@ -81,7 +81,7 @@ export function GalleryPage() {
 
           <select
             value={filterElement}
-            onChange={(e) => setFilterElement(e.target.value)}
+            onChange={(e) => setFilterElement(e.target.value as Element | '')}
             className="bg-navy-800 text-white text-sm px-3 py-1.5"
           >
             <option value="">Aura</option>
@@ -92,7 +92,7 @@ export function GalleryPage() {
 
           <select
             value={filterTag}
-            onChange={(e) => setFilterTag(e.target.value)}
+            onChange={(e) => setFilterTag(e.target.value as CardTag | '')}
             className="bg-navy-800 text-white text-sm px-3 py-1.5"
           >
             <option value="">Tags</option>

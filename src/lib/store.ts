@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import type { LayoutType } from '@/types/layout';
 import type { CardData, CardSnapshot, CardType, Element } from '@/types/card';
-import { CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA, TYPES_WITHOUT_TRAITS } from '@/data/constants';
+import {
+  CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA, TYPES_WITHOUT_TRAITS,
+  STYLE_TYPES_TRIBES, STYLE_SPELLBOOK_LIMIT, STYLE_CARD_NAME, STYLE_TNL, STYLE_LP, STYLE_FLAVOR_TEXT,
+} from '@/data/constants';
 import type { EffectBlock, EffectBlockType } from '@/types/effects';
 import { createDefaultBlock } from '@/types/effects';
 import { ZONE_ID_MAPS, getTextZoneId, getImageZoneId, getStyleZoneId } from '@/data/layouts';
@@ -171,13 +174,13 @@ function buildInitialCardData(layout: LayoutType, cardType: CardType, locale: Lo
   if (limitKey) data[limitKey] = formatSpellbookLimitLocale(DEFAULT_SPELLBOOK_LIMIT, locale);
 
   const styles: [string, string][] = [
-    ['LP', '{fontSize:19px}'],
-    ['TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}'],
-    ['SpellbookLimit', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}'],
-    ['CardName', '{maxHeight:23px;justifyContent:flex-start;paddingLeft:2px;outlineWidth:0px}'],
-    ['TNL', '{flex:1;minWidth:0;alignItems:stretch}'],
+    ['LP', STYLE_LP],
+    ['TypesTribes', STYLE_TYPES_TRIBES],
+    ['SpellbookLimit', STYLE_SPELLBOOK_LIMIT],
+    ['CardName', STYLE_CARD_NAME],
+    ['TNL', STYLE_TNL],
     ['AttackDivider', '{display:none}'],
-    ['FlavorText', '{left:95px;justifyContent:flex-end}'],
+    ['FlavorText', STYLE_FLAVOR_TEXT],
   ];
   for (const [key, value] of styles) {
     const styleKey = getStyleZoneId(layout, key);

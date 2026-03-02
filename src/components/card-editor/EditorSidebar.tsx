@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
-import { CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA } from '@/data/constants';
+import {
+  CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA,
+  STYLE_TYPES_TRIBES, STYLE_TYPES_TRIBES_TOKEN, STYLE_SPELLBOOK_LIMIT,
+  STYLE_CARD_NAME, STYLE_TNL, STYLE_TNL_TOKEN, STYLE_LP, STYLE_FLAVOR_TEXT,
+  BORDERLESS_ART_STYLE, TERRA_GRADIENT_STYLE,
+} from '@/data/constants';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import { CardTypeSelector } from './CardTypeSelector';
 import { t } from '@/data/locales';
@@ -158,38 +163,38 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
           setStyleField(key, value);
         }
       };
-      setStyleIfMissing('LP', '{fontSize:19px}');
-      setStyleIfMissing('CardName', '{maxHeight:23px;justifyContent:flex-start;paddingLeft:2px;outlineWidth:0px}');
+      setStyleIfMissing('LP', STYLE_LP);
+      setStyleIfMissing('CardName', STYLE_CARD_NAME);
       if (s.cardType === 'Token') {
-        setStyleIfMissing('TypesTribes', '{fontSize:9px;height:10px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+        setStyleIfMissing('TypesTribes', STYLE_TYPES_TRIBES_TOKEN);
         setStyleIfMissing('SpellbookLimit', '{display:none}');
-        setStyleIfMissing('TNL', '{flex:1;minWidth:0;alignItems:stretch;justifyContent:flex-end}');
+        setStyleIfMissing('TNL', STYLE_TNL_TOKEN);
       } else {
-        setStyleIfMissing('TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
-        setStyleIfMissing('SpellbookLimit', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
-        setStyleIfMissing('TNL', '{flex:1;minWidth:0;alignItems:stretch}');
+        setStyleIfMissing('TypesTribes', STYLE_TYPES_TRIBES);
+        setStyleIfMissing('SpellbookLimit', STYLE_SPELLBOOK_LIMIT);
+        setStyleIfMissing('TNL', STYLE_TNL);
       }
       setTextField('Copyright', `\u00a9 ${new Date().getFullYear()} OpenZoo`);
       setStyleIfMissing('Copyright', '{top:1px;marginLeft:2px}');
       setStyleIfMissing('Artist', '{top:1px;marginRight:2px}');
-      setStyleIfMissing('FlavorText', '{left:95px;justifyContent:flex-end}');
+      setStyleIfMissing('FlavorText', STYLE_FLAVOR_TEXT);
       return;
     }
     if (snapshotGuard.current) {
       return;
     }
     setTextField('LP', `{LP}${lp}`);
-    setStyleField('LP', '{fontSize:19px}');
-    setStyleField('TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
-    setStyleField('SpellbookLimit', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
-    setStyleField('CardName', '{maxHeight:23px;justifyContent:flex-start;paddingLeft:2px;outlineWidth:0px}');
-    setStyleField('TNL', '{flex:1;minWidth:0;alignItems:stretch}');
+    setStyleField('LP', STYLE_LP);
+    setStyleField('TypesTribes', STYLE_TYPES_TRIBES);
+    setStyleField('SpellbookLimit', STYLE_SPELLBOOK_LIMIT);
+    setStyleField('CardName', STYLE_CARD_NAME);
+    setStyleField('TNL', STYLE_TNL);
     setStyleField('AttackDivider', '{display:none}');
     setStyleField('CardBorder', `{outlineColor:${BORDER_COLORS.Red};background:${BORDER_COLORS.Red}}`);
     setTextField('Copyright', `\u00a9 ${new Date().getFullYear()} OpenZoo`);
     setStyleField('Copyright', '{top:1px;marginLeft:2px}');
     setStyleField('Artist', '{top:1px;marginRight:2px}');
-    setStyleField('FlavorText', '{left:95px;justifyContent:flex-end}');
+    setStyleField('FlavorText', STYLE_FLAVOR_TEXT);
   }, [snapshotVersion]);
 
   useEffect(() => {
@@ -210,11 +215,11 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       setFlavorText('');
       setStyleField('Aura1', '{display:none}');
       setStyleField('Aura2', '');
-      setStyleField('TypesTribes', '{fontSize:9px;height:10px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+      setStyleField('TypesTribes', STYLE_TYPES_TRIBES_TOKEN);
       setStyleField('SpellbookLimit', '{display:none}');
-      setStyleField('TNL', '{flex:1;minWidth:0;alignItems:stretch;justifyContent:flex-end}');
+      setStyleField('TNL', STYLE_TNL_TOKEN);
       if (borderless) {
-        setStyleField('CardArt', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+        setStyleField('CardArt', BORDERLESS_ART_STYLE);
       }
     } else if (cardType === 'Aura') {
       setSpellbookLimit('');
@@ -223,11 +228,11 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       setFlavorText('');
       setStyleField('Aura1', '');
       setStyleField('Aura2', '');
-      setStyleField('TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
-      setStyleField('SpellbookLimit', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
-      setStyleField('TNL', '{flex:1;minWidth:0;alignItems:stretch}');
+      setStyleField('TypesTribes', STYLE_TYPES_TRIBES);
+      setStyleField('SpellbookLimit', STYLE_SPELLBOOK_LIMIT);
+      setStyleField('TNL', STYLE_TNL);
       if (borderless) {
-        setStyleField('CardArt', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+        setStyleField('CardArt', BORDERLESS_ART_STYLE);
       }
     } else if (cardType === 'Special Aura') {
       setCardName('Name');
@@ -239,7 +244,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       setImageField('SetSymbol', 'OZLegacyGold.png');
       setFlavorText('');
       if (borderless) {
-        setStyleField('CardArt', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+        setStyleField('CardArt', BORDERLESS_ART_STYLE);
       }
     } else if (cardType === 'Terra') {
       setSpellbookLimit('');
@@ -247,9 +252,9 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       setTerraEffectText('');
       setFlavorText('');
       if (borderless) {
-        setStyleField('Art', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+        setStyleField('Art', BORDERLESS_ART_STYLE);
       } else {
-        setStyleField('Art', '{backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+        setStyleField('Art', TERRA_GRADIENT_STYLE);
       }
     } else if (cardType === 'Special Terra') {
       setCardName('Name');
@@ -259,9 +264,9 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       setImageField('SetSymbol', 'OZLegacyGold.png');
       setFlavorText('');
       if (borderless) {
-        setStyleField('Art', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+        setStyleField('Art', BORDERLESS_ART_STYLE);
       } else {
-        setStyleField('Art', '{backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+        setStyleField('Art', TERRA_GRADIENT_STYLE);
       }
     } else {
       setCardName('Name');
@@ -270,11 +275,11 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       setTerraEffectText('');
       setStyleField('Aura1', '');
       setStyleField('Aura2', '');
-      setStyleField('LP', '{fontSize:19px}');
+      setStyleField('LP', STYLE_LP);
       setStyleField('AttackDivider', '{display:none}');
-      setStyleField('TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+      setStyleField('TypesTribes', STYLE_TYPES_TRIBES);
       if (borderless) {
-        setStyleField('CardArt', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+        setStyleField('CardArt', BORDERLESS_ART_STYLE);
         setStyleField('CardBorder', '{outlineWidth:0px;backgroundImage:none;backgroundColor:transparent}');
       }
 
@@ -301,9 +306,9 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
   const applyBorderless = () => {
     setBorderless(true);
     setStyleField('CardBorder', '{outlineWidth:0px;backgroundImage:none;backgroundColor:transparent}');
-    setStyleField('CardArt', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+    setStyleField('CardArt', BORDERLESS_ART_STYLE);
     if (isTerra) {
-      setStyleField('Art', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+      setStyleField('Art', BORDERLESS_ART_STYLE);
     }
   };
 
@@ -312,7 +317,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
     setStyleField('CardBorder', `{outlineColor:${color};background:${color}}`);
     setStyleField('CardArt', '');
     if (isTerra) {
-      setStyleField('Art', '{backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+      setStyleField('Art', TERRA_GRADIENT_STYLE);
     }
   };
 

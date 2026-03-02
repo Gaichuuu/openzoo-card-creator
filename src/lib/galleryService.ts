@@ -18,8 +18,7 @@ import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element } from '@/types/card';
 import type { LayoutType } from '@/types/layout';
 import type { EffectBlock } from '@/types/effects';
-
-type Locale = 'en' | 'ja';
+import type { Locale } from '@/data/locales';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -70,23 +69,14 @@ export async function publishCard(
 
   const now = Timestamp.now();
   const savedCard = {
+    ...snapshot,
     id: cardId,
-    cardType: snapshot.cardType,
-    layoutType: snapshot.layoutType,
     cardData,
-    cardName: snapshot.cardName,
-    tribe: snapshot.tribe,
-    spellbookLimit: snapshot.spellbookLimit,
-    primaryElement: snapshot.primaryElement,
-    secondaryElement: snapshot.secondaryElement,
-    traits: snapshot.traits,
-    terras: snapshot.terras,
-    strongAgainst: snapshot.strongAgainst,
+    cardArtUrl,
     effectBlocks: snapshot.effectBlocks.map(blockToPlain),
     locale: snapshot.locale || 'en',
     borderless: snapshot.borderless || false,
     thumbnailUrl,
-    cardArtUrl,
     creatorName: options.creatorName,
     tags: options.tags,
     remixedFrom: options.remixedFrom,
@@ -120,6 +110,10 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     effectBlocks: (data.effectBlocks || []) as EffectBlock[],
     locale: (data.locale || 'en') as Locale,
     borderless: (data.borderless ?? false) as boolean,
+    mainTextBoxNudge: (data.mainTextBoxNudge ?? 0) as number,
+    mainTextBoxExtraShrink: (data.mainTextBoxExtraShrink ?? 0) as number,
+    cardArtPositionX: (data.cardArtPositionX ?? 0) as number,
+    cardArtPositionY: (data.cardArtPositionY ?? 0) as number,
     thumbnailUrl: (data.thumbnailUrl || '') as string,
     cardArtUrl: (data.cardArtUrl || '') as string,
     creatorName: (data.creatorName || '') as string,

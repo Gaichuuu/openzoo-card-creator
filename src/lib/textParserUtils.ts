@@ -6,6 +6,7 @@ export type Segment =
   | { type: 'image'; content: string };
 
 export function expandVariables(text: string, variables: Record<string, string>): string {
+  if (!text.includes('{')) return text;
   let result = text;
   for (const [varName, varValue] of Object.entries(variables)) {
     result = result.replaceAll(`{${varName}}`, varValue);

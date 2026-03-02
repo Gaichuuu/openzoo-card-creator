@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useCardStore } from '@/lib/store';
+import type { LayoutType } from '@/types/layout';
 import type { EffectBlockType } from '@/types/effects';
 import { BLOCK_ORDER, BLOCK_LABELS } from '@/types/effects';
 import { sortBlocks } from '@/lib/effectComposer';
@@ -31,7 +32,7 @@ export function Stepper({ label, value, min, max, onChange, valueWidth = 'w-4' }
   );
 }
 
-const AVAILABLE_BLOCKS: Record<string, EffectBlockType[]> = {
+const AVAILABLE_BLOCKS: Partial<Record<LayoutType, EffectBlockType[]>> = {
   BasicNoAttack: [
     'tribal-boost', 'static', 'discard',
     'contract', 'enter', 'arena', 'destroyed', 'power',
