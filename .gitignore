@@ -22,9 +22,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Internal data
+# Deploy artifacts
+.deploy.env
+sitemap.xml
 .claude/
 CLAUDE.md
 /data/
 /src/cards/
-/scripts/
+/scripts/temp/
