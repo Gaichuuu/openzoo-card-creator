@@ -1,26 +1,20 @@
 import { useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
+import { Stepper } from './TextBoxBuilder';
 
-// Max dimension for card art. At pixelRatio 4, the art zone is 197*4 = 788px.
-// We use 1600px to allow plenty of headroom for high-quality print exports.
 const MAX_IMAGE_DIM = 1600;
 
-/** Load, optionally resize, and return a data URL for the image. */
 function processImage(file: File): Promise<{ url: string; width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
     img.onload = () => {
       const { naturalWidth: w, naturalHeight: h } = img;
-
-      // Determine target dimensions (resize if too large)
       const needsResize = w > MAX_IMAGE_DIM || h > MAX_IMAGE_DIM;
       const scale = needsResize ? Math.min(MAX_IMAGE_DIM / w, MAX_IMAGE_DIM / h) : 1;
       const newW = Math.round(w * scale);
       const newH = Math.round(h * scale);
-
-      // Always convert to data URL via canvas for reliable CSS background rendering
       const canvas = document.createElement('canvas');
       canvas.width = newW;
       canvas.height = newH;
@@ -44,14 +38,15 @@ export function ImageUploader() {
   const cardArtUrl = useCardStore((s) => s.cardArtUrl);
   const setCardArt = useCardStore((s) => s.setCardArt);
   const cardType = useCardStore((s) => s.cardType);
+  const posX = useCardStore((s) => s.cardArtPositionX);
+  const posY = useCardStore((s) => s.cardArtPositionY);
+  const setCardArtPosition = useCardStore((s) => s.setCardArtPosition);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
-
   const borderless = useCardStore((s) => s.borderless);
   const layoutType = CARD_TYPE_TO_LAYOUT[cardType];
   const isTerraLayout = layoutType === 'Terra';
   const isAuraLayout = layoutType === 'Aura';
-  // Borderless: art fills full card (238×333 native, ~5:7)
   const ratioHint = borderless ? '5:7 ratio | 952×1332 | PNG, JPG'
     : isTerraLayout ? '2:3 ratio | 848×1228 | PNG, JPG'
     : isAuraLayout ? '5:6 ratio | 788×936 | PNG, JPG'
@@ -124,6 +119,18 @@ export function ImageUploader() {
           <span className="text-[10px] text-gold-500">{dims.width}x{dims.height}</span>
         )}
       </div>
+      {cardArtUrl && (
+        <div className="flex items-center gap-3 pt-1">
+          <Stepper label="X" value={posX} min={-50} max={50} onChange={(v) => setCardArtPosition(v, posY)} valueWidth="w-5" />
+          <Stepper label="Y" value={posY} min={-50} max={50} onChange={(v) => setCardArtPosition(posX, v)} valueWidth="w-5" />
+          <button
+            onClick={() => setCardArtPosition(0, 0)}
+            className="text-[10px] text-gold-500 hover:text-white"
+          >
+            Reset
+          </button>
+        </div>
+      )}
     </div>
   );
 }

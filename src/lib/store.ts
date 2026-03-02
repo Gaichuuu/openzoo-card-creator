@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import type { LayoutType } from '@/types/layout';
 import type { CardData, CardSnapshot, CardType, Element } from '@/types/card';
-import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
+import { CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA, TYPES_WITHOUT_TRAITS } from '@/data/constants';
 import type { EffectBlock, EffectBlockType } from '@/types/effects';
 import { createDefaultBlock } from '@/types/effects';
-import { ZONE_ID_MAPS } from '@/data/layouts';
+import { ZONE_ID_MAPS, getTextZoneId, getImageZoneId, getStyleZoneId } from '@/data/layouts';
 import { resolveBanner } from './bannerResolver';
 import { resolveArtBorderStyle, resolveBgOverlayStyle, computeStrongAgainst } from '@/data/constants';
 import { composeEffectBlocks } from './effectComposer';
@@ -15,8 +15,6 @@ interface CardEditorState {
   cardType: CardType;
   layoutType: LayoutType;
   cardData: CardData;
-
-  // Convenience fields
   cardName: string;
   tribe: string;
   spellbookLimit: string;
@@ -26,22 +24,18 @@ interface CardEditorState {
   terras: (string | null)[];
   strongAgainst: (Element | null)[];
   cardArtUrl: string | null;
-
-  // Effect blocks
   effectBlocks: EffectBlock[];
-
-  // Locale
   locale: Locale;
-
-  // Border
   borderless: boolean;
-
-  // Snapshot loading guard — when true, mount effects should skip setting defaults
+  mainTextBoxNudge: number;
+  mainTextBoxExtraShrink: number;
+  _autoFitRatio: number;
+  cardArtPositionX: number;
+  cardArtPositionY: number;
   _isLoadingSnapshot: boolean;
   _snapshotVersion: number;
   _snapshotTimer: ReturnType<typeof setTimeout> | null;
 
-  // Actions
   setCardType: (type: CardType) => void;
   setLocale: (locale: Locale) => void;
   setLayoutType: (type: LayoutType) => void;
@@ -58,6 +52,10 @@ interface CardEditorState {
   setStrongAgainst: (index: number, el: Element | null) => void;
   setCardArt: (url: string | null) => void;
   setBorderless: (v: boolean) => void;
+  setMainTextBoxNudge: (v: number) => void;
+  setMainTextBoxExtraShrink: (v: number) => void;
+  setCardArtPosition: (x: number, y: number) => void;
+  _setAutoFitRatio: (ratio: number) => void;
   setRawCardData: (key: string, value: string) => void;
   addEffectBlock: (type: EffectBlockType) => void;
   removeEffectBlock: (id: string) => void;
@@ -68,34 +66,6 @@ interface CardEditorState {
   loadSnapshot: (snapshot: CardSnapshot) => void;
 }
 
-function getTextZoneId(layoutType: LayoutType, semanticKey: string): string | null {
-  const map = ZONE_ID_MAPS[layoutType];
-  const zoneId = map?.[semanticKey];
-  if (zoneId === undefined) return null;
-  return `t${zoneId}`;
-}
-
-function getImageZoneId(layoutType: LayoutType, semanticKey: string): string | null {
-  const map = ZONE_ID_MAPS[layoutType];
-  const zoneId = map?.[semanticKey];
-  if (zoneId === undefined) return null;
-  return `i${zoneId}`;
-}
-
-function getStyleZoneId(layoutType: LayoutType, semanticKey: string): string | null {
-  const map = ZONE_ID_MAPS[layoutType];
-  const zoneId = map?.[semanticKey];
-  if (zoneId === undefined) return null;
-  return `s${zoneId}`;
-}
-
-/**
- * Apply all aura-derived colors to the card data:
- * - Banner image
- * - Aura1/Aura2 icons
- * - ArtBorder background color
- * - BackgroundColor overlay
- */
 function applyAuraColors(
   newData: CardData,
   layoutType: LayoutType,
@@ -103,48 +73,38 @@ function applyAuraColors(
   secondary: Element | null,
   cardType?: CardType,
 ) {
-  // Banner
   const bannerKey = getImageZoneId(layoutType, 'Banner');
   if (bannerKey) {
     newData[bannerKey] = resolveBanner(primary, secondary, cardType);
   }
 
-  // Aura icon positioning depends on card type
   const aura1Key = getImageZoneId(layoutType, 'Aura1');
   const aura2Key = getImageZoneId(layoutType, 'Aura2');
   if (cardType === 'Aura') {
-    // Single element: icon in Aura2 (right position), Aura1 cleared
     if (aura1Key) newData[aura1Key] = '';
     if (aura2Key) newData[aura2Key] = primary ? `${primary}.png` : '';
   } else if (cardType === 'Special Aura') {
-    // Special.png icon in Aura2 (right), Aura1 cleared
     if (aura1Key) newData[aura1Key] = '';
     if (aura2Key) newData[aura2Key] = 'Special.png';
   } else {
-    // Default: Aura1 = primary, Aura2 = secondary
     if (aura1Key) newData[aura1Key] = primary ? `${primary}.png` : '';
     if (aura2Key) newData[aura2Key] = secondary ? `${secondary}.png` : '';
   }
 
-  // Art border color
+  const colorPrimary = primary ?? 'Neutral';
   const artBorderStyleKey = getStyleZoneId(layoutType, 'ArtBorder');
   if (artBorderStyleKey) {
-    const artBorderBg = resolveArtBorderStyle(primary, secondary);
+    const artBorderBg = resolveArtBorderStyle(colorPrimary, secondary);
     newData[artBorderStyleKey] = artBorderBg ? `{background:${artBorderBg}}` : '';
   }
 
-  // Background color overlay
   const bgColorStyleKey = getStyleZoneId(layoutType, 'BackgroundColor');
   if (bgColorStyleKey) {
-    const bgOverlay = resolveBgOverlayStyle(primary, secondary);
+    const bgOverlay = resolveBgOverlayStyle(colorPrimary, secondary);
     newData[bgColorStyleKey] = bgOverlay ? `{background:${bgOverlay}}` : '';
   }
 }
 
-/**
- * Auto-populate SAura1–4 image zones based on element strengths.
- * Also ensures the "StrongAgainst" text label is always set.
- */
 function applyStrongAgainst(
   newData: CardData,
   layoutType: LayoutType,
@@ -159,8 +119,6 @@ function applyStrongAgainst(
     if (imgKey) {
       newData[imgKey] = i < strengths.length ? `${strengths[i]}.png` : '';
     }
-    // Show border when icon is present, hide zone when empty (so it doesn't
-    // take flex space and push the +20 value text to the right)
     const styleKey = getStyleZoneId(layoutType, saKeys[i]);
     if (styleKey) {
       newData[styleKey] = i < strengths.length
@@ -168,7 +126,6 @@ function applyStrongAgainst(
         : '{display:none}';
     }
   }
-  // Always show the "Strong Against:" label, left-aligned
   const textKey = getTextZoneId(layoutType, 'StrongAgainst');
   if (textKey) {
     newData[textKey] = `<p>${t('Strong Against', locale)}</p>`;
@@ -178,26 +135,16 @@ function applyStrongAgainst(
     const saLeft = locale === 'ja' ? '-17px' : '-7px';
     newData[textStyleKey] = `{left:${saLeft};width:60px;textAlign:left}`;
   }
-  // Left-align the icon container (child of StrongAgainst zone).
-  // Compensate for parent's left shift in Japanese (compounding absolute offsets).
-  // Font styling matches Terra bonus values for the "+20" text.
   const containerStyleKey = getStyleZoneId(layoutType, 'SAContainer');
   if (containerStyleKey) {
     const saContainerLeft = locale === 'ja' ? '19px' : '9px';
     newData[containerStyleKey] = `{left:${saContainerLeft};width:78px;justifyContent:flex-end;gap:1px;outline:none;fontSize:8px;fontWeight:bold;letterSpacing:-0.1em;color:red;-webkit-text-stroke:0.5px white}`;
   }
-  // "+20" value after the icons (only when there are strong-against auras)
   const valueKey = getTextZoneId(layoutType, 'SAValue');
   if (valueKey) {
     newData[valueKey] = strengths.length > 0 ? '<p>+20</p>' : '';
   }
 }
-
-/**
- * Small caps are handled by the {SC:} inline class in the text content.
- * The zone's base textTransform:uppercase and fontWeight:bold are preserved.
- * Japanese locale skips small caps entirely (delegated to toSmallCapsLocale).
- */
 
 function getTypeCapabilities(type: CardType) {
   return {
@@ -208,7 +155,6 @@ function getTypeCapabilities(type: CardType) {
 }
 
 const METADATA_ZONES = ['CryptidInfoBar', 'DOB/Discovered:', 'GPS', 'Weight', 'Height/Length'] as const;
-
 const DEFAULT_CARD_TYPE: CardType = 'Beastie';
 const DEFAULT_LAYOUT: LayoutType = CARD_TYPE_TO_LAYOUT[DEFAULT_CARD_TYPE];
 const DEFAULT_CARD_NAME = 'Name';
@@ -224,9 +170,6 @@ function buildInitialCardData(layout: LayoutType, cardType: CardType, locale: Lo
   const limitKey = getTextZoneId(layout, 'SpellbookLimit');
   if (limitKey) data[limitKey] = formatSpellbookLimitLocale(DEFAULT_SPELLBOOK_LIMIT, locale);
 
-  // Essential style overrides — must be in initial cardData so
-  // AutoShrinkText and zone rendering work from the first frame,
-  // even before EditorSidebar's mount useEffect fires.
   const styles: [string, string][] = [
     ['LP', '{fontSize:19px}'],
     ['TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}'],
@@ -260,6 +203,11 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   effectBlocks: [],
   locale: 'en' as Locale,
   borderless: false,
+  mainTextBoxNudge: 0,
+  mainTextBoxExtraShrink: 0,
+  _autoFitRatio: 1,
+  cardArtPositionX: 0,
+  cardArtPositionY: 0,
   _isLoadingSnapshot: false,
   _snapshotVersion: 0,
   _snapshotTimer: null,
@@ -273,12 +221,9 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const lt = state.layoutType;
     const newData = { ...state.cardData };
     const caps = getTypeCapabilities(type);
-
-    // TypesTribes
     const typesKey = getTextZoneId(lt, 'TypesTribes');
     if (typesKey) newData[typesKey] = formatTypesTribesLocale(type, state.tribe, state.locale);
 
-    // LP: clear or set default
     const lpKey = getTextZoneId(lt, 'LP');
     if (lpKey) {
       if (!caps.hasLP) {
@@ -290,19 +235,16 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       }
     }
 
-    // Metadata: clear for non-Beastie
     if (!caps.hasMetadata) {
       for (const zone of METADATA_ZONES) {
         const key = getTextZoneId(lt, zone);
         if (key) newData[key] = '';
       }
-      // Clear CryptidInfoBar gradient background
       const infoBarStyleKey = getStyleZoneId(lt, 'CryptidInfoBar');
       if (infoBarStyleKey) newData[infoBarStyleKey] = '';
     }
 
-    // Terra bonuses: clear for types without terra bonus section
-    if (type === 'Potion' || type === 'Artifact' || type === 'Spell' || type === 'Aura' || type === 'Special Aura' || type === 'Terra' || type === 'Special Terra') {
+    if (TYPES_WITHOUT_TERRA.has(type)) {
       for (const zone of ['Terra1', 'Terra2']) {
         const imgKey = getImageZoneId(lt, zone);
         if (imgKey) newData[imgKey] = '';
@@ -313,38 +255,33 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       }
     }
 
-    // Traits: clear for Aura/Special Aura/Terra/Special Terra
-    if (type === 'Aura' || type === 'Special Aura' || type === 'Terra' || type === 'Special Terra') {
+    if (TYPES_WITHOUT_TRAITS.has(type)) {
       for (const zone of ['Trait1', 'Trait2', 'Trait3']) {
         const imgKey = getImageZoneId(lt, zone);
         if (imgKey) newData[imgKey] = '';
       }
-      // Clear text boxes
       const textBoxKey = getTextZoneId(lt, 'Aura/Terra Text Box');
       if (textBoxKey) newData[textBoxKey] = '';
       const textBoxKey1 = getTextZoneId(lt, 'Aura/Terra Text Box 1');
       if (textBoxKey1) newData[textBoxKey1] = '';
     }
 
-    // Special Aura: apply Neutral colors (gray background, NeutralAltBanner)
     if (type === 'Special Aura') {
       applyAuraColors(newData, lt, 'Neutral', null, type);
     }
 
-    // Attacks: filter attack blocks for non-Beastie, recompose
     let { effectBlocks } = state;
     if (!caps.hasAttacks) {
       effectBlocks = effectBlocks.filter((b) => b.type !== 'attack');
     }
-    // Clear effect blocks for Aura/Terra types (no effect block editor)
-    if (type === 'Aura' || type === 'Special Aura' || type === 'Terra' || type === 'Special Terra') {
+    if (TYPES_WITHOUT_TRAITS.has(type)) {
       effectBlocks = [];
     }
-    const effectPatch = composeEffectBlocks(effectBlocks, lt, type, state.locale);
+    const effectPatch = composeEffectBlocks(effectBlocks, lt, type, state.locale, state.borderless);
     Object.assign(newData, effectPatch);
 
-    const noTerra = type === 'Potion' || type === 'Artifact' || type === 'Spell' || type === 'Aura' || type === 'Special Aura' || type === 'Terra' || type === 'Special Terra';
-    const noTraits = type === 'Aura' || type === 'Special Aura' || type === 'Terra' || type === 'Special Terra';
+    const noTerra = TYPES_WITHOUT_TERRA.has(type);
+    const noTraits = TYPES_WITHOUT_TRAITS.has(type);
     const clearElements = type === 'Special Aura' || type === 'Terra' || type === 'Special Terra';
     set({
       effectBlocks,
@@ -377,18 +314,15 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       }
     }
 
-    // Re-apply card art — semantic key differs across layouts (CardArt vs Art)
     if (state.cardArtUrl) {
       const artKey = getImageZoneId(type, 'CardArt') || getImageZoneId(type, 'Art');
       if (artKey) newCardData[artKey] = state.cardArtUrl;
     }
 
-    // Re-apply aura colors and strong against for new layout
     applyAuraColors(newCardData, type, state.primaryElement, state.secondaryElement, state.cardType);
     applyStrongAgainst(newCardData, type, state.primaryElement, state.secondaryElement, state.locale);
 
-    // Re-compose effect blocks for new layout
-    const effectPatch = composeEffectBlocks(state.effectBlocks, type, state.cardType, state.locale);
+    const effectPatch = composeEffectBlocks(state.effectBlocks, type, state.cardType, state.locale, state.borderless);
     Object.assign(newCardData, effectPatch);
 
     set({ layoutType: type, cardData: newCardData });
@@ -398,7 +332,6 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const { layoutType, cardData } = get();
     const key = getTextZoneId(layoutType, 'CardName');
     if (!key) return;
-    // Convert literal \n token to actual newline for line breaks in rendering
     const renderName = name.replace(/\\n/g, '\n');
     set({
       cardName: name,
@@ -523,11 +456,31 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       newData[key] = url || '';
     }
 
-    set({ cardArtUrl: url, cardData: newData });
+    set({ cardArtUrl: url, cardData: newData, cardArtPositionX: 0, cardArtPositionY: 0 });
   },
 
   setBorderless: (v) => {
-    set({ borderless: v });
+    const { layoutType, cardData, effectBlocks, cardType, locale } = get();
+    const patch = composeEffectBlocks(effectBlocks, layoutType, cardType, locale, v);
+    set({ borderless: v, cardData: { ...cardData, ...patch } });
+  },
+
+  setMainTextBoxNudge: (v) => {
+    set({ mainTextBoxNudge: Math.max(-10, Math.min(10, v)) });
+  },
+
+  setMainTextBoxExtraShrink: (v) => {
+    set({ mainTextBoxExtraShrink: Math.max(0, Math.min(20, v)) });
+  },
+
+  setCardArtPosition: (x, y) => {
+    set({ cardArtPositionX: Math.max(-50, Math.min(50, x)), cardArtPositionY: Math.max(-50, Math.min(50, y)) });
+  },
+
+  _setAutoFitRatio: (ratio) => {
+    if (Math.abs(ratio - get()._autoFitRatio) > 0.001) {
+      set({ _autoFitRatio: ratio });
+    }
   },
 
   setRawCardData: (key, value) => {
@@ -540,14 +493,14 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const id = `eb-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const newBlock: EffectBlock = { id, ...createDefaultBlock(type) };
     const newBlocks = [...effectBlocks, newBlock];
-    const patch = composeEffectBlocks(newBlocks, layoutType, cardType, locale);
+    const patch = composeEffectBlocks(newBlocks, layoutType, cardType, locale, get().borderless);
     set({ effectBlocks: newBlocks, cardData: { ...cardData, ...patch } });
   },
 
   removeEffectBlock: (id) => {
     const { layoutType, cardData, effectBlocks, cardType, locale } = get();
     const newBlocks = effectBlocks.filter((b) => b.id !== id);
-    const patch = composeEffectBlocks(newBlocks, layoutType, cardType, locale);
+    const patch = composeEffectBlocks(newBlocks, layoutType, cardType, locale, get().borderless);
     set({ effectBlocks: newBlocks, cardData: { ...cardData, ...patch } });
   },
 
@@ -556,7 +509,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const newBlocks = effectBlocks.map((b) =>
       b.id === id ? { ...b, ...updates } : b
     );
-    const patch = composeEffectBlocks(newBlocks, layoutType, cardType, locale);
+    const patch = composeEffectBlocks(newBlocks, layoutType, cardType, locale, get().borderless);
     set({ effectBlocks: newBlocks, cardData: { ...cardData, ...patch } });
   },
 
@@ -565,20 +518,15 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const state = get();
     const { layoutType: lt, cardType, tribe, spellbookLimit, primaryElement, secondaryElement, effectBlocks } = state;
     const newData = { ...state.cardData };
-
-    // Re-compose TypesTribes
     const typesKey = getTextZoneId(lt, 'TypesTribes');
     if (typesKey) newData[typesKey] = formatTypesTribesLocale(cardType, tribe, locale);
 
-    // Re-compose SpellbookLimit
     const limitKey = getTextZoneId(lt, 'SpellbookLimit');
     if (limitKey && spellbookLimit) newData[limitKey] = formatSpellbookLimitLocale(spellbookLimit, locale);
 
-    // Re-compose StrongAgainst
     applyStrongAgainst(newData, lt, primaryElement, secondaryElement, locale);
 
-    // Re-compose effect blocks
-    const effectPatch = composeEffectBlocks(effectBlocks, lt, cardType, locale);
+    const effectPatch = composeEffectBlocks(effectBlocks, lt, cardType, locale, get().borderless);
     Object.assign(newData, effectPatch);
 
     set({ cardData: newData });
@@ -600,6 +548,11 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardArtUrl: null,
       effectBlocks: [],
       borderless: false,
+      mainTextBoxNudge: 0,
+      mainTextBoxExtraShrink: 0,
+      cardArtPositionX: 0,
+      cardArtPositionY: 0,
+      _autoFitRatio: 1,
       _isLoadingSnapshot: false,
       _snapshotVersion: _snapshotVersion + 1,
       _snapshotTimer: null,
@@ -631,32 +584,27 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       effectBlocks: s.effectBlocks,
       locale: s.locale,
       borderless: s.borderless,
+      mainTextBoxNudge: s.mainTextBoxNudge,
+      mainTextBoxExtraShrink: s.mainTextBoxExtraShrink,
+      cardArtPositionX: s.cardArtPositionX,
+      cardArtPositionY: s.cardArtPositionY,
     };
   },
 
   loadSnapshot: (snapshot) => {
-    // Cancel any pending timer from a previous loadSnapshot so it doesn't
-    // clear _isLoadingSnapshot while the current import's effects are firing.
     const prev = get()._snapshotTimer;
     if (prev) clearTimeout(prev);
 
     const locale = snapshot.locale ?? 'en';
     const newData = { ...snapshot.cardData };
-
-    // Ensure card art image zone matches cardArtUrl (e.g. blob URL from
-    // remix conversion — the snapshot's cardData still has the remote URL)
     const lt = snapshot.layoutType;
     const artKey = getImageZoneId(lt, 'CardArt') || getImageZoneId(lt, 'Art');
     if (artKey && snapshot.cardArtUrl) {
       newData[artKey] = snapshot.cardArtUrl;
     }
 
-    // Re-compose effect blocks as a fallback for older snapshots that may
-    // be missing composition-managed zone data. Only fill in keys that don't
-    // already exist in the snapshot — the snapshot's cardData is the source
-    // of truth (it captured the full accumulated state from editing).
     const effectPatch = composeEffectBlocks(
-      snapshot.effectBlocks ?? [], lt, snapshot.cardType, locale,
+      snapshot.effectBlocks ?? [], lt, snapshot.cardType, locale, snapshot.borderless ?? false,
     );
 
     for (const key of Object.keys(effectPatch)) {
@@ -665,15 +613,9 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       }
     }
 
-    // Re-apply aura colors from stored elements — older snapshots or
-    // autosaves created before the resetCard ordering fix may be missing
-    // ArtBorder/BackgroundColor/Banner styles in cardData.
     applyAuraColors(newData, lt, snapshot.primaryElement, snapshot.secondaryElement, snapshot.cardType);
+    applyStrongAgainst(newData, lt, snapshot.primaryElement, snapshot.secondaryElement, locale);
 
-    // Clear after all effects have fired. Components also use a local
-    // snapshotGuard ref as belt-and-suspenders (in case this fires early),
-    // but 500ms provides generous margin for React StrictMode's double-
-    // invocation cycle and any scheduling delays.
     const timer = setTimeout(() => {
       set({ _isLoadingSnapshot: false, _snapshotTimer: null });
     }, 500);
@@ -683,6 +625,11 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardData: newData,
       locale,
       borderless: snapshot.borderless ?? false,
+      mainTextBoxNudge: snapshot.mainTextBoxNudge ?? 0,
+      mainTextBoxExtraShrink: snapshot.mainTextBoxExtraShrink ?? 0,
+      cardArtPositionX: snapshot.cardArtPositionX ?? 0,
+      cardArtPositionY: snapshot.cardArtPositionY ?? 0,
+      _autoFitRatio: 1,
       _isLoadingSnapshot: true,
       _snapshotVersion: get()._snapshotVersion + 1,
       _snapshotTimer: timer,
@@ -690,25 +637,20 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   },
 }));
 
-// Auto-save to sessionStorage
 const AUTOSAVE_KEY = 'openzoo-card-autosave';
 let _saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 useCardStore.subscribe((state) => {
-  // Don't save while a snapshot is being loaded (would re-save the same data)
   if (state._isLoadingSnapshot) return;
   if (_saveTimer) clearTimeout(_saveTimer);
   _saveTimer = setTimeout(() => {
     try {
       const snapshot = useCardStore.getState().getSnapshot();
-      // Blob URLs don't survive reloads — exclude cardArtUrl
       sessionStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...snapshot, cardArtUrl: null }));
     } catch { /* sessionStorage quota exceeded or unavailable */ }
   }, 500);
 });
 
-// Restore saved state on page load (runs during module evaluation, before
-// React mounts, so _isLoadingSnapshot guards work correctly).
 try {
   const saved = sessionStorage.getItem(AUTOSAVE_KEY);
   if (saved) {
