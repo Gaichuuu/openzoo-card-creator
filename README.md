@@ -1,18 +1,18 @@
 # OpenZoo Card Creator
 
-Web-based card creator for the OpenZoo open-source trading card game. Design custom cards in the browser and export print-ready PNGs.
+Web-based card creator for the OpenZoo trading card game. Design custom cards in the browser and export print-ready PNGs.
 
 **Website:** https://openzootcg.com/
 
 ## Features
 
-- **Editor** — upload card art, live preview, inline text formatting
-- **Card Types** — Beastie, Artifact, Spell, Potion, Aura, Terra, Token (+ Special Aura, Special Terra)
-- **Elements** — full dual-type support with auto-resolved colors, banners, and strengths
-- **Effect Block System** — compose abilities and attacks with auto layout
-- **PNG Export** — standard and print-ready (with 3.5mm bleed) at 4x resolution
-- **JSON Support** — ability to export/import cards as JSON
-- **Gallery** — publish, browse, and remix cards
+- **Editor:** upload card art, live preview, inline text formatting
+- **Card Types:** Beastie, Artifact, Spell, Potion, Aura, Terra, Token (+ Special Aura, Special Terra)
+- **Elements:** dual-type support with auto-resolved colors, banners, and strengths
+- **Effect Block System:** compose abilities and attacks with auto layout
+- **PNG Export:** standard and print-ready (with 3.5mm bleed) at 4x resolution
+- **JSON Support:** ability to export/import cards as JSON
+- **Gallery:** publish, browse, and remix cards
 
 ## Tech Stack
 

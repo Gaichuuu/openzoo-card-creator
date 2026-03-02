@@ -4,6 +4,10 @@
   "description": "Web-based card creator for the OpenZoo trading card game",
   "license": "MIT",
   "homepage": "https://openzootcg.com/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gaichuuu/openzoo-card-creator.git"
+  },
   "keywords": ["tcg", "card-creator", "card-game", "openzoo", "react", "vite"],
   "type": "module",
   "scripts": {
