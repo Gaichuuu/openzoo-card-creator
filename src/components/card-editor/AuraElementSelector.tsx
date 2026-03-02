@@ -12,43 +12,53 @@ export function AuraElementSelector() {
   const cardType = useCardStore((s) => s.cardType);
   const locale = useCardStore((s) => s.locale);
 
+  const isToken = cardType === 'Token';
   const snapshotGuard = useRef(false);
-  const [element, setElement] = useState<Element>('Spirit');
+  const [element, setElement] = useState<Element>(isToken ? 'Cosmic' : 'Spirit');
 
   const applyElement = (el: Element) => {
     const colorEl = el === 'Neutral' ? null : el;
     setPrimaryElement(colorEl);
     setSecondaryElement(null);
-    setCardName(`${t(el, locale)} ${t('Aura', locale)}`);
-    // Border on the icon (Aura2 position, set by applyAuraColors)
-    setStyleField('Aura2', '{border:1px solid rgba(0,0,0,1)}');
-    // Hide the empty Aura1 zone (toggleIfNoContent is false, so it renders as empty 14x14 div)
-    setStyleField('Aura1', '{display:none}');
+    if (cardType === 'Aura') {
+      setCardName(`${t(el, locale)} ${t('Aura', locale)}`);
+    }
+    if (cardType === 'Token') {
+      setStyleField('Aura1', '{display:none}');
+      setStyleField('Aura2', '{display:none}');
+    } else {
+      setStyleField('Aura2', '{border:1px solid rgba(0,0,0,1)}');
+      setStyleField('Aura1', '{display:none}');
+    }
   };
 
-  // Apply defaults on mount (or sync from snapshot on import)
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
       snapshotGuard.current = true;
-      const el = useCardStore.getState().primaryElement ?? 'Spirit';
+      const el = useCardStore.getState().primaryElement ?? (isToken ? 'Cosmic' : 'Spirit');
       setElement(el);
       return;
     }
     if (snapshotGuard.current) return;
-    applyElement('Spirit');
+    applyElement(isToken ? 'Cosmic' : 'Spirit');
   }, []);
 
-  // Re-apply when switching back to Aura
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) return;
     if (snapshotGuard.current) { snapshotGuard.current = false; return; }
-    if (cardType === 'Aura') {
-      applyElement(element);
+    if (cardType === 'Token') {
+      const defaultEl = 'Cosmic';
+      setElement(defaultEl);
+      applyElement(defaultEl);
+    } else if (cardType === 'Aura') {
+      const defaultEl = 'Spirit';
+      setElement(defaultEl);
+      applyElement(defaultEl);
     }
   }, [cardType]);
 
-  // Translate card name when locale changes (without re-applying all Aura settings)
   useEffect(() => {
+    if (useCardStore.getState()._isLoadingSnapshot) return;
     if (cardType === 'Aura') {
       setCardName(`${t(element, locale)} ${t('Aura', locale)}`);
     }
@@ -69,7 +79,7 @@ export function AuraElementSelector() {
         onChange={(e) => handleElementChange(e.target.value as Element)}
         className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
       >
-        {ELEMENTS.filter((el) => el !== 'Neutral').map((el) => (
+        {ELEMENTS.filter((el) => isToken ? el !== 'Special' : el !== 'Neutral').map((el) => (
           <option key={el} value={el}>{el}</option>
         ))}
       </select>

@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
-import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
+import { CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA } from '@/data/constants';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import { CardTypeSelector } from './CardTypeSelector';
 import { t } from '@/data/locales';
 import type { Locale } from '@/data/locales';
-
 import { TraitSelector } from './TraitSelector';
 import { TerraSelector } from './TerraSelector';
 import { ImageUploader } from './ImageUploader';
@@ -14,7 +13,6 @@ import { CostEditor } from './CostEditor';
 import { CryptidInfoEditor } from './CryptidInfoEditor';
 import { AuraElementSelector } from './AuraElementSelector';
 import { TerraCardSelector } from './TerraCardSelector';
-
 import { SetSymbolSelector } from './SetSymbolSelector';
 import { TextBoxBuilder } from './TextBoxBuilder';
 import { FormattedTextarea } from './FormattedTextarea';
@@ -76,8 +74,15 @@ function TextField({ label, value, onChange, placeholder, multiline, maxLength }
 }
 
 export function EditorSidebar({ cardRef }: EditorSidebarProps) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
+
+  const clearRemix = () => {
+    if (remixId) {
+      setSearchParams({}, { replace: true });
+      setRemixSource(null);
+    }
+  };
   const [remixSource, setRemixSource] = useState<{ name: string; tags: CardTag[] } | null>(null);
 
   useEffect(() => {
@@ -102,7 +107,6 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
   const locale = useCardStore((s) => s.locale);
   const setLocale = useCardStore((s) => s.setLocale);
   const snapshotVersion = useCardStore((s) => s._snapshotVersion);
-
   const [lp, setLp] = useState('10');
   const [flavorText, setFlavorText] = useState('');
   const [auraEffectText, setAuraEffectText] = useState('');
@@ -110,10 +114,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
   const [artist, setArtist] = useState('');
   const [borderStyle, setBorderStyle] = useState('Red');
   const [showPublish, setShowPublish] = useState(false);
-  // Guards the cardType effect from re-applying defaults after a snapshot load.
-  // Set to true during snapshot extraction; the cardType effect skips once then clears it.
   const snapshotGuard = useRef(false);
-
   const layout = CARD_TYPE_TO_LAYOUT[cardType];
   const isBasic = layout.startsWith('Basic');
   const isTerra = layout === 'Terra';
@@ -122,10 +123,11 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
   const isSpecialAura = cardType === 'Special Aura';
   const isRegularTerra = cardType === 'Terra';
   const isSpecialTerra = cardType === 'Special Terra';
-  const hasTribe = cardType === 'Artifact' || cardType === 'Beastie';
+  const isToken = cardType === 'Token';
+  const hasTribe = cardType === 'Artifact' || cardType === 'Beastie' || cardType === 'Token';
   const hasLP = cardType === 'Artifact' || cardType === 'Beastie';
   const hasMetadata = cardType === 'Beastie';
-  const hasSpellbookLimit = !isRegularAura && !isRegularTerra;
+  const hasSpellbookLimit = !isRegularAura && !isRegularTerra && !isToken;
 
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
@@ -150,16 +152,27 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       const terraTextZoneId = ZONE_ID_MAPS[s.layoutType]?.['Aura/Terra Text Box 1'];
       const terraText = terraTextZoneId != null ? s.cardData[`t${terraTextZoneId}`] : '';
       if (terraText) setTerraEffectText(stripP(terraText));
-      setStyleField('LP', '{fontSize:19px}');
-      setStyleField('TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
-      setStyleField('SpellbookLimit', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
-      setStyleField('CardName', '{maxHeight:23px;justifyContent:flex-start;paddingLeft:2px;outlineWidth:0px}');
-      setStyleField('TNL', '{flex:1;minWidth:0;alignItems:stretch}');
-      // AttackDivider: do NOT override — snapshot cardData has the correct display value
+      const setStyleIfMissing = (key: string, value: string) => {
+        const zoneId = ZONE_ID_MAPS[s.layoutType]?.[key];
+        if (zoneId !== undefined && !s.cardData[`s${zoneId}`]) {
+          setStyleField(key, value);
+        }
+      };
+      setStyleIfMissing('LP', '{fontSize:19px}');
+      setStyleIfMissing('CardName', '{maxHeight:23px;justifyContent:flex-start;paddingLeft:2px;outlineWidth:0px}');
+      if (s.cardType === 'Token') {
+        setStyleIfMissing('TypesTribes', '{fontSize:9px;height:10px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+        setStyleIfMissing('SpellbookLimit', '{display:none}');
+        setStyleIfMissing('TNL', '{flex:1;minWidth:0;alignItems:stretch;justifyContent:flex-end}');
+      } else {
+        setStyleIfMissing('TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+        setStyleIfMissing('SpellbookLimit', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+        setStyleIfMissing('TNL', '{flex:1;minWidth:0;alignItems:stretch}');
+      }
       setTextField('Copyright', `\u00a9 ${new Date().getFullYear()} OpenZoo`);
-      setStyleField('Copyright', '{top:1px;marginLeft:2px}');
-      setStyleField('Artist', '{top:1px;marginRight:2px}');
-      setStyleField('FlavorText', '{left:95px;justifyContent:flex-end}');
+      setStyleIfMissing('Copyright', '{top:1px;marginLeft:2px}');
+      setStyleIfMissing('Artist', '{top:1px;marginRight:2px}');
+      setStyleIfMissing('FlavorText', '{left:95px;justifyContent:flex-end}');
       return;
     }
     if (snapshotGuard.current) {
@@ -187,14 +200,32 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       snapshotGuard.current = false;
       return;
     }
-    if (cardType === 'Aura') {
+    if (cardType === 'Token') {
+      setCardName('Name');
+      setTribe('');
+      setTextField('TypesTribes', '');
       setSpellbookLimit('');
       setTextField('SpellbookLimit', '');
       setAuraEffectText('');
       setFlavorText('');
-      // Clear Special Aura icon overrides that persist across layout migration
+      setStyleField('Aura1', '{display:none}');
+      setStyleField('Aura2', '');
+      setStyleField('TypesTribes', '{fontSize:9px;height:10px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+      setStyleField('SpellbookLimit', '{display:none}');
+      setStyleField('TNL', '{flex:1;minWidth:0;alignItems:stretch;justifyContent:flex-end}');
+      if (borderless) {
+        setStyleField('CardArt', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
+      }
+    } else if (cardType === 'Aura') {
+      setSpellbookLimit('');
+      setTextField('SpellbookLimit', '');
+      setAuraEffectText('');
+      setFlavorText('');
       setStyleField('Aura1', '');
       setStyleField('Aura2', '');
+      setStyleField('TypesTribes', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+      setStyleField('SpellbookLimit', '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}');
+      setStyleField('TNL', '{flex:1;minWidth:0;alignItems:stretch}');
       if (borderless) {
         setStyleField('CardArt', '{left:0px;top:0px;width:238px;height:333px;backgroundImage:linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))}');
       }
@@ -237,7 +268,6 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       setSpellbookLimit('1');
       setAuraEffectText('');
       setTerraEffectText('');
-      // Clear Aura icon style overrides that persist across layout migration
       setStyleField('Aura1', '');
       setStyleField('Aura2', '');
       setStyleField('LP', '{fontSize:19px}');
@@ -302,7 +332,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
           <h2 className="text-lg font-bold text-white">Card Editor</h2>
         </div>
         <button
-          onClick={() => { resetCard(); setBorderStyle('Red'); }}
+          onClick={() => { resetCard(); setBorderStyle('Red'); clearRemix(); }}
           className="text-xs text-gold-400 hover:text-red-400 transition-colors"
         >
           Clear
@@ -362,7 +392,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       {/* Set Symbol */}
       <SetSymbolSelector />
 
-      {/* Card Identity (hidden for regular Aura and regular Terra — name is auto-generated) */}
+      {/* Card Name */}
       {!isRegularAura && !isRegularTerra && (
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
@@ -379,13 +409,13 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
         </div>
       )}
 
-      {/* Tribe: only for Artifacts and Beasties */}
+      {/* Tribe */}
       {hasTribe && (
         <TextField
           label="Tribe"
           value={tribe}
           onChange={setTribe}
-          placeholder="e.g. Spirit"
+          placeholder="e.g. Humanoid"
           maxLength={30}
         />
       )}
@@ -417,14 +447,14 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
         </div>
       )}
 
-      {/* Aura / Element Selection */}
+      {/* Aura */}
       {isBasic && (
         <>
           <CostEditor />
           <SectionDivider />
         </>
       )}
-      {isRegularAura && (
+      {(isRegularAura || isToken) && (
         <>
           <AuraElementSelector />
           <SectionDivider />
@@ -437,15 +467,15 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
         </>
       )}
 
-      {/* Traits (hidden for Terra and Aura layouts) */}
+      {/* Traits */}
       {!isTerra && !isAura && (
         <>
           <TraitSelector />
         </>
       )}
 
-      {/* Terra + Bonuses (hidden for Terra, Aura layouts, Potion, Artifact, Spell) */}
-      {!isTerra && !isAura && cardType !== 'Potion' && cardType !== 'Artifact' && cardType !== 'Spell' && (
+      {/* Terra */}
+      {!TYPES_WITHOUT_TERRA.has(cardType) && (
         <TerraSelector />
       )}
 
@@ -454,7 +484,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       {/* Card Art */}
       <ImageUploader />
 
-      {/* Effect Text Box Builder (hidden for Terra and Aura layouts) */}
+      {/* Effect Text Box Builder */}
       {!isTerra && !isAura && (
         <>
           <SectionDivider />
@@ -496,7 +526,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
         </>
       )}
 
-      {/* Metadata (Beastie only) */}
+      {/* Metadata */}
       {hasMetadata && (
         <>
           <SectionDivider />
@@ -510,7 +540,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
 
       <SectionDivider />
 
-      {/* Flavor Text (Basic layout only) */}
+      {/* Flavor Text */}
       {isBasic && (borderless ? (
         <div className="text-xs text-gold-500 italic">Flavor text does not appear on borderless cards.</div>
       ) : (
@@ -524,7 +554,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
         />
       ))}
 
-      {/* Credits */}
+      {/* Artist */}
       <TextField
         label="Artist"
         value={artist}
@@ -546,7 +576,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
 
       <div className="flex gap-2">
         <JsonExportButton />
-        <JsonImportButton />
+        <JsonImportButton onImport={clearRemix} />
       </div>
 
       <div className="h-4" />

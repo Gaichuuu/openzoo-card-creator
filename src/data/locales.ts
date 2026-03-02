@@ -1,17 +1,14 @@
 export type Locale = 'en' | 'ja';
 
 const translations: Record<string, Record<Locale, string>> = {
-  // Card type labels (rendered on card in TypesTribes zone)
   'Beastie': { en: 'Beastie', ja: 'ビースティ' },
   'Artifact': { en: 'Artifact', ja: '秘宝' },
   'Spell': { en: 'Spell', ja: '呪文' },
   'Potion': { en: 'Potion', ja: '薬' },
-  // Aura/Terra card name components
   'Aura': { en: 'Aura', ja: 'オーラ' },
   'Special Aura': { en: 'Special Aura', ja: '特別オーラ' },
   'Special Terra': { en: 'Special Terra', ja: '特別テラ' },
-
-  // Element names (for Aura card names: "{Element} Aura")
+  'Token': { en: 'Token', ja: 'トークン' },
   'Neutral': { en: 'Neutral', ja: '無' },
   'Cosmic': { en: 'Cosmic', ja: '宇宙' },
   'Dark': { en: 'Dark', ja: '闇' },
@@ -24,8 +21,6 @@ const translations: Record<string, Record<Locale, string>> = {
   'Special': { en: 'Special', ja: '特別' },
   'Spirit': { en: 'Spirit', ja: '精霊' },
   'Water': { en: 'Water', ja: '水' },
-
-  // Terra names (for Terra card names)
   'Cave': { en: 'Cave', ja: '洞窟' },
   'City': { en: 'City', ja: '都市' },
   'Dawn': { en: 'Dawn', ja: '夜明け' },
@@ -52,28 +47,18 @@ const translations: Record<string, Record<Locale, string>> = {
   'Winter': { en: 'Winter', ja: '冬' },
   'Woodlands': { en: 'Woodlands', ja: '森林' },
   'North Pole': { en: 'North Pole', ja: '北極' },
-
-  // Strong against label
   'Strong Against': { en: 'Strong Against', ja: '強い相手' },
-
-  // Artist prefix
   'Illus.': { en: 'Illus.', ja: 'イラスト' },
-
-  // Effect keywords
   'REVEAL': { en: 'REVEAL', ja: '公開' },
   'DISCARD': { en: 'DISCARD', ja: '破棄' },
   'CONTRACT': { en: 'CONTRACT', ja: '契約' },
   'ENTER': { en: 'ENTER', ja: '登場' },
   'ARENA': { en: 'ARENA', ja: '闘技場' },
   'DESTROYED': { en: 'DESTROYED', ja: '破壊' },
-
-  // Boost labels
   'TRIBAL BOOST': { en: 'TRIBAL BOOST', ja: '種族強化' },
   'AURA BOOST': { en: 'AURA BOOST', ja: 'オーラ強化' },
   'ATK': { en: 'ATK', ja: 'ATK' },
   'LP': { en: 'LP', ja: 'LP' },
-
-  // Metadata labels (Japanese labels include fullwidth colon)
   'Discovered': { en: 'Discovered', ja: '発見年' },
   'DOB': { en: 'DOB', ja: 'DOB' },
   'Origin': { en: 'Origin', ja: '起源' },
@@ -84,15 +69,10 @@ const translations: Record<string, Record<Locale, string>> = {
   'Length': { en: 'Length', ja: '長さ' },
 };
 
-/** Look up a translated string. Falls back to key if no translation found. */
 export function t(key: string, locale: Locale): string {
   return translations[key]?.[locale] ?? translations[key]?.en ?? key;
 }
 
-/**
- * Small caps for locale: wraps rest of each word in {SC:} for English,
- * returns plain text for Japanese (no small caps concept).
- */
 export function toSmallCapsLocale(text: string, locale: Locale): string {
   if (locale === 'ja') return text;
   return text
@@ -105,11 +85,6 @@ export function toSmallCapsLocale(text: string, locale: Locale): string {
     .join(' ');
 }
 
-/**
- * Format spellbook limit text for the SpellbookLimit zone.
- * English: "2 Per Spellbook" (with small caps)
- * Japanese: "呪文書ごとに2枚" (plain)
- */
 export function formatSpellbookLimitLocale(limit: string, locale: Locale): string {
   if (locale === 'ja') {
     return `<p>呪文書ごとに${limit}枚</p>`;
@@ -117,34 +92,27 @@ export function formatSpellbookLimitLocale(limit: string, locale: Locale): strin
   return `<p>${limit} ${toSmallCapsLocale('Per Spellbook', 'en')}</p>`;
 }
 
-/**
- * Format the card type + tribe label for the TypesTribes zone.
- * Returns empty string for Aura/Terra (they hide the type label).
- */
 export function formatTypesTribesLocale(
   cardType: string,
   tribe: string,
   locale: Locale,
 ): string {
   if (cardType === 'Aura' || cardType === 'Terra') return '';
+  if (cardType === 'Token') {
+    return tribe ? `<p>${toSmallCapsLocale(tribe, locale)}</p>` : '';
+  }
   const hasTribe = cardType === 'Artifact' || cardType === 'Beastie';
   const localizedType = t(cardType, locale);
   const text = hasTribe && tribe ? `${localizedType} ${tribe}` : localizedType;
   return `<p>${toSmallCapsLocale(text, locale)}</p>`;
 }
 
-/**
- * Format metadata text with bold label.
- * English: "{B:Label:} value"  (colon appended)
- * Japanese: "{B:ラベル：} value" (fullwidth colon appended)
- */
 export function formatMetadataLocale(label: string, value: string, locale: Locale): string {
   const localizedLabel = t(label, locale);
   const colon = locale === 'ja' ? '：' : ': ';
   return `{B:${localizedLabel}${colon}}${value}`;
 }
 
-/** PSB variable value per locale */
 export function getPSBVariable(locale: Locale): string {
   if (locale === 'ja') return '呪文書ごとに';
   return 'P{TTL:ER} S{TTL:PELLBOOK}';

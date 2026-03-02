@@ -76,7 +76,8 @@ export type CardType =
   | 'Special Aura'
   | 'Special Terra'
   | 'Spell'
-  | 'Terra';
+  | 'Terra'
+  | 'Token';
 
 export type CardData = Record<string, string>;
 
@@ -92,7 +93,6 @@ export const TAG_COLORS: Record<CardTag, { bg: string; text: string }> = {
   Proxy:       { bg: 'bg-orange-900', text: 'text-orange-300' },
 };
 
-/** Shape of a card snapshot — all serializable editor state needed for full restore. */
 export interface CardSnapshot {
   cardType: CardType;
   layoutType: LayoutType;
@@ -109,9 +109,12 @@ export interface CardSnapshot {
   effectBlocks: EffectBlock[];
   locale?: Locale;
   borderless?: boolean;
+  mainTextBoxNudge?: number;
+  mainTextBoxExtraShrink?: number;
+  cardArtPositionX?: number;
+  cardArtPositionY?: number;
 }
 
-/** Shape of a card document in Firestore. */
 export interface SavedCard extends CardSnapshot {
   id: string;
   thumbnailUrl: string;
