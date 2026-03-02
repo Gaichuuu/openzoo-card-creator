@@ -23,7 +23,6 @@ export function CostEditor() {
   const [slot2El, setSlot2El] = useState<Element | ''>('Neutral');
   const [slot2Cost, setSlot2Cost] = useState('1');
 
-  // For card colors, treat Neutral as "no element"
   const colorElement = (el: Element | '' | null): Element | null => {
     if (!el || el === 'Neutral') return null;
     return el;
@@ -63,7 +62,6 @@ export function CostEditor() {
     else if (ct === 'Artifact') { s1El = 'Lightning'; s1Cost = '1'; s2El = ''; s2Cost = ''; }
     setSlot1El(s1El); setSlot1Cost(s1Cost);
     setSlot2El(s2El); setSlot2Cost(s2Cost);
-    // Set colors first — applySlot overwrites what setPrimaryElement clears
     setPrimaryElement(colorElement(s1El));
     setSecondaryElement(colorElement(s2El));
     applySlot(1, s1El, s1Cost);
@@ -117,8 +115,6 @@ export function CostEditor() {
     setSlot1El(el);
     setPrimaryElement(colorElement(el));
     applySlot(1, el, slot1Cost);
-    // Re-apply slot 2: applyAuraColors overwrites Aura2 using secondaryElement
-    // which is null when Neutral (colorElement converts Neutral→null)
     applySlot(2, slot2El, slot2Cost);
   };
 

@@ -1,4 +1,3 @@
-// Auto-generated layout index
 import type { LayoutData, LayoutType, ZoneIdMap } from '@/types/layout';
 import { BasicNoAttackLayout } from './BasicNoAttack';
 import { BasicOnlyAttackLayout } from './BasicOnlyAttack';
@@ -260,4 +259,25 @@ export function getLayout(type: LayoutType): LayoutData {
 
 export function getZoneIdMap(type: LayoutType): ZoneIdMap {
   return ZONE_ID_MAPS[type];
+}
+
+export function getTextZoneId(layoutType: LayoutType, semanticKey: string): string | null {
+  const map = ZONE_ID_MAPS[layoutType];
+  const zoneId = map?.[semanticKey];
+  if (zoneId === undefined) return null;
+  return `t${zoneId}`;
+}
+
+export function getImageZoneId(layoutType: LayoutType, semanticKey: string): string | null {
+  const map = ZONE_ID_MAPS[layoutType];
+  const zoneId = map?.[semanticKey];
+  if (zoneId === undefined) return null;
+  return `i${zoneId}`;
+}
+
+export function getStyleZoneId(layoutType: LayoutType, semanticKey: string): string | null {
+  const map = ZONE_ID_MAPS[layoutType];
+  const zoneId = map?.[semanticKey];
+  if (zoneId === undefined) return null;
+  return `s${zoneId}`;
 }

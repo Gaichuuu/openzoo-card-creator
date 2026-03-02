@@ -23,8 +23,16 @@ export const TERRAS: Terra[] = [
 
 export const CARD_TYPES: CardType[] = [
   'Beastie', 'Artifact', 'Spell', 'Potion',
-  'Terra', 'Special Terra', 'Aura', 'Special Aura',
+  'Terra', 'Special Terra', 'Aura', 'Special Aura', 'Token',
 ];
+
+export const TYPES_WITHOUT_TERRA = new Set<CardType>([
+  'Potion', 'Artifact', 'Spell', 'Aura', 'Special Aura', 'Terra', 'Special Terra', 'Token',
+]);
+
+export const TYPES_WITHOUT_TRAITS = new Set<CardType>([
+  'Aura', 'Special Aura', 'Terra', 'Special Terra', 'Token',
+]);
 
 export const CARD_TYPE_TO_LAYOUT: Record<CardType, LayoutType> = {
   Artifact: 'BasicAttackMain',
@@ -35,26 +43,17 @@ export const CARD_TYPE_TO_LAYOUT: Record<CardType, LayoutType> = {
   'Special Terra': 'Terra',
   Spell: 'BasicAttackMain',
   Terra: 'Terra',
+  Token: 'Aura',
 };
 
-/**
- * Aura color definitions from aura-colors.csv.
- * Each element has a Card Background color and an Art Border color.
- * When an element is selected:
- *   - ArtBorder style = Art Border color (full opacity)
- *   - BackgroundColor style = Card Background color at 0.65 opacity
- * For dual elements, both become linear gradients (primary -> secondary).
- */
 export interface AuraColor {
-  cardBackground: string;  // hex color
-  artBorder: string;       // hex color
-  /** RGBA with full opacity for art border */
+  cardBackground: string;
+  artBorder: string;
   artBorderRgba: string;
-  /** RGBA at 0.65 opacity for background overlay */
   bgOverlayRgba: string;
 }
 
-function hexToRgba(hex: string, alpha: number): string {
+export function hexToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
@@ -85,11 +84,6 @@ export const AURA_COLORS: Record<Element, AuraColor> = {
   Special:   makeAuraColor('#DAA520', '#FFD700'),
 };
 
-/**
- * Resolves art border CSS background for element selection.
- * Single: solid color. Dual: linear gradient.
- * Light alone gets a rainbow gradient.
- */
 export function resolveArtBorderStyle(
   primary: Element | null,
   secondary: Element | null
@@ -97,22 +91,17 @@ export function resolveArtBorderStyle(
   if (!primary) return '';
   const pc = AURA_COLORS[primary];
 
-  // Light alone = rainbow gradient
-  if (primary === 'Light' && (!secondary || secondary === 'Light')) {
+  if (primary === 'Light' && (!secondary || secondary === 'Light' || secondary === 'Neutral')) {
     return 'linear-gradient(135deg, #8F00FF 0%, #0000FF 17%, #FFFFFF 33%, #00FF00 50%, #FFFF00 67%, #FF8F00 83%, #FF0000 100%)';
   }
 
-  if (!secondary || secondary === primary) {
+  if (!secondary || secondary === primary || secondary === 'Neutral') {
     return pc.artBorderRgba;
   }
   const sc = AURA_COLORS[secondary];
   return `linear-gradient(90deg, ${pc.artBorderRgba} 0%, ${sc.artBorderRgba} 100%)`;
 }
 
-/**
- * Resolves background overlay CSS for element selection.
- * Single: solid color at 0.65 opacity. Dual: linear gradient of both at 0.65.
- */
 export function resolveBgOverlayStyle(
   primary: Element | null,
   secondary: Element | null
@@ -120,16 +109,13 @@ export function resolveBgOverlayStyle(
   if (!primary) return '';
   const pc = AURA_COLORS[primary];
 
-  if (!secondary || secondary === primary) {
+  if (!secondary || secondary === primary || secondary === 'Neutral') {
     return pc.bgOverlayRgba;
   }
   const sc = AURA_COLORS[secondary];
   return `linear-gradient(90deg, ${pc.bgOverlayRgba} 0%, ${sc.bgOverlayRgba} 100%)`;
 }
 
-/**
- * Aura strength chart: each element's list of elements it is strong against.
- */
 export const AURA_STRENGTHS: Record<Element, Element[]> = {
   Water: ['Flame', 'Earth'],
   Flame: ['Forest', 'Frost'],
@@ -145,10 +131,6 @@ export const AURA_STRENGTHS: Record<Element, Element[]> = {
   Special: [],
 };
 
-/**
- * Compute the Strong Against elements for a primary/secondary element pair.
- * Returns a deduplicated array (max 4).
- */
 export function computeStrongAgainst(
   primary: Element | null,
   secondary: Element | null,

@@ -46,7 +46,7 @@ function TokenTable() {
     ['{SC:text}', 'Small caps'],
     ['{Power:NAME}', 'Pill badge'],
     ['{Star}', '4th Wall star icon'],
-    ['\\n', 'Line break (card name)'],
+    ['\\n', 'Line break'],
   ];
   return (
     <div>

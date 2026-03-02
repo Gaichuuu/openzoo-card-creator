@@ -166,7 +166,7 @@ function AttackBlockEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
         <span className="text-[10px] text-gold-400">Show divider above attack</span>
       </label>
 
-      {/* Attack name + DMG */}
+      {/* Attack name + ATK */}
       <div className="flex gap-2">
         <div className="flex-1">
           <label className="text-[10px] text-gold-500">Attack Name</label>
@@ -240,7 +240,7 @@ function AttackBlockEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
         </div>
       </div>
 
-      {/* Attack Effect with 4th Wall */}
+      {/* Attack Effect */}
       <div>
         <label className="text-[10px] text-gold-500">Attack Effect</label>
         <FormattedTextarea
@@ -276,14 +276,26 @@ function TribalBoostEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
           <label className="text-[10px] text-gold-500">
             {block.boostLabel === 'TRIBAL BOOST' ? 'Tribe' : 'Aura'}
           </label>
-          <input
-            type="text"
-            value={block.boostTarget}
-            onChange={(e) => onUpdate({ boostTarget: e.target.value })}
-            placeholder={block.boostLabel === 'TRIBAL BOOST' ? 'e.g. Sasquatch' : 'e.g. Forest'}
-            maxLength={20}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
-          />
+          {block.boostLabel === 'AURA BOOST' ? (
+            <select
+              value={block.boostTarget}
+              onChange={(e) => onUpdate({ boostTarget: e.target.value })}
+              className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs"
+            >
+              {ELEMENTS.filter((el) => el !== 'Neutral' && el !== 'Special').map((el) => (
+                <option key={el} value={el}>{el}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              value={block.boostTarget}
+              onChange={(e) => onUpdate({ boostTarget: e.target.value })}
+              placeholder="e.g. Sasquatch"
+              maxLength={20}
+              className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+            />
+          )}
         </div>
       </div>
       <div className="flex gap-2">

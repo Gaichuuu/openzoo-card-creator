@@ -1,4 +1,3 @@
-// Auto-generated from BasicOnlyAttack_layout.json
 import type { LayoutData } from '@/types/layout';
 
 export const BasicOnlyAttackLayout: LayoutData = {

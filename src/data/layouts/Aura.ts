@@ -1,4 +1,3 @@
-// Auto-generated from Aura_layout.json
 import type { LayoutData } from '@/types/layout';
 
 export const AuraLayout: LayoutData = {

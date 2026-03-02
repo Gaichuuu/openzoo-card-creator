@@ -1,11 +1,3 @@
-/**
- * Resolves Dextrous image paths to local asset paths.
- *
- * Dextrous stores paths like "OpenZoo Banners/NeutralBanner.png"
- * or bare filenames like "Cost1.png" with a defaultImageFolders context.
- * We map these to /assets/... paths.
- */
-
 const FOLDER_MAP: Record<string, string> = {
   'OpenZoo Banners': '/assets/Banners',
   'OpenZoo Background': '/assets',
@@ -23,7 +15,6 @@ const FOLDER_MAP: Record<string, string> = {
 export function resolveImagePath(rawPath: string): string {
   if (!rawPath || rawPath === 'default_image') return '';
 
-  // If it's already a data URL, blob URL, or absolute URL, return as-is
   if (rawPath.startsWith('data:') || rawPath.startsWith('blob:') || rawPath.startsWith('http') || rawPath.startsWith('/assets/')) {
     return rawPath;
   }
@@ -35,8 +26,6 @@ export function resolveImagePath(rawPath: string): string {
     }
   }
 
-  // For bare filenames, try common asset directories
-  // The banner resolver already gives us just the filename
   if (rawPath.endsWith('Banner.png')) {
     return `/assets/Banners/${rawPath}`;
   }
@@ -50,6 +39,5 @@ export function resolveImagePath(rawPath: string): string {
     return `/assets/SetSymbols/${rawPath}`;
   }
 
-  // Default: assume it's relative to assets
   return `/assets/${rawPath}`;
 }

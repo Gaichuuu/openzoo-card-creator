@@ -21,7 +21,6 @@ export function TerraSelector() {
   const setTerra = useCardStore((s) => s.setTerra);
   const setTextField = useCardStore((s) => s.setTextField);
   const setStyleField = useCardStore((s) => s.setStyleField);
-
   const snapshotGuard = useRef(false);
   const [bonuses, setBonuses] = useState(DEFAULT_BONUSES);
 

@@ -17,11 +17,12 @@ interface PublishDialogProps {
 export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, initialTags }: PublishDialogProps) {
   const navigate = useNavigate();
   const getSnapshot = useCardStore((s) => s.getSnapshot);
-  const [creatorName, setCreatorName] = useState('');
+  const [creatorName, setCreatorName] = useState(() => localStorage.getItem('openzoo-creator-name') || '');
   const [selectedTags, setSelectedTags] = useState<CardTag[]>(initialTags || []);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [publishedId, setPublishedId] = useState<string | null>(null);
 
   async function handlePublish() {
     if (!cardRef.current) return;
@@ -29,7 +30,6 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
     setError(null);
 
     try {
-      // Generate thumbnail — capture at 4x then compress to JPEG for fast upload
       cardRef.current.classList.add('card-exporting');
       const rawDataUrl = await toPng(cardRef.current, {
         pixelRatio: 4,
@@ -38,7 +38,6 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         height: 333,
         style: { transform: 'none' },
       });
-      // Re-encode as JPEG via canvas to keep file size small
       const thumbnailDataUrl = await new Promise<string>((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
@@ -56,13 +55,17 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
 
       const snapshot = getSnapshot();
 
-      await publishCard(snapshot, thumbnailDataUrl, {
+      const cardId = await publishCard(snapshot, thumbnailDataUrl, {
         creatorName: creatorName.trim(),
         tags: selectedTags,
         remixedFrom: remixedFrom || null,
         remixedFromName: remixedFromName || '',
       });
 
+      const trimmed = creatorName.trim();
+      if (trimmed) localStorage.setItem('openzoo-creator-name', trimmed);
+
+      setPublishedId(cardId);
       setSuccess(true);
     } catch (err) {
       if (import.meta.env.DEV) console.error('Publish failed:', err);
@@ -90,7 +93,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
           <div className="text-green-400 text-lg font-semibold">Published!</div>
           <p className="text-gold-400 text-sm">Your card is now in the gallery.</p>
           <button
-            onClick={() => navigate('/gallery')}
+            onClick={() => navigate(publishedId ? `/gallery/${publishedId}` : '/gallery')}
             className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors text-sm border-gold"
           >
             View in Gallery
@@ -123,7 +126,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
             type="text"
             value={creatorName}
             onChange={(e) => setCreatorName(e.target.value)}
-            placeholder="Your name"
+            placeholder="Nickname"
             maxLength={40}
             className="w-full bg-navy-800 border border-navy-600 text-white text-sm rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
           />

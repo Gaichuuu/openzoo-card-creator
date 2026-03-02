@@ -14,31 +14,24 @@ export interface EffectBlock {
   type: EffectBlockType;
   hasStar: boolean;
   text: string;
-
-  // Power-specific
   powerName: string;
-
-  // Attack-specific
   attackName: string;
   attackDamage: string;
   attackEffect: string;
   attackHasStar: boolean;
-  attackBonus: string;       // aura element for attack strength 1 (e.g. "Dark")
-  attackBonus2: string;      // aura element for attack strength 2
-  showDivider: boolean;      // render divider line above attack
+  attackBonus: string;
+  attackBonus2: string;
+  showDivider: boolean;
   statusEffect: string;
   statusEffectDuration: string;
   statusEffect2: string;
   statusEffectDuration2: string;
-
-  // Tribal boost specific
-  boostLabel: string;   // "AURA BOOST" or "TRIBAL BOOST"
-  boostTarget: string;  // tribe name (e.g. "Sasquatch")
-  boostAtk: string;     // e.g. "+10"
-  boostLp: string;      // e.g. "+10"
+  boostLabel: string;
+  boostTarget: string;
+  boostAtk: string;
+  boostLp: string;
 }
 
-/** Display order priority — lower index = higher on card */
 export const BLOCK_ORDER: EffectBlockType[] = [
   'tribal-boost',
   'static',

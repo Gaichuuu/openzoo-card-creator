@@ -5,7 +5,7 @@ import { ZONE_ID_MAPS } from '@/data/layouts';
 interface SetDef {
   value: string;
   label: string;
-  rarities: string[];   // available rarity options; empty = no rarity
+  rarities: string[];
 }
 
 const SETS: SetDef[] = [
@@ -42,7 +42,7 @@ export function SetSymbolSelector() {
       const zoneId = map?.['SetSymbol'];
       const img = zoneId != null ? s.cardData[`i${zoneId}`] || '' : '';
       const base = img.replace('.png', '');
-      // Try matching each set — longest match first (e.g. "OZLegacy" before "OZ")
+
       for (const def of [...SETS].sort((a, b) => b.value.length - a.value.length)) {
         if (base.startsWith(def.value)) {
           setSet(def.value);

@@ -12,12 +12,6 @@ interface CardRendererProps {
   borderlessOverride?: boolean;
 }
 
-/**
- * Renders an OpenZoo card from layout data and card data.
- *
- * The card is rendered at its native 238x333px size and scaled
- * via CSS transform for display. The ref can be used for PNG export.
- */
 export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
   ({ layoutType, cardData, scale = 2, borderlessOverride }, ref) => {
     const storeBorderless = useCardStore((s) => s.borderless);

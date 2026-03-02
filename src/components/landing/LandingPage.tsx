@@ -8,10 +8,10 @@ export function LandingPage() {
         <div className="flex items-center gap-12">
           <Card3DHero />
 
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-8">
             <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-40 mx-auto" />
 
-            <p className="text-gold-300 text-xl pb-10">
+            <p className="text-gold-300 text-xl pb-36">
               The only TCG where your surroundings matter!
             </p>
 
@@ -20,7 +20,7 @@ export function LandingPage() {
                 to="/create"
                 className="px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors text-lg border-gold"
               >
-                Create a Card
+                Card Creator
               </Link>
               <Link
                 to="/gallery"

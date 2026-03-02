@@ -2,7 +2,11 @@ import { useRef } from 'react';
 import { useCardStore } from '@/lib/store';
 import type { CardSnapshot } from '@/types/card';
 
-export function JsonImportButton() {
+interface JsonImportButtonProps {
+  onImport?: () => void;
+}
+
+export function JsonImportButton({ onImport }: JsonImportButtonProps) {
   const loadSnapshot = useCardStore((s) => s.loadSnapshot);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -16,6 +20,7 @@ export function JsonImportButton() {
           return;
         }
         loadSnapshot(parsed);
+        onImport?.();
       } catch {
         alert('Failed to parse JSON file');
       }

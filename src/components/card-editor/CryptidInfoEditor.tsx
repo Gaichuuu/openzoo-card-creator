@@ -52,30 +52,27 @@ export function CryptidInfoEditor() {
       const restored = SLOT_CONFIG.map((cfg) => {
         const zoneId = map?.[cfg.semanticKey];
         const raw = zoneId != null ? stripP(s.cardData[`t${zoneId}`] || '') : '';
-        // Parse "{B:Label: }value" or "{B:ラベル：}value"
         const m = raw.match(/\{B:(.+?)(?::\s*|：)\}(.*)/);
         if (m) {
-          // Find the matching option (reverse-lookup from localized label)
           const matchedOpt = cfg.options.find((opt) => raw.includes(opt)) || cfg.defaultLabel;
           return { label: matchedOpt, value: m[2] };
         }
         return { label: cfg.defaultLabel, value: cfg.defaultValue };
       });
       setSlots(restored);
+      snapshotGuard.current = true;
       return;
     }
     if (snapshotGuard.current) return;
     SLOT_CONFIG.forEach((cfg) => {
       setTextField(cfg.semanticKey, formatMetadataLocale(cfg.defaultLabel, cfg.defaultValue, locale));
     });
-    // DOB/Discovered zone has numeric top:130.5/left:17 in base style — override to 0
     setStyleField('DOB/Discovered:', '{top:0px;left:0px}');
     setStyleField('CryptidInfoBar', '{background:linear-gradient(to top, rgb(230, 165, 10), rgb(248, 210, 50));gap:2px}');
   }, []);
 
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) return;
-    if (snapshotGuard.current) { snapshotGuard.current = false; return; }
     slots.forEach((slot, i) => {
       const { semanticKey } = SLOT_CONFIG[i];
       if (slot.value) {

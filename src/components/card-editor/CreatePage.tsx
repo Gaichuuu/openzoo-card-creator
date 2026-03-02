@@ -12,8 +12,6 @@ export function CreatePage() {
   const loadSnapshot = useCardStore((s) => s.loadSnapshot);
   const snapshotVersion = useCardStore((s) => s._snapshotVersion);
 
-  // When entering the editor without a remix ID, reset to a blank card
-  // so stale state from a previous session doesn't carry over.
   const resetCard = useCardStore((s) => s.resetCard);
   useEffect(() => {
     if (!remixId) {
@@ -33,10 +31,6 @@ export function CreatePage() {
           setLoading(false);
           return;
         }
-        // Convert remote card art to data URL before loading snapshot so
-        // html-to-image can capture it (remote URLs fail due to CORS, and
-        // blob URLs can't be re-fetched by html-to-image's SVG serializer).
-        // Data URLs are self-contained — same format as locally uploaded images.
         let cardArtUrl = card.cardArtUrl;
         if (cardArtUrl && cardArtUrl.startsWith('http')) {
           try {
@@ -52,9 +46,6 @@ export function CreatePage() {
             if (cancelled) return;
             cardArtUrl = dataUrl;
           } catch {
-            // CORS not configured on Firebase Storage — card art will show
-            // in preview (CSS background-image ignores CORS) but won't be
-            // included in PNG export or re-publish.
             console.warn(
               'Could not fetch card art for remix (CORS). ' +
               'Run: gsutil cors set cors.json gs://openzoo.firebasestorage.app'

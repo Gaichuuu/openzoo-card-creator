@@ -11,10 +11,8 @@ export function TerraCardSelector() {
   const setCardName = useCardStore((s) => s.setCardName);
   const cardType = useCardStore((s) => s.cardType);
   const locale = useCardStore((s) => s.locale);
-
   const snapshotGuard = useRef(false);
   const [terra, setTerra] = useState<Terra>('Cave');
-
   const applyTerra = (t: Terra) => {
     setImageField('TerraSymbol', `OpenZoo Terra/${t}.png`);
     setStyleField('TerraSymbol', '{outlineWidth:0px;left:-2px}');
@@ -23,11 +21,9 @@ export function TerraCardSelector() {
     }
   };
 
-  // Apply defaults on mount (or sync from snapshot on import)
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
       snapshotGuard.current = true;
-      // Extract terra from TerraSymbol image (e.g. "OpenZoo Terra/Cave.png" → "Cave")
       const s = useCardStore.getState();
       const map = ZONE_ID_MAPS[s.layoutType];
       const zoneId = map?.['TerraSymbol'];
@@ -40,7 +36,6 @@ export function TerraCardSelector() {
     applyTerra('Cave');
   }, []);
 
-  // Re-apply when switching back to Terra types
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) return;
     if (snapshotGuard.current) { snapshotGuard.current = false; return; }
@@ -49,7 +44,6 @@ export function TerraCardSelector() {
     }
   }, [cardType]);
 
-  // Translate card name when locale changes (without re-applying all Terra settings)
   useEffect(() => {
     if (cardType === 'Terra' || cardType === 'Special Terra') {
       setCardName(translate(terra, locale));

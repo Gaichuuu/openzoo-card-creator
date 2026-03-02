@@ -60,7 +60,6 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* Gold gradient border utility */
 .border-gold {
   border: 1px solid transparent;
   border-image: linear-gradient(180deg, #e8d88c, #aa821e) 1;
@@ -77,7 +76,6 @@ body {
   border-image-slice: 0 0 1 0;
 }
 
-/* Gold gradient border on form inputs — retro sharp corners */
 input:not([type="checkbox"]):not([type="file"]),
 select,
 textarea {
@@ -101,9 +99,6 @@ textarea:focus {
   min-height: 100vh;
 }
 
-/* === Borderless / Full Art mode === */
-
-/* Hide border-frame structural zones + metadata */
 .card-borderless [data-zone-key="ArtBorder"],
 .card-borderless [data-zone-key="BackgroundColor"],
 .card-borderless [data-zone-key="BottomBar"],
@@ -111,12 +106,10 @@ textarea:focus {
   display: none !important;
 }
 
-/* CardArt expands to full card — push it behind all other zones */
 .card-borderless [data-zone-key="CardArt"] {
   z-index: 0 !important;
 }
 
-/* All content zones above the expanded art */
 .card-borderless [data-zone-key="Banner"],
 .card-borderless [data-zone-key="SetSymbol"],
 .card-borderless [data-zone-key="CardTop"],
@@ -126,7 +119,13 @@ textarea:focus {
   z-index: 1 !important;
 }
 
-/* Semi-transparent text container for readability (zone 32 = attack/text container in Basic layouts) */
+.card-borderless [data-zone-key="Boost 1"] {
+  top: 228px !important; 
+}
+.card-borderless [data-zone-key="Boost 2"] {
+  top: 240px !important; 
+}
+
 .card-borderless [data-zone-id="32"] {
   background: rgba(0, 0, 0, 0.3) !important;
   z-index: 1 !important;
@@ -134,38 +133,30 @@ textarea:focus {
   height: 86px !important;
 }
 
-/* Semi-transparent text container for Aura/Terra text boxes (zone 57 = Aura, zone 71 = Terra) */
-.card-borderless [data-zone-id="57"],
-.card-borderless [data-zone-id="71"] {
+.card-borderless [data-zone-key="Aura/Terra Text Box"],
+.card-borderless [data-zone-key="Aura/Terra Text Box 1"] {
   background: rgba(0, 0, 0, 0.3) !important;
   outline-color: rgba(1, 1, 1, 1) !important;
   z-index: 1 !important;
 }
 
-/* White text outline for effect text inside the text container */
 .card-borderless [data-zone-id="32"] *,
-.card-borderless [data-zone-id="57"] *,
-.card-borderless [data-zone-id="71"] * {
-  text-shadow: -0.5px -0.5px 0 #FFF, 0.5px -0.5px 0 #FFF,
-               -0.5px 0.5px 0 #FFF, 0.5px 0.5px 0 #FFF;
+.card-borderless [data-zone-key="Aura/Terra Text Box"] *,
+.card-borderless [data-zone-key="Aura/Terra Text Box 1"] * {
+  text-shadow:
+    0.1em 0 0 #FFF, 0.098em 0.02em 0 #FFF, 0.092em 0.038em 0 #FFF,
+    0.083em 0.056em 0 #FFF, 0.071em 0.071em 0 #FFF, 0.056em 0.083em 0 #FFF,
+    0.038em 0.092em 0 #FFF, 0.02em 0.098em 0 #FFF, 0 0.1em 0 #FFF,
+    -0.02em 0.098em 0 #FFF, -0.038em 0.092em 0 #FFF, -0.056em 0.083em 0 #FFF,
+    -0.071em 0.071em 0 #FFF, -0.083em 0.056em 0 #FFF, -0.092em 0.038em 0 #FFF,
+    -0.098em 0.02em 0 #FFF, -0.1em 0 0 #FFF, -0.098em -0.02em 0 #FFF,
+    -0.092em -0.038em 0 #FFF, -0.083em -0.056em 0 #FFF, -0.071em -0.071em 0 #FFF,
+    -0.056em -0.083em 0 #FFF, -0.038em -0.092em 0 #FFF, -0.02em -0.098em 0 #FFF,
+    0 -0.1em 0 #FFF, 0.02em -0.098em 0 #FFF, 0.038em -0.092em 0 #FFF,
+    0.056em -0.083em 0 #FFF, 0.071em -0.071em 0 #FFF, 0.083em -0.056em 0 #FFF,
+    0.092em -0.038em 0 #FFF, 0.098em -0.02em 0 #FFF !important;
 }
 
-/* White text outline for readability on zones overlaid on art */
-.card-borderless [data-zone-key="CardName"],
-.card-borderless [data-zone-key="TypesTribes"],
-.card-borderless [data-zone-key="SpellbookLimit"],
-.card-borderless [data-zone-key="LP"],
-.card-borderless [data-zone-key="Copyright"],
-.card-borderless [data-zone-key="Artist"],
-.card-borderless [data-zone-key="Boost 1"],
-.card-borderless [data-zone-key="Boost 2"] {
-  text-shadow: -0.5px -0.5px 0 #FFF, 0.5px -0.5px 0 #FFF,
-               -0.5px 0.5px 0 #FFF, 0.5px 0.5px 0 #FFF;
-}
-
-/* Export-only positioning adjustments — compensate for html-to-image
-   rendering differences vs live DOM preview. Uses translateY to offset
-   relative to current position (not override absolute top). */
 .card-exporting [data-zone-key="CryptidInfoBar"] > * {
   transform: translateY(0.5px) !important;
 }
