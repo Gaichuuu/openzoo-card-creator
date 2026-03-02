@@ -1,17 +1,16 @@
 # OpenZoo Card Creator
 
-Web-based card creator for the [OpenZoo](https://github.com/openzoo) open-source trading card game. Design custom cards in the browser and export print-ready PNGs.
+Web-based card creator for the OpenZoo open-source trading card game. Design custom cards in the browser and export print-ready PNGs.
 
 ## Features
 
-- **Visual Card Editor** — drag-and-drop card art, live preview, inline text formatting
-- **8 Card Types** — Beastie, Artifact, Spell, Potion, Aura, Terra (+ Special Aura, Special Terra)
-- **12 Elements** — full dual-type support with auto-resolved banners and strengths
-- **Effect Block System** — compose abilities, attacks, boosts, and keywords
+- **Editor** — upload card art, live preview, inline text formatting
+- **Card Types** — Beastie, Artifact, Spell, Potion, Aura, Terra, Token (+ Special Aura, Special Terra)
+- **Elements** — full dual-type support with auto-resolved colors, banners, and strengths
+- **Effect Block System** — compose abilities and attacks with auto layout
 - **PNG Export** — standard and print-ready (with 3.5mm bleed) at 4x resolution
-- **JSON Import/Export** — save and share card designs without an account
-- **Community Gallery** — publish cards, browse, and remix other creators' designs
-- **Localization** — English and Japanese card text
+- **JSON Support** — ability to export/import cards as JSON
+- **Gallery** — publish, browse, and remix cards
 
 ## Tech Stack
 
@@ -43,7 +42,7 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-### Firebase CORS (required for remix/export)
+### Firebase CORS 
 
 Card art remix and re-export require CORS configured on your Firebase Storage bucket:
 
@@ -57,10 +56,41 @@ See `cors.json` in the project root for the configuration.
 
 ```bash
 npm run dev        # Start dev server
-npm run build      # Type-check + production build
+npm run build      # Tests + type-check + production build
 npm run lint       # ESLint
 npm run preview    # Preview production build
+npm test           # Run tests once
+npm run test:watch # Run tests in watch mode
 ```
+
+### Utility Scripts
+
+```bash
+npx tsx scripts/generate-sitemap.ts    # Generate sitemap.xml
+```
+
+## Deployment (Optional)
+
+The project includes a deploy script for self-hosting that builds, generates a sitemap, and rsyncs to a remote server.
+
+### Setup
+
+```bash
+cp .deploy.env.example .deploy.env
+# Fill in your server credentials in .deploy.env
+```
+
+### Deploy
+
+```bash
+bash scripts/deploy.sh
+```
+
+This will:
+1. Run `npm run build`
+2. Generate `sitemap.xml`
+3. Rsync `dist/` to the remote server
+4. Deploy the nginx config
 
 ## Project Structure
 
@@ -69,11 +99,11 @@ src/
 ├── components/
 │   ├── card-renderer/   # Core rendering engine (CardRenderer, ZoneRenderer, TextParser)
 │   ├── card-editor/     # Editor UI (sidebar, controls, export)
-│   ├── gallery/         # Community gallery (grid, detail modal, 3D card viewer)
-│   ├── about/           # Project info + asset attribution tables
+│   ├── gallery/         # Community gallery (grid, detail modal, card viewer)
+│   ├── about/           # Project info
 │   └── landing/         # Home page
 ├── data/
-│   ├── layouts/         # Auto-generated layout definitions
+│   ├── layouts/         # Layout definitions
 │   ├── constants.ts     # Element, Trait, Terra lists
 │   ├── inlineClasses.ts # Text styling definitions
 │   └── locales.ts       # i18n translations
@@ -91,8 +121,8 @@ src/
 
 ## Attributions
 
-OpenZoo symbols are created by **Jack Penman** unless otherwise noted. Original icons are sourced from [game-icons.net](https://game-icons.net/) under CC BY 3.0. SCP-themed cards reference [SCP Foundation](https://scp-wiki.wikidot.com/) content under CC BY-SA 3.0. Full attribution details are available on the [About page](ATTRIBUTIONS.md) and in the app at `/about`.
+OpenZoo symbols are created by **Jack Penman** unless otherwise noted. Original icons are sourced from [game-icons.net](https://game-icons.net/) under CC BY 3.0. SCP-themed cards reference [SCP Foundation](https://scp-wiki.wikidot.com/) content under CC BY-SA 3.0. Full attribution details are available on the About page in the app at `/about`.
 
 ## License
 
-Code is [MIT](LICENSE) licensed. Creative assets (images, icons, card templates) are [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+Code is [MIT](LICENSE) licensed. Creative assets (images, icons, templates) are [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).

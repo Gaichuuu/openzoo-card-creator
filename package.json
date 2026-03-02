@@ -1,12 +1,17 @@
 {
   "name": "openzoo-card-creator",
   "version": "1.0.0",
+  "description": "Web-based card creator for the OpenZoo trading card game",
+  "license": "MIT",
+  "keywords": ["tcg", "card-creator", "card-game", "openzoo", "react", "vite"],
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vitest run && tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@google/model-viewer": "^4.1.0",
@@ -32,6 +37,7 @@
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   }
 }
