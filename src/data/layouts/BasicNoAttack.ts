@@ -41,7 +41,7 @@ export const BasicNoAttackLayout: LayoutData = {
       "marginTop": "0px",
       "color": "rgba(0, 0, 0, 1)",
       "paddingTop": "0px",
-      "outlineColor": "rgba(178, 10, 27, 1)",
+      "outlineColor": "rgba(221, 12, 34, 1)",
       "lineHeight": "1.1",
       "pointerEvents": "auto",
       "display": "flex",

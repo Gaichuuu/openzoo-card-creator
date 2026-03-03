@@ -62,7 +62,7 @@ export const AuraLayout: LayoutData = {
       "columnFill": "auto",
       "mixBlendMode": "normal",
       "fontStyle": "normal",
-      "outlineColor": "rgba(178, 10, 27, 1)",
+      "outlineColor": "rgba(221, 12, 34, 1)",
       "outlineStyle": "solid",
       "textDecoration": "",
       "background": "rgba(254, 250, 231, 1)",

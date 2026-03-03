@@ -48,7 +48,7 @@ export const BasicOnlyAttackLayout: LayoutData = {
       "filter": "none",
       "overflow": "hidden",
       "mixBlendMode": "normal",
-      "outlineColor": "rgba(178, 10, 27, 1)",
+      "outlineColor": "rgba(221, 12, 34, 1)",
       "marginBottom": "0px",
       "textShadow": "0.1em 0.1em 0.1em rgba(100, 100, 100, 0)",
       "justifyContent": "center",

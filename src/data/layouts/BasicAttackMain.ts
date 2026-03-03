@@ -16,7 +16,7 @@ export const BasicAttackMainLayout: LayoutData = {
       "outlineOffset": "-13px",
       "display": "flex",
       "paintOrder": "stroke fill",
-      "outlineColor": "rgba(178, 10, 27, 1)",
+      "outlineColor": "rgba(221, 12, 34, 1)",
       "-webkit-text-stroke-width": "2em",
       "pointerEvents": "auto",
       "transform": "",
