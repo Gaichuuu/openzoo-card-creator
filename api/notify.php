@@ -44,7 +44,7 @@ if (!$card) {
   exit;
 }
 
-$cardName = str_replace("\n", ' ', $card['cardName'] ?? 'Untitled');
+$cardName = get_card_display_name($card);
 $desc = build_card_description($card);
 $cardUrl = "https://openzootcg.com/gallery/{$cardId}";
 $thumbnailUrl = $card['thumbnailUrl'] ?? '';
@@ -54,12 +54,12 @@ $embed = [
   'url' => $cardUrl,
   'description' => mb_substr($desc, 0, 300),
   'color' => 0xDAAA00,
-  'footer' => ['text' => 'OpenZoo Card Creator'],
+  'footer' => ['text' => 'OpenZoo TCG'],
   'timestamp' => date('c'),
 ];
 
 if ($thumbnailUrl) {
-  $embed['thumbnail'] = ['url' => $thumbnailUrl];
+  $embed['image'] = ['url' => $thumbnailUrl];
 }
 
 $payload = json_encode(['embeds' => [$embed]], JSON_UNESCAPED_SLASHES);

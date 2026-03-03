@@ -22,8 +22,8 @@ $debug = isset($_GET['dbg']);
 $path = $_SERVER['REQUEST_URI'] ?? '';
 $parsedPath = parse_url($path, PHP_URL_PATH);
 
-$cardId = null;
-if (preg_match('~^/gallery/([^/?#]+)~', $parsedPath, $matches)) {
+$cardId = $_GET['cardId'] ?? null;
+if (!$cardId && preg_match('~^/gallery/([^/?#]+)~', $parsedPath, $matches)) {
   $cardId = urldecode($matches[1]);
 }
 
@@ -53,7 +53,7 @@ if ($isBot && $projectId) {
   $card = fetch_card($cardId, $projectId);
 
   if ($card) {
-    $cardName = str_replace("\n", ' ', $card['cardName'] ?? 'Untitled');
+    $cardName = get_card_display_name($card);
     $desc = build_card_description($card);
     $image = !empty($card['thumbnailUrl']) ? $card['thumbnailUrl'] : $defaultImage;
     render_og($parsedPath, $cardName, $desc, $image);
