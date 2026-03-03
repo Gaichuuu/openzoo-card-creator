@@ -139,7 +139,14 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       snapshotGuard.current = true;
       const s = useCardStore.getState();
       const stripP = (v: string) => v.replace(/^<p>/, '').replace(/<\/p>$/, '');
-      if (s.borderless) setBorderStyle('None');
+      if (s.borderless) {
+        setBorderStyle('None');
+      } else {
+        const cbZoneId = ZONE_ID_MAPS[s.layoutType]?.['CardBorder'];
+        const cbStyle = cbZoneId != null ? s.cardData[`s${cbZoneId}`] || '' : '';
+        const match = Object.entries(BORDER_COLORS).find(([, c]) => cbStyle.includes(c));
+        if (match) setBorderStyle(match[0]);
+      }
       const lpZoneId = ZONE_ID_MAPS[s.layoutType]?.['LP'];
       const lpText = lpZoneId != null ? s.cardData[`t${lpZoneId}`] : '';
       const lpMatch = lpText?.match(/\{LP\}(\d+)/);
