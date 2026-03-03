@@ -24,11 +24,17 @@ npx tsx scripts/generate-sitemap.ts
 
 echo "==> Deploying dist/ to ${REMOTE}..."
 rsync -avz --delete \
+  --exclude=gallery --exclude=api --exclude=lib \
   dist/ \
   "$REMOTE"
 
 echo "==> Deploying sitemap..."
 rsync -avz sitemap.xml "$REMOTE"
+
+echo "==> Deploying PHP files..."
+rsync -avz gallery/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/gallery/"
+rsync -avz --exclude='config.php' api/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/api/"
+rsync -avz lib/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/lib/"
 
 echo "==> Deploying NGINX config..."
 ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p ~/nginx/openzootcg.com"

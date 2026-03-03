@@ -56,6 +56,14 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         remixedFromName: remixedFromName || '',
       });
 
+      if (!import.meta.env.DEV) {
+        fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardId }),
+        }).catch(() => {});
+      }
+
       const trimmed = creatorName.trim();
       if (trimmed) localStorage.setItem('openzoo-creator-name', trimmed);
 

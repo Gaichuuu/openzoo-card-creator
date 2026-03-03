@@ -25,6 +25,7 @@ dist-ssr
 # Deploy artifacts
 .deploy.env
 sitemap.xml
+api/config.php
 .claude/
 CLAUDE.md
 /data/
