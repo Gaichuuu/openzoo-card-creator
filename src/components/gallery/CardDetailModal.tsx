@@ -210,9 +210,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
               <>Created by <span className="text-gray-300">{card.creatorName}</span> on </>
             ) : 'Created '}
             <span className="text-gray-300">
-              {card.createdAt instanceof Date
-                ? card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-                : ''}
+              {card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
             </span>
           </div>
 
