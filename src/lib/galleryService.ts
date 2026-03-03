@@ -40,32 +40,42 @@ export async function publishCard(
 
   const cardData = { ...snapshot.cardData };
 
+  const uploads: Promise<void>[] = [];
+
   for (const key of Object.keys(cardData)) {
     const value = cardData[key];
     if (value && value.startsWith('data:image/')) {
-      const blob = dataUrlToBlob(value);
-      const storageRef = ref(storage, `cards/${cardId}/zone-${key}.png`);
-      await uploadBytes(storageRef, blob);
-      cardData[key] = await getDownloadURL(storageRef);
+      uploads.push((async () => {
+        const blob = dataUrlToBlob(value);
+        const storageRef = ref(storage, `cards/${cardId}/zone-${key}.png`);
+        await uploadBytes(storageRef, blob);
+        cardData[key] = await getDownloadURL(storageRef);
+      })());
     }
   }
 
   let cardArtUrl = snapshot.cardArtUrl || '';
   if (cardArtUrl.startsWith('data:image/')) {
-    const blob = dataUrlToBlob(cardArtUrl);
-    const storageRef = ref(storage, `cards/${cardId}/art.png`);
-    await uploadBytes(storageRef, blob);
-    cardArtUrl = await getDownloadURL(storageRef);
+    uploads.push((async () => {
+      const blob = dataUrlToBlob(cardArtUrl);
+      const storageRef = ref(storage, `cards/${cardId}/art.png`);
+      await uploadBytes(storageRef, blob);
+      cardArtUrl = await getDownloadURL(storageRef);
+    })());
   }
 
   let thumbnailUrl = '';
   if (thumbnailDataUrl) {
-    const blob = dataUrlToBlob(thumbnailDataUrl);
-    const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
-    const storageRef = ref(storage, `cards/${cardId}/thumb.${ext}`);
-    await uploadBytes(storageRef, blob);
-    thumbnailUrl = await getDownloadURL(storageRef);
+    uploads.push((async () => {
+      const blob = dataUrlToBlob(thumbnailDataUrl);
+      const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+      const storageRef = ref(storage, `cards/${cardId}/thumb.${ext}`);
+      await uploadBytes(storageRef, blob);
+      thumbnailUrl = await getDownloadURL(storageRef);
+    })());
   }
+
+  await Promise.all(uploads);
 
   const now = Timestamp.now();
   const savedCard = {
