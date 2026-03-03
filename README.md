@@ -13,6 +13,7 @@ Web-based card creator for the OpenZoo trading card game. Design custom cards in
 - **PNG Export:** standard and print-ready (with 3.5mm bleed) at 4x resolution
 - **JSON Support:** ability to export/import cards as JSON
 - **Gallery:** publish, browse, and remix cards
+- **Discord Notifications:** automatic webhook embed when a card is published
 
 ## Tech Stack
 
@@ -92,7 +93,17 @@ This will:
 1. Run `npm run build`
 2. Generate `sitemap.xml`
 3. Rsync `dist/` to the remote server
-4. Deploy the nginx config
+4. Deploy PHP files (`gallery/`, `api/`, `lib/`)
+5. Deploy the nginx config
+
+### Server-Side Config
+
+The server uses PHP for SEO (OG meta tags) and Discord webhook notifications. After first deploy, create the config file on the server:
+
+```bash
+cp api/config.example.php api/config.php
+# Fill in firebase_project_id and discord_webhook_url
+```
 
 ## Project Structure
 
@@ -119,6 +130,18 @@ src/
 ├── types/               # TypeScript type definitions
 ├── App.tsx              # Router
 └── main.tsx             # Entry point
+
+gallery/
+└── index.php            # SEO handler: OG meta tags for /gallery/{cardId}
+api/
+├── notify.php           # Discord webhook endpoint
+├── config.php           # Server-side secrets (gitignored)
+└── config.example.php   # Config template
+lib/
+└── firestore.php        # Shared PHP helper for Firestore REST API
+nginx/
+└── openzootcg.com/
+    └── nginx.conf       # Nginx config (bot detection, PHP routing)
 ```
 
 ## Attributions
