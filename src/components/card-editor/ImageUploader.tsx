@@ -4,8 +4,14 @@ import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
 import { Stepper } from './TextBoxBuilder';
 
 const MAX_IMAGE_DIM = 1600;
+const MAX_UPLOAD_MB = 15;
 
-function processImage(file: File): Promise<{ url: string; width: number; height: number }> {
+function dataUrlByteSize(dataUrl: string): number {
+  const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+  return Math.ceil(base64.length * 3 / 4);
+}
+
+function processImage(file: File): Promise<{ url: string; width: number; height: number; bytes: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
@@ -24,7 +30,7 @@ function processImage(file: File): Promise<{ url: string; width: number; height:
 
       URL.revokeObjectURL(objectUrl);
       const dataUrl = canvas.toDataURL('image/png');
-      resolve({ url: dataUrl, width: newW, height: newH });
+      resolve({ url: dataUrl, width: newW, height: newH, bytes: dataUrlByteSize(dataUrl) });
     };
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
@@ -43,6 +49,7 @@ export function ImageUploader() {
   const setCardArtPosition = useCardStore((s) => s.setCardArtPosition);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
+  const [artSizeMB, setArtSizeMB] = useState<number | null>(null);
   const borderless = useCardStore((s) => s.borderless);
   const layoutType = CARD_TYPE_TO_LAYOUT[cardType];
   const isTerraLayout = layoutType === 'Terra';
@@ -57,8 +64,9 @@ export function ImageUploader() {
     : '394 / 318';
 
   async function handleFile(file: File) {
-    const { url, width, height } = await processImage(file);
+    const { url, width, height, bytes } = await processImage(file);
     setDims({ width, height });
+    setArtSizeMB(bytes / (1024 * 1024));
     setCardArt(url);
   }
 
@@ -73,6 +81,7 @@ export function ImageUploader() {
   function handleRemove() {
     setCardArt(null);
     setDims(null);
+    setArtSizeMB(null);
   }
 
   return (
@@ -119,6 +128,11 @@ export function ImageUploader() {
           <span className="text-[10px] text-gold-500">{dims.width}x{dims.height}</span>
         )}
       </div>
+      {artSizeMB !== null && artSizeMB > MAX_UPLOAD_MB && (
+        <div className="text-[11px] text-red-400">
+          Image is {artSizeMB.toFixed(1)}MB — exceeds {MAX_UPLOAD_MB}MB upload limit. Try a smaller image.
+        </div>
+      )}
       {cardArtUrl && (
         <div className="flex items-center gap-3 pt-1">
           <Stepper label="X" value={posX} min={-50} max={50} onChange={(v) => setCardArtPosition(v, posY)} valueWidth="w-5" />

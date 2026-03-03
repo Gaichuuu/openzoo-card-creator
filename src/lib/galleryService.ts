@@ -31,6 +31,16 @@ interface PublishOptions {
   remixedFromName: string;
 }
 
+const MAX_UPLOAD_SIZE = 15 * 1024 * 1024; // 15MB — must match Firebase Storage rules
+
+function uploadBlob(blob: Blob, storageRef: ReturnType<typeof ref>): Promise<void> {
+  if (blob.size > MAX_UPLOAD_SIZE) {
+    const sizeMB = (blob.size / (1024 * 1024)).toFixed(1);
+    throw new Error(`Image too large (${sizeMB}MB). Maximum upload size is ${MAX_UPLOAD_SIZE / (1024 * 1024)}MB.`);
+  }
+  return uploadBytes(storageRef, blob).then(() => undefined);
+}
+
 export async function publishCard(
   snapshot: CardSnapshot,
   thumbnailDataUrl: string,
@@ -48,7 +58,7 @@ export async function publishCard(
       uploads.push((async () => {
         const blob = dataUrlToBlob(value);
         const storageRef = ref(storage, `cards/${cardId}/zone-${key}.png`);
-        await uploadBytes(storageRef, blob);
+        await uploadBlob(blob, storageRef);
         cardData[key] = await getDownloadURL(storageRef);
       })());
     }
@@ -59,7 +69,7 @@ export async function publishCard(
     uploads.push((async () => {
       const blob = dataUrlToBlob(cardArtUrl);
       const storageRef = ref(storage, `cards/${cardId}/art.png`);
-      await uploadBytes(storageRef, blob);
+      await uploadBlob(blob, storageRef);
       cardArtUrl = await getDownloadURL(storageRef);
     })());
   }
@@ -70,7 +80,7 @@ export async function publishCard(
       const blob = dataUrlToBlob(thumbnailDataUrl);
       const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
       const storageRef = ref(storage, `cards/${cardId}/thumb.${ext}`);
-      await uploadBytes(storageRef, blob);
+      await uploadBlob(blob, storageRef);
       thumbnailUrl = await getDownloadURL(storageRef);
     })());
   }
