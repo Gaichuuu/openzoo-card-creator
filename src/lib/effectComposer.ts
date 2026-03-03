@@ -285,12 +285,13 @@ export function composeEffectBlocks(
     patch[dividerKey] = attack?.showDivider ? '<p> </p>' : '';
   }
   if (dividerStyleKey) {
+    const dividerMargin = 'marginTop:1px;marginBottom:1px';
     if (!attack?.showDivider) {
       patch[dividerStyleKey] = '{background:none}';
     } else if (borderless) {
-      patch[dividerStyleKey] = '{background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 45%, rgba(255,255,255,1) 53%, rgba(255,255,255,1) 60%, rgba(255,255,255,0) 100%)}';
+      patch[dividerStyleKey] = `{background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 45%, rgba(255,255,255,1) 53%, rgba(255,255,255,1) 60%, rgba(255,255,255,0) 100%);${dividerMargin}}`;
     } else {
-      patch[dividerStyleKey] = '';
+      patch[dividerStyleKey] = `{${dividerMargin}}`;
     }
   }
 
