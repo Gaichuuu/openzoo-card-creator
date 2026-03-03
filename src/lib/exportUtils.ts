@@ -3,6 +3,7 @@ import { toPng } from 'html-to-image';
 export const CARD_W = 238;
 export const CARD_H = 333;
 export const BLEED = 13;
+export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // must match Firebase Storage rules
 
 const PIXEL_RATIO = 4;
 

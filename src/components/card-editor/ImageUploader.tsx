@@ -1,17 +1,18 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useCardStore } from '@/lib/store';
 import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
+import { MAX_UPLOAD_BYTES } from '@/lib/exportUtils';
 import { Stepper } from './TextBoxBuilder';
 
 const MAX_IMAGE_DIM = 1600;
-const MAX_UPLOAD_MB = 15;
+const MAX_UPLOAD_MB = MAX_UPLOAD_BYTES / (1024 * 1024);
 
 function dataUrlByteSize(dataUrl: string): number {
-  const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
-  return Math.ceil(base64.length * 3 / 4);
+  const base64Len = dataUrl.length - dataUrl.indexOf(',') - 1;
+  return Math.ceil(base64Len * 3 / 4);
 }
 
-function processImage(file: File): Promise<{ url: string; width: number; height: number; bytes: number }> {
+function processImage(file: File): Promise<{ url: string; width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
@@ -30,7 +31,7 @@ function processImage(file: File): Promise<{ url: string; width: number; height:
 
       URL.revokeObjectURL(objectUrl);
       const dataUrl = canvas.toDataURL('image/png');
-      resolve({ url: dataUrl, width: newW, height: newH, bytes: dataUrlByteSize(dataUrl) });
+      resolve({ url: dataUrl, width: newW, height: newH });
     };
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
@@ -49,7 +50,6 @@ export function ImageUploader() {
   const setCardArtPosition = useCardStore((s) => s.setCardArtPosition);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
-  const [artSizeMB, setArtSizeMB] = useState<number | null>(null);
   const borderless = useCardStore((s) => s.borderless);
   const layoutType = CARD_TYPE_TO_LAYOUT[cardType];
   const isTerraLayout = layoutType === 'Terra';
@@ -63,10 +63,14 @@ export function ImageUploader() {
     : isAuraLayout ? '394 / 468'
     : '394 / 318';
 
+  const artSizeMB = useMemo(
+    () => cardArtUrl?.startsWith('data:') ? dataUrlByteSize(cardArtUrl) / (1024 * 1024) : null,
+    [cardArtUrl],
+  );
+
   async function handleFile(file: File) {
-    const { url, width, height, bytes } = await processImage(file);
+    const { url, width, height } = await processImage(file);
     setDims({ width, height });
-    setArtSizeMB(bytes / (1024 * 1024));
     setCardArt(url);
   }
 
@@ -81,7 +85,6 @@ export function ImageUploader() {
   function handleRemove() {
     setCardArt(null);
     setDims(null);
-    setArtSizeMB(null);
   }
 
   return (

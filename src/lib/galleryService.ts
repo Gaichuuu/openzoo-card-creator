@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
-import { dataUrlToBlob } from './exportUtils';
+import { dataUrlToBlob, MAX_UPLOAD_BYTES } from './exportUtils';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element } from '@/types/card';
 import type { LayoutType } from '@/types/layout';
@@ -31,14 +31,13 @@ interface PublishOptions {
   remixedFromName: string;
 }
 
-const MAX_UPLOAD_SIZE = 15 * 1024 * 1024; // 15MB — must match Firebase Storage rules
-
-function uploadBlob(blob: Blob, storageRef: ReturnType<typeof ref>): Promise<void> {
-  if (blob.size > MAX_UPLOAD_SIZE) {
+async function uploadBlob(blob: Blob, storageRef: ReturnType<typeof ref>): Promise<void> {
+  if (blob.size > MAX_UPLOAD_BYTES) {
     const sizeMB = (blob.size / (1024 * 1024)).toFixed(1);
-    throw new Error(`Image too large (${sizeMB}MB). Maximum upload size is ${MAX_UPLOAD_SIZE / (1024 * 1024)}MB.`);
+    const limitMB = MAX_UPLOAD_BYTES / (1024 * 1024);
+    throw new Error(`Image too large (${sizeMB}MB). Maximum upload size is ${limitMB}MB.`);
   }
-  return uploadBytes(storageRef, blob).then(() => undefined);
+  await uploadBytes(storageRef, blob);
 }
 
 export async function publishCard(
