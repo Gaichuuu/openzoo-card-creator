@@ -22,8 +22,8 @@ $debug = isset($_GET['dbg']);
 $path = $_SERVER['REQUEST_URI'] ?? '';
 $parsedPath = parse_url($path, PHP_URL_PATH);
 
-$cardId = null;
-if (preg_match('~^/gallery/([^/?#]+)~', $parsedPath, $matches)) {
+$cardId = $_GET['cardId'] ?? null;
+if (!$cardId && preg_match('~^/gallery/([^/?#]+)~', $parsedPath, $matches)) {
   $cardId = urldecode($matches[1]);
 }
 
