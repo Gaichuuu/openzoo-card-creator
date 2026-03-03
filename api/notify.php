@@ -44,7 +44,7 @@ if (!$card) {
   exit;
 }
 
-$cardName = str_replace("\n", ' ', $card['cardName'] ?? 'Untitled');
+$cardName = get_card_display_name($card);
 $desc = build_card_description($card);
 $cardUrl = "https://openzootcg.com/gallery/{$cardId}";
 $thumbnailUrl = $card['thumbnailUrl'] ?? '';

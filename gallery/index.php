@@ -53,7 +53,7 @@ if ($isBot && $projectId) {
   $card = fetch_card($cardId, $projectId);
 
   if ($card) {
-    $cardName = str_replace("\n", ' ', $card['cardName'] ?? 'Untitled');
+    $cardName = get_card_display_name($card);
     $desc = build_card_description($card);
     $image = !empty($card['thumbnailUrl']) ? $card['thumbnailUrl'] : $defaultImage;
     render_og($parsedPath, $cardName, $desc, $image);

@@ -51,6 +51,10 @@ function fetch_card(string $cardId, string $projectId): ?array {
   return parse_firestore_fields($json['fields']);
 }
 
+function get_card_display_name(array $card): string {
+  return str_replace("\n", ' ', $card['cardName'] ?? 'Untitled');
+}
+
 function build_card_description(array $card): string {
   $parts = [];
 

@@ -33,7 +33,7 @@ rsync -avz sitemap.xml "$REMOTE"
 
 echo "==> Deploying PHP files..."
 rsync -avz gallery/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/gallery/"
-rsync -avz api/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/api/"
+rsync -avz --exclude='config.php' api/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/api/"
 rsync -avz lib/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/lib/"
 
 echo "==> Deploying NGINX config..."
