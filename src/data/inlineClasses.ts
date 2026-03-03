@@ -108,6 +108,11 @@ for (const trait of TRAITS) {
   BASE_VARIABLES[trait] = `{OpenZoo Traits/${trait}.png, 0.9, 0.1}`;
 }
 
+const CACHED_VARIABLES: Partial<Record<Locale, Record<string, string>>> = {};
+
 export function getVariables(locale: Locale): Record<string, string> {
-  return { ...BASE_VARIABLES, PSB: getPSBVariable(locale) };
+  if (!CACHED_VARIABLES[locale]) {
+    CACHED_VARIABLES[locale] = { ...BASE_VARIABLES, PSB: getPSBVariable(locale) };
+  }
+  return CACHED_VARIABLES[locale];
 }

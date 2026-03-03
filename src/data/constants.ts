@@ -7,6 +7,10 @@ export const ELEMENTS: Element[] = [
   'Frost', 'Light', 'Lightning', 'Special', 'Spirit', 'Water',
 ];
 
+export const ATTACK_ELEMENTS = ELEMENTS.filter(
+  (el) => el !== 'Neutral' && el !== 'Special'
+);
+
 export const TRAITS: Trait[] = [
   'Bloodsucker', 'Burrow', 'Convert', 'Defender', 'Destroyer',
   'Equipment', 'Fear', 'First Strike', 'Flash', 'Fleet', 'Flight',
@@ -146,7 +150,22 @@ export function computeStrongAgainst(
 }
 
 export const STATUS_EFFECTS = [
-  'Burn', 'Confused', 'Frozen', 'Paralyze', 'Scared', 
+  'Burn', 'Confused', 'Frozen', 'Paralyze', 'Scared',
 ] as const;
 
 export type StatusEffect = (typeof STATUS_EFFECTS)[number];
+
+// Shared style override constants used by EditorSidebar and store
+export const STYLE_TYPES_TRIBES = '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}';
+export const STYLE_TYPES_TRIBES_TOKEN = '{fontSize:9px;height:10px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}';
+// Same style as TypesTribes — both are TNL child zones with identical base overrides
+export const STYLE_SPELLBOOK_LIMIT = STYLE_TYPES_TRIBES;
+export const STYLE_TNL = '{flex:1;minWidth:0;alignItems:stretch}';
+export const STYLE_TNL_TOKEN = '{flex:1;minWidth:0;alignItems:stretch;justifyContent:flex-end}';
+export const STYLE_CARD_NAME = '{maxHeight:23px;justifyContent:flex-start;paddingLeft:2px;outlineWidth:0px}';
+export const STYLE_LP = '{fontSize:19px}';
+export const STYLE_FLAVOR_TEXT = '{left:95px;justifyContent:flex-end}';
+
+const DARK_GRADIENT = 'linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))';
+export const BORDERLESS_ART_STYLE = `{left:0px;top:0px;width:238px;height:333px;backgroundImage:${DARK_GRADIENT}}`;
+export const TERRA_GRADIENT_STYLE = `{backgroundImage:${DARK_GRADIENT}}`;

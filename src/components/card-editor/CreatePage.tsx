@@ -53,23 +53,7 @@ export function CreatePage() {
           }
         }
         if (cancelled) return;
-        loadSnapshot({
-          cardType: card.cardType,
-          layoutType: card.layoutType,
-          cardData: card.cardData,
-          cardName: card.cardName,
-          tribe: card.tribe,
-          spellbookLimit: card.spellbookLimit,
-          primaryElement: card.primaryElement,
-          secondaryElement: card.secondaryElement,
-          traits: card.traits,
-          terras: card.terras,
-          strongAgainst: card.strongAgainst,
-          cardArtUrl,
-          effectBlocks: card.effectBlocks,
-          locale: card.locale,
-          borderless: card.borderless,
-        });
+        loadSnapshot({ ...card, cardArtUrl });
         setLoading(false);
       })
       .catch(() => {

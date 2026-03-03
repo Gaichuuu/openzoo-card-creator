@@ -1,6 +1,6 @@
 import type { EffectBlock } from '@/types/effects';
 import { BLOCK_LABELS } from '@/types/effects';
-import { STATUS_EFFECTS, ELEMENTS } from '@/data/constants';
+import { STATUS_EFFECTS, ATTACK_ELEMENTS } from '@/data/constants';
 import { FormattedTextarea } from './FormattedTextarea';
 
 interface EffectBlockEditorProps {
@@ -220,7 +220,7 @@ function AttackBlockEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
             className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs"
           >
             <option value="">None</option>
-            {ELEMENTS.map((el) => (
+            {ATTACK_ELEMENTS.map((el) => (
               <option key={el} value={el}>{el}</option>
             ))}
           </select>
@@ -233,7 +233,7 @@ function AttackBlockEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
             className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs"
           >
             <option value="">None</option>
-            {ELEMENTS.map((el) => (
+            {ATTACK_ELEMENTS.map((el) => (
               <option key={el} value={el}>{el}</option>
             ))}
           </select>
@@ -282,7 +282,7 @@ function TribalBoostEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
               onChange={(e) => onUpdate({ boostTarget: e.target.value })}
               className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs"
             >
-              {ELEMENTS.filter((el) => el !== 'Neutral' && el !== 'Special').map((el) => (
+              {ATTACK_ELEMENTS.map((el) => (
                 <option key={el} value={el}>{el}</option>
               ))}
             </select>

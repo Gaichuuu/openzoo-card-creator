@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toPng } from 'html-to-image';
 import { useCardStore } from '@/lib/store';
 import { publishCard } from '@/lib/galleryService';
+import { exportStandardPng } from '@/lib/exportUtils';
 import { CARD_TAGS, TAG_COLORS } from '@/types/card';
 import type { CardTag } from '@/types/card';
 
@@ -31,13 +31,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
 
     try {
       cardRef.current.classList.add('card-exporting');
-      const rawDataUrl = await toPng(cardRef.current, {
-        pixelRatio: 4,
-        quality: 1,
-        width: 238,
-        height: 333,
-        style: { transform: 'none' },
-      });
+      const rawDataUrl = await exportStandardPng(cardRef.current, false);
       const thumbnailDataUrl = await new Promise<string>((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
