@@ -34,7 +34,7 @@ export function LandingPage() {
       </div>
 
       <footer className="flex items-center justify-center gap-3 py-4 text-sm text-gray-500">
-        <span>&copy; {new Date().getFullYear()} OpenZoo v1.0.0</span>
+        <span>&copy; {new Date().getFullYear()} OpenZoo v{__APP_VERSION__}</span>
         <span className="text-navy-600">|</span>
         <Link to="/about" className="hover:text-gray-300 transition-colors">About</Link>
         <a href="https://github.com/Gaichuuu/openzoo-card-creator" target="_blank" rel="noopener noreferrer" className="hover:text-gray-300 transition-colors" aria-label="GitHub">
