@@ -234,7 +234,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       } else if (!newData[lpKey]) {
         newData[lpKey] = '<p>{LP}10</p>';
         const lpStyleKey = getStyleZoneId(lt, 'LP');
-        if (lpStyleKey) newData[lpStyleKey] = '{fontSize:19px}';
+        if (lpStyleKey) newData[lpStyleKey] = STYLE_LP;
       }
     }
 

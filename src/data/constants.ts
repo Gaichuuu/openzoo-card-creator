@@ -158,6 +158,7 @@ export type StatusEffect = (typeof STATUS_EFFECTS)[number];
 // Shared style override constants used by EditorSidebar and store
 export const STYLE_TYPES_TRIBES = '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}';
 export const STYLE_TYPES_TRIBES_TOKEN = '{fontSize:9px;height:10px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}';
+// Same style as TypesTribes — both are TNL child zones with identical base overrides
 export const STYLE_SPELLBOOK_LIMIT = STYLE_TYPES_TRIBES;
 export const STYLE_TNL = '{flex:1;minWidth:0;alignItems:stretch}';
 export const STYLE_TNL_TOKEN = '{flex:1;minWidth:0;alignItems:stretch;justifyContent:flex-end}';
