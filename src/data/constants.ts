@@ -7,6 +7,10 @@ export const ELEMENTS: Element[] = [
   'Frost', 'Light', 'Lightning', 'Special', 'Spirit', 'Water',
 ];
 
+export const ATTACK_ELEMENTS = ELEMENTS.filter(
+  (el) => el !== 'Neutral' && el !== 'Special'
+);
+
 export const TRAITS: Trait[] = [
   'Bloodsucker', 'Burrow', 'Convert', 'Defender', 'Destroyer',
   'Equipment', 'Fear', 'First Strike', 'Flash', 'Fleet', 'Flight',
