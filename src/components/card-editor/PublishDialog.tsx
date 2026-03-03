@@ -70,8 +70,9 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       setPublishedId(cardId);
       setSuccess(true);
     } catch (err) {
-      if (import.meta.env.DEV) console.error('Publish failed:', err);
-      setError('Failed to publish. Make sure Firebase is configured.');
+      console.error('Publish failed:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Failed to publish: ${msg}`);
     } finally {
       cardRef.current?.classList.remove('card-exporting');
       setPublishing(false);
