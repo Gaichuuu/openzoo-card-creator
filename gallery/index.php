@@ -17,8 +17,6 @@ $isBot = (bool) preg_match(
   $ua
 );
 
-$debug = isset($_GET['dbg']);
-
 $path = $_SERVER['REQUEST_URI'] ?? '';
 $parsedPath = parse_url($path, PHP_URL_PATH);
 
@@ -27,24 +25,13 @@ if (!$cardId && preg_match('~^/gallery/([^/?#]+)~', $parsedPath, $matches)) {
   $cardId = urldecode($matches[1]);
 }
 
-if (!$cardId) {
-  serve_index();
-  exit;
+// Validate card ID format immediately
+if ($cardId && !preg_match('/^[a-zA-Z0-9_-]{1,50}$/', $cardId)) {
+  $cardId = null;
 }
 
-if ($debug) {
-  header('Content-Type: text/plain; charset=utf-8');
-  echo "UA: $ua\n";
-  echo "IS_BOT: " . ($isBot ? 'true' : 'false') . "\n";
-  echo "CARD_ID: $cardId\n";
-  echo "PROJECT: $projectId\n\n";
-
-  if ($projectId) {
-    $card = fetch_card($cardId, $projectId);
-    echo "CARD DATA: " . json_encode($card, JSON_PRETTY_PRINT) . "\n";
-  } else {
-    echo "ERROR: firebase_project_id not configured\n";
-  }
+if (!$cardId) {
+  serve_index();
   exit;
 }
 
