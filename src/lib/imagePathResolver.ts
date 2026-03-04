@@ -12,11 +12,29 @@ const FOLDER_MAP: Record<string, string> = {
   'OpenZooMisc': '/assets',
 };
 
+const ALLOWED_EXTERNAL_HOSTS = [
+  'firebasestorage.googleapis.com',
+  'storage.googleapis.com',
+];
+
+function isAllowedUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return ALLOWED_EXTERNAL_HOSTS.some((h) => parsed.hostname === h || parsed.hostname.endsWith('.' + h));
+  } catch {
+    return false;
+  }
+}
+
 export function resolveImagePath(rawPath: string): string {
   if (!rawPath || rawPath === 'default_image') return '';
 
-  if (rawPath.startsWith('data:') || rawPath.startsWith('blob:') || rawPath.startsWith('http') || rawPath.startsWith('/assets/')) {
+  if (rawPath.startsWith('data:') || rawPath.startsWith('blob:') || rawPath.startsWith('/assets/')) {
     return rawPath;
+  }
+
+  if (rawPath.startsWith('http://') || rawPath.startsWith('https://')) {
+    return isAllowedUrl(rawPath) ? rawPath : '';
   }
 
   for (const [dexFolder, localFolder] of Object.entries(FOLDER_MAP)) {

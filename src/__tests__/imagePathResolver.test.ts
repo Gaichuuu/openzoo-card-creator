@@ -21,9 +21,20 @@ describe('resolveImagePath', () => {
       expect(resolveImagePath(url)).toBe(url);
     });
 
-    it('passes through http URLs', () => {
-      const url = 'https://example.com/img.png';
+    it('passes through allowed Firebase Storage URLs', () => {
+      const url = 'https://firebasestorage.googleapis.com/v0/b/bucket/o/img.png';
       expect(resolveImagePath(url)).toBe(url);
+    });
+
+    it('passes through storage.googleapis.com URLs', () => {
+      const url = 'https://storage.googleapis.com/bucket/img.png';
+      expect(resolveImagePath(url)).toBe(url);
+    });
+
+    it('blocks arbitrary external URLs', () => {
+      expect(resolveImagePath('https://evil.com/tracker.png')).toBe('');
+      expect(resolveImagePath('https://example.com/img.png')).toBe('');
+      expect(resolveImagePath('http://malicious.site/x.png')).toBe('');
     });
 
     it('passes through /assets/ paths', () => {
