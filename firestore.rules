@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cards collection
+    match /cards/{cardId} {
+      // Anyone can read cards
+      allow read: if true;
+
+      // Create only (no update/delete) with schema validation
+      allow create: if
+        isValidCardDocument(request.resource.data);
+
+      allow update, delete: if false;
+    }
+
+    // Reject all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+function isValidCardDocument(data) {
+  return data.keys().hasAll(['cardType', 'layoutType', 'cardData', 'cardName'])
+    && data.cardType is string
+    && data.layoutType is string
+    && data.cardData is map
+    && data.cardName is string
+    && data.cardName.size() <= 50
+    && (!('creatorName' in data) || (data.creatorName is string && data.creatorName.size() <= 50))
+    && (!('tribe' in data) || (data.tribe is string && data.tribe.size() <= 40))
+    // Enforce reasonable document size (Firestore 1MB limit, but we want much less)
+    && request.resource.size() < 500000;
+}
