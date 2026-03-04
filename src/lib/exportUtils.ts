@@ -12,7 +12,7 @@ const BACKGROUND_ZONE_KEYS = new Set([
   'ArtBorder', 'BottomBar', 'CryptidInfoBar',
 ]);
 
-function loadImage(src: string, crossOrigin?: boolean): Promise<HTMLImageElement> {
+export function loadImage(src: string, crossOrigin?: boolean): Promise<HTMLImageElement> {
   const img = new Image();
   if (crossOrigin) img.crossOrigin = 'anonymous';
   img.src = src;
@@ -31,6 +31,24 @@ export function dataUrlToBlob(dataUrl: string): Blob {
     arr[i] = bytes.charCodeAt(i);
   }
   return new Blob([arr], { type: mime });
+}
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = url;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function sanitizeCardNameForFilename(name: string): string {
+  return (name || 'openzoo-card')
+    .replace(/\\n/g, ' ')
+    .replace(/[/\\:*?"<>|]/g, '_')
+    .trim() || 'openzoo-card';
 }
 
 export function downloadDataUrl(dataUrl: string, filename: string) {
