@@ -3,6 +3,7 @@ import type { LayoutType } from '@/types/layout';
 import type { CardData } from '@/types/card';
 import { LAYOUTS } from '@/data/layouts';
 import { useCardStore } from '@/lib/store';
+import { CARD_W, CARD_H } from '@/lib/exportUtils';
 import { ZoneRenderer } from './ZoneRenderer';
 
 interface CardRendererProps {
@@ -22,8 +23,8 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
     return (
       <div
         style={{
-          width: `${238 * scale}px`,
-          height: `${333 * scale}px`,
+          width: `${CARD_W * scale}px`,
+          height: `${CARD_H * scale}px`,
           flexShrink: 0,
           borderRadius: borderless ? '0' : `${10 * scale}px`,
           boxShadow: borderless ? undefined : '0 0 0 1px rgb(55, 65, 81)',
@@ -33,8 +34,8 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
           ref={ref}
           className={borderless ? 'card-borderless' : undefined}
           style={{
-            width: '238px',
-            height: '333px',
+            width: `${CARD_W}px`,
+            height: `${CARD_H}px`,
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
             position: 'relative',

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import { formatMetadataLocale } from '@/data/locales';
+import { stripParagraphWrap } from '@/lib/textParserUtils';
 
 const SLOT_CONFIG = [
   {
@@ -48,10 +49,9 @@ export function CryptidInfoEditor() {
     if (useCardStore.getState()._isLoadingSnapshot) {
       const s = useCardStore.getState();
       const map = ZONE_ID_MAPS[s.layoutType];
-      const stripP = (v: string) => v.replace(/^<p>/, '').replace(/<\/p>$/, '');
       const restored = SLOT_CONFIG.map((cfg) => {
         const zoneId = map?.[cfg.semanticKey];
-        const raw = zoneId != null ? stripP(s.cardData[`t${zoneId}`] || '') : '';
+        const raw = zoneId != null ? stripParagraphWrap(s.cardData[`t${zoneId}`] || '') : '';
         const m = raw.match(/\{B:(.+?)(?::\s*|：)\}(.*)/);
         if (m) {
           const matchedOpt = cfg.options.find((opt) => raw.includes(opt)) || cfg.defaultLabel;

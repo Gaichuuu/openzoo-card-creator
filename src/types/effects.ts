@@ -56,25 +56,21 @@ export const BLOCK_LABELS: Record<EffectBlockType, string> = {
   'attack': 'Attack',
 };
 
+const DEFAULT_TEXTS: Partial<Record<EffectBlockType, string>> = {
+  'static': 'If {Lightning Storm} is active, this Page has {Fleet}.',
+  'discard': 'Pay 2 {Water} and say "No, No, No..." to nullify target resolving Page.',
+  'contract': 'You may only Contract this Page if you are wearing a scarf.',
+  'enter': 'Destroy a Beastie you control to place any Page from your Spellbook into your Chapter.',
+  'arena': 'Beasties you control cannot have their Traits nullfiied or removed by Page Effects.',
+  'destroyed': 'Until the end of the active Caster\'s next turn, {Lightning Storm} is active.',
+  'power': 'You may pay 1 {Water} to Bookmark 1.',
+};
+
 export function createDefaultBlock(type: EffectBlockType): Omit<EffectBlock, 'id'> {
   return {
     type,
     hasStar: type === 'static' || type === 'discard' || type === 'contract',
-    text: type === 'static'
-      ? 'If {Lightning Storm} is active, this Page has {Fleet}.'
-      : type === 'discard'
-        ? 'Pay 2 {Water} and say "No, No, No..." to nullify target resolving Page.'
-        : type === 'contract'
-          ? 'You may only Contract this Page if you are wearing a scarf.'
-          : type === 'enter'
-            ? 'Destroy a Beastie you control to place any Page from your Spellbook into your Chapter.'
-            : type === 'arena'
-              ? 'Beasties you control cannot have their Traits nullfiied or removed by Page Effects.'
-              : type === 'destroyed'
-                ? 'Until the end of the active Caster\'s next turn, {Lightning Storm} is active.'
-                : type === 'power'
-                  ? 'You may pay 1 {Water} to Bookmark 1.'
-                  : '',
+    text: DEFAULT_TEXTS[type] ?? '',
     powerName: type === 'power' ? 'Sifting' : '',
     attackName: type === 'attack' ? 'Rushing Waters' : '',
     attackDamage: type === 'attack' ? '50' : '',

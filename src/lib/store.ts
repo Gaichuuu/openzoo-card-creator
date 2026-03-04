@@ -114,7 +114,7 @@ function applyStrongAgainst(
   primary: Element | null,
   secondary: Element | null,
   locale: Locale = 'en',
-) {
+): Element[] {
   const strengths = computeStrongAgainst(primary, secondary);
   const saKeys = ['SAura1', 'SAura2', 'SAura3', 'SAura4'];
   for (let i = 0; i < saKeys.length; i++) {
@@ -147,6 +147,7 @@ function applyStrongAgainst(
   if (valueKey) {
     newData[valueKey] = strengths.length > 0 ? '<p>+20</p>' : '';
   }
+  return strengths;
 }
 
 function getTypeCapabilities(type: CardType) {
@@ -387,8 +388,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const { layoutType, cardData, secondaryElement, cardType, locale } = get();
     const newData = { ...cardData };
     applyAuraColors(newData, layoutType, el, secondaryElement, cardType);
-    applyStrongAgainst(newData, layoutType, el, secondaryElement, locale);
-    const strengths = computeStrongAgainst(el, secondaryElement);
+    const strengths = applyStrongAgainst(newData, layoutType, el, secondaryElement, locale);
     const sa: (Element | null)[] = [null, null, null, null];
     strengths.forEach((s, i) => { sa[i] = s; });
     set({ primaryElement: el, strongAgainst: sa, cardData: newData });
@@ -398,8 +398,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const { layoutType, cardData, primaryElement, cardType, locale } = get();
     const newData = { ...cardData };
     applyAuraColors(newData, layoutType, primaryElement, el, cardType);
-    applyStrongAgainst(newData, layoutType, primaryElement, el, locale);
-    const strengths = computeStrongAgainst(primaryElement, el);
+    const strengths = applyStrongAgainst(newData, layoutType, primaryElement, el, locale);
     const sa: (Element | null)[] = [null, null, null, null];
     strengths.forEach((s, i) => { sa[i] = s; });
     set({ secondaryElement: el, strongAgainst: sa, cardData: newData });

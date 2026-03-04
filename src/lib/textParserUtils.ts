@@ -72,6 +72,10 @@ export function parseSegments(text: string): Segment[] {
   return segments;
 }
 
+export function stripParagraphWrap(v: string): string {
+  return v.replace(/^<p>/, '').replace(/<\/p>$/, '');
+}
+
 export function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, '\n')

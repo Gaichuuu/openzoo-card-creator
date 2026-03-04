@@ -7,6 +7,7 @@ import {
   STYLE_CARD_NAME, STYLE_TNL, STYLE_TNL_TOKEN, STYLE_LP, STYLE_FLAVOR_TEXT,
   BORDERLESS_ART_STYLE, TERRA_GRADIENT_STYLE,
 } from '@/data/constants';
+import { stripParagraphWrap } from '@/lib/textParserUtils';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import { CardTypeSelector } from './CardTypeSelector';
 import { t } from '@/data/locales';
@@ -138,7 +139,6 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
     if (useCardStore.getState()._isLoadingSnapshot) {
       snapshotGuard.current = true;
       const s = useCardStore.getState();
-      const stripP = (v: string) => v.replace(/^<p>/, '').replace(/<\/p>$/, '');
       if (s.borderless) {
         setBorderStyle('None');
       } else {
@@ -153,17 +153,17 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
       if (lpMatch) setLp(lpMatch[1]);
       const flavorZoneId = ZONE_ID_MAPS[s.layoutType]?.['FlavorText'];
       const flavorVal = flavorZoneId != null ? s.cardData[`t${flavorZoneId}`] : '';
-      if (flavorVal) setFlavorText(stripP(flavorVal));
+      if (flavorVal) setFlavorText(stripParagraphWrap(flavorVal));
       const artistZoneId = ZONE_ID_MAPS[s.layoutType]?.['Artist'];
-      const artistText = artistZoneId != null ? stripP(s.cardData[`t${artistZoneId}`] || '') : '';
+      const artistText = artistZoneId != null ? stripParagraphWrap(s.cardData[`t${artistZoneId}`] || '') : '';
       const artistMatch = artistText?.match(/(?:Illus\.|イラスト)\s*(.*)/);
       if (artistMatch) setArtist(artistMatch[1]);
       const auraTextZoneId = ZONE_ID_MAPS[s.layoutType]?.['Aura/Terra Text Box'];
       const auraText = auraTextZoneId != null ? s.cardData[`t${auraTextZoneId}`] : '';
-      if (auraText) setAuraEffectText(stripP(auraText));
+      if (auraText) setAuraEffectText(stripParagraphWrap(auraText));
       const terraTextZoneId = ZONE_ID_MAPS[s.layoutType]?.['Aura/Terra Text Box 1'];
       const terraText = terraTextZoneId != null ? s.cardData[`t${terraTextZoneId}`] : '';
-      if (terraText) setTerraEffectText(stripP(terraText));
+      if (terraText) setTerraEffectText(stripParagraphWrap(terraText));
       const setStyleIfMissing = (key: string, value: string) => {
         const zoneId = ZONE_ID_MAPS[s.layoutType]?.[key];
         if (zoneId !== undefined && !s.cardData[`s${zoneId}`]) {

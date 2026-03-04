@@ -5,7 +5,7 @@ import { BLOCK_ORDER } from '@/types/effects';
 import { getTextZoneId, getImageZoneId, getStyleZoneId } from '@/data/layouts';
 import { AURA_COLORS } from '@/data/constants';
 import type { Locale } from '@/data/locales';
-import { t, toSmallCapsLocale } from '@/data/locales';
+import { t, toSmallCapsLocale, localeColon, localeSp } from '@/data/locales';
 
 export function sortBlocks(blocks: EffectBlock[]): EffectBlock[] {
   return [...blocks].sort((a, b) => {
@@ -15,26 +15,26 @@ export function sortBlocks(blocks: EffectBlock[]): EffectBlock[] {
   });
 }
 
+const KEYWORD_KEYS: Partial<Record<EffectBlockType, string>> = {
+  'static': '',
+  'discard': 'DISCARD',
+  'contract': 'CONTRACT',
+  'enter': 'ENTER',
+  'arena': 'ARENA',
+  'destroyed': 'DESTROYED',
+};
+
 export function composeKeywordBlock(block: EffectBlock, locale: Locale = 'en'): string {
   const { type, hasStar, text } = block;
   if (!text) return '';
-
-  const KEYWORD_KEYS: Partial<Record<EffectBlockType, string>> = {
-    'static': '',
-    'discard': 'DISCARD',
-    'contract': 'CONTRACT',
-    'enter': 'ENTER',
-    'arena': 'ARENA',
-    'destroyed': 'DESTROYED',
-  };
 
   const keywordKey = KEYWORD_KEYS[type];
   if (keywordKey === undefined) return '';
   const keyword = keywordKey ? t(keywordKey, locale) : '';
 
   const starPrefix = hasStar ? '{Star}' : '';
-  const colon = locale === 'ja' ? '：' : ':';
-  const sp = locale === 'ja' ? '' : ' ';
+  const colon = localeColon(locale);
+  const sp = localeSp(locale);
 
   if (hasStar) {
     if (keyword) {
@@ -106,8 +106,8 @@ export function composeBoosts(blocks: EffectBlock[], locale: Locale = 'en'): [st
         : `[${toSmallCapsLocale(t(b.boostTarget, locale), locale)}]`;
       const atk = t('ATK', locale);
       const lp = t('LP', locale);
-      const boostColon = locale === 'ja' ? '：' : ':';
-      const boostSp = locale === 'ja' ? '' : ' ';
+      const boostColon = localeColon(locale);
+      const boostSp = localeSp(locale);
       results[i] = `${localizedLabel}${boostColon}${boostSp}${bracket} ${b.boostAtk} ${atk}/${b.boostLp} ${lp}`;
     }
   }
@@ -163,13 +163,13 @@ export function composeEffectBlocks(
     patch[textKey] = mainText ? `<p>${mainText}</p>` : '';
   }
 
+  const boostBlocks = blocks.filter((b) => b.type === 'tribal-boost');
   const [boost1, boost2] = composeBoosts(blocks, locale);
   const boost1Key = getTextZoneId(layoutType, 'Boost 1');
   const boost2Key = getTextZoneId(layoutType, 'Boost 2');
   if (boost1Key) patch[boost1Key] = boost1 ? `<p>${boost1}</p>` : '';
   if (boost2Key) patch[boost2Key] = boost2 ? `<p>${boost2}</p>` : '';
 
-  const boostBlocks = blocks.filter((b) => b.type === 'tribal-boost');
   for (let i = 0; i < Math.min(boostBlocks.length, 2); i++) {
     const b = boostBlocks[i];
     if (b.boostLabel === 'AURA BOOST' && b.boostTarget) {
@@ -249,8 +249,8 @@ export function composeEffectBlocks(
 
   if (atkEffectKey) {
     if (attack?.attackEffect) {
-      const atkColon = locale === 'ja' ? '：' : ':';
-      const atkSp = locale === 'ja' ? '' : ' ';
+      const atkColon = localeColon(locale);
+      const atkSp = localeSp(locale);
       const effectText = attack.attackHasStar
         ? `{Star}**${atkColon}**${atkSp}{I:${attack.attackEffect}}`
         : attack.attackEffect;
