@@ -48,13 +48,16 @@ export async function exportStandardPng(
   el: HTMLElement,
   borderless: boolean,
 ): Promise<string> {
-  return toPng(el, {
+  await document.fonts.ready;
+  const opts = {
     pixelRatio: PIXEL_RATIO,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
     style: { transform: 'none', borderRadius: borderless ? '0' : undefined },
-  });
+  };
+  await toPng(el, opts);
+  return toPng(el, opts);
 }
 
 export async function exportPrintReadyPng(
@@ -98,20 +101,23 @@ async function exportPrintBorderless(
     ctx.fillRect(0, 0, printW, printH);
   }
 
-  const overlayUrl = await toPng(el, {
+  await document.fonts.ready;
+  const overlayOpts = {
     pixelRatio: pr,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
     style: { transform: 'none', borderRadius: '0' },
-    filter: (node) => {
+    filter: (node: Node) => {
       if (node instanceof HTMLElement) {
         const key = node.getAttribute('data-zone-key');
         if (key && BACKGROUND_ZONE_KEYS.has(key)) return false;
       }
       return true;
     },
-  });
+  };
+  await toPng(el, overlayOpts);
+  const overlayUrl = await toPng(el, overlayOpts);
   const overlayImg = await loadImage(overlayUrl);
   ctx.drawImage(overlayImg, bPx, bPx);
 
@@ -124,13 +130,16 @@ async function exportPrintBordered(el: HTMLElement): Promise<string> {
     ? getComputedStyle(rootZone).backgroundColor
     : 'rgb(221, 12, 34)';
 
-  const cardDataUrl = await toPng(el, {
+  await document.fonts.ready;
+  const borderedOpts = {
     pixelRatio: PIXEL_RATIO,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
     style: { transform: 'none', borderRadius: '0' },
-  });
+  };
+  await toPng(el, borderedOpts);
+  const cardDataUrl = await toPng(el, borderedOpts);
 
   const pr = PIXEL_RATIO;
   const canvas = document.createElement('canvas');
