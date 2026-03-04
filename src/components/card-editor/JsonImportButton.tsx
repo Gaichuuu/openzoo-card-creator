@@ -1,14 +1,11 @@
 import { useRef } from 'react';
 import { useCardStore } from '@/lib/store';
-import type { CardSnapshot, CardType } from '@/types/card';
-import type { LayoutType } from '@/types/layout';
+import type { CardSnapshot } from '@/types/card';
+import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
+import { LAYOUTS } from '@/data/layouts';
 
-const VALID_LAYOUT_TYPES: ReadonlySet<string> = new Set<LayoutType>([
-  'BasicNoAttack', 'BasicOnlyAttack', 'BasicAttackMain', 'Aura', 'Terra',
-]);
-const VALID_CARD_TYPES: ReadonlySet<string> = new Set<CardType>([
-  'Artifact', 'Aura', 'Beastie', 'Potion', 'Special Aura', 'Special Terra', 'Spell', 'Terra', 'Token',
-]);
+const VALID_LAYOUT_TYPES: ReadonlySet<string> = new Set(Object.keys(LAYOUTS));
+const VALID_CARD_TYPES: ReadonlySet<string> = new Set(Object.keys(CARD_TYPE_TO_LAYOUT));
 const MAX_STRING_LEN = 1000;
 const MAX_CARD_DATA_KEYS = 500;
 

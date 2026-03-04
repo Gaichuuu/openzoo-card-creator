@@ -52,14 +52,7 @@ export function sanitizeCardNameForFilename(name: string): string {
 }
 
 export function downloadDataUrl(dataUrl: string, filename: string) {
-  const url = URL.createObjectURL(dataUrlToBlob(dataUrl));
-  const link = document.createElement('a');
-  link.download = filename;
-  link.href = url;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  downloadBlob(dataUrlToBlob(dataUrl), filename);
 }
 
 export async function exportStandardPng(

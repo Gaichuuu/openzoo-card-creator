@@ -61,16 +61,16 @@ if (!$webhookUrl || !$projectId) {
   exit;
 }
 
+require_once dirname(__DIR__) . '/lib/firestore.php';
+
 $input = json_decode(file_get_contents('php://input'), true);
 $cardId = $input['cardId'] ?? '';
 
-if (!$cardId || !preg_match('/^[a-zA-Z0-9_-]{1,50}$/', $cardId)) {
+if (!$cardId || !preg_match(CARD_ID_PATTERN, $cardId)) {
   http_response_code(400);
   echo json_encode(['error' => 'Invalid cardId']);
   exit;
 }
-
-require_once dirname(__DIR__) . '/lib/firestore.php';
 
 $card = fetch_card($cardId, $projectId);
 if (!$card) {

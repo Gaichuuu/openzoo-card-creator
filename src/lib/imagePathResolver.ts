@@ -1,3 +1,5 @@
+import { ELEMENTS } from '@/data/constants';
+
 const FOLDER_MAP: Record<string, string> = {
   'OpenZoo Banners': '/assets/Banners',
   'OpenZoo Background': '/assets',
@@ -18,12 +20,10 @@ const ALLOWED_EXTERNAL_HOSTS = [
 ];
 
 function isAllowedUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return ALLOWED_EXTERNAL_HOSTS.some((h) => parsed.hostname === h || parsed.hostname.endsWith('.' + h));
-  } catch {
-    return false;
-  }
+  const match = url.match(/^https?:\/\/([^/:]+)/);
+  if (!match) return false;
+  const hostname = match[1];
+  return ALLOWED_EXTERNAL_HOSTS.some((h) => hostname === h || hostname.endsWith('.' + h));
 }
 
 export function resolveImagePath(rawPath: string): string {
@@ -48,8 +48,7 @@ export function resolveImagePath(rawPath: string): string {
     return `/assets/Banners/${rawPath}`;
   }
 
-  if (['Cosmic', 'Dark', 'Earth', 'Flame', 'Forest', 'Frost', 'Light', 'Lightning', 'Neutral', 'Special', 'Spirit', 'Water']
-    .some(el => rawPath === `${el}.png`)) {
+  if (ELEMENTS.some(el => rawPath === `${el}.png`)) {
     return `/assets/AuraSymbols/${rawPath}`;
   }
 

@@ -26,7 +26,7 @@ if (!$cardId && preg_match('~^/gallery/([^/?#]+)~', $parsedPath, $matches)) {
 }
 
 // Validate card ID format immediately
-if ($cardId && !preg_match('/^[a-zA-Z0-9_-]{1,50}$/', $cardId)) {
+if ($cardId && !preg_match(CARD_ID_PATTERN, $cardId)) {
   $cardId = null;
 }
 
