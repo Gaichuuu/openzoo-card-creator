@@ -200,11 +200,9 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
 
           <div className="text-sm text-gold-400">
             {card.creatorName ? (
-              <>Created by <span className="text-gray-300">{card.creatorName}</span> on </>
+              <>Created by <span className="text-white">{card.creatorName}</span> on </>
             ) : 'Created '}
-            <span className="text-gray-300">
-              {card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-            </span>
+            {card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
           </div>
 
           {card.remixedFrom && (
