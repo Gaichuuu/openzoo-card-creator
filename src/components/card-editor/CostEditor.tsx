@@ -3,6 +3,7 @@ import { useCardStore } from '@/lib/store';
 import { ELEMENTS } from '@/data/constants';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import type { Element } from '@/types/card';
+import { stripParagraphWrap } from '@/lib/textParserUtils';
 
 export function CostEditor() {
   const setImageField = useCardStore((s) => s.setImageField);
@@ -43,13 +44,12 @@ export function CostEditor() {
       snapshotGuard.current = true;
       const s = useCardStore.getState();
       const map = ZONE_ID_MAPS[s.layoutType];
-      const stripP = (v: string) => v.replace(/^<p>/, '').replace(/<\/p>$/, '');
       const aura1Img = map?.['Aura1'] != null ? s.cardData[`i${map['Aura1']}`] : '';
       const el1 = aura1Img?.replace('.png', '') as Element || '';
-      const cost1 = map?.['Cost1'] != null ? stripP(s.cardData[`t${map['Cost1']}`] || '') : '';
+      const cost1 = map?.['Cost1'] != null ? stripParagraphWrap(s.cardData[`t${map['Cost1']}`] || '') : '';
       const aura2Img = map?.['Aura2'] != null ? s.cardData[`i${map['Aura2']}`] : '';
       const el2 = aura2Img?.replace('.png', '') as Element | '' || '';
-      const cost2 = map?.['Cost2'] != null ? stripP(s.cardData[`t${map['Cost2']}`] || '') : '';
+      const cost2 = map?.['Cost2'] != null ? stripParagraphWrap(s.cardData[`t${map['Cost2']}`] || '') : '';
       if (el1) { setSlot1El(el1 as Element); setSlot1Cost(cost1); }
       if (el2) { setSlot2El(el2 as Element); setSlot2Cost(cost2); } else { setSlot2El(''); setSlot2Cost(''); }
       return;

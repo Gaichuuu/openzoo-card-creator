@@ -12,6 +12,41 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
+// Origin check — only accept requests from the production site
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$referer = $_SERVER['HTTP_REFERER'] ?? '';
+$allowedOrigin = 'https://openzootcg.com';
+$isLocalhost = str_contains($origin, 'localhost') || str_contains($referer, 'localhost');
+if (!$isLocalhost && $origin !== $allowedOrigin && !str_starts_with($referer, $allowedOrigin)) {
+  http_response_code(403);
+  echo json_encode(['error' => 'Forbidden']);
+  exit;
+}
+
+// Simple file-based rate limiter: max 30 notifications per minute per IP
+$rateLimitDir = sys_get_temp_dir() . '/openzoo-notify-rate';
+@mkdir($rateLimitDir, 0755, true);
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+$rateLimitFile = $rateLimitDir . '/' . md5($ip);
+$now = time();
+$window = 60;
+$maxRequests = 30;
+
+$timestamps = [];
+if (is_file($rateLimitFile)) {
+  $timestamps = array_filter(
+    explode("\n", file_get_contents($rateLimitFile)),
+    fn($ts) => $ts && (int)$ts > $now - $window
+  );
+}
+if (count($timestamps) >= $maxRequests) {
+  http_response_code(429);
+  echo json_encode(['error' => 'Too many requests']);
+  exit;
+}
+$timestamps[] = $now;
+file_put_contents($rateLimitFile, implode("\n", $timestamps));
+
 $config = @include __DIR__ . '/config.php';
 if (!$config) {
   echo json_encode(['ok' => true, 'skipped' => 'no config']);
@@ -26,16 +61,16 @@ if (!$webhookUrl || !$projectId) {
   exit;
 }
 
+require_once dirname(__DIR__) . '/lib/firestore.php';
+
 $input = json_decode(file_get_contents('php://input'), true);
 $cardId = $input['cardId'] ?? '';
 
-if (!$cardId || !preg_match('/^[a-zA-Z0-9_-]{1,50}$/', $cardId)) {
+if (!$cardId || !preg_match(CARD_ID_PATTERN, $cardId)) {
   http_response_code(400);
   echo json_encode(['error' => 'Invalid cardId']);
   exit;
 }
-
-require_once dirname(__DIR__) . '/lib/firestore.php';
 
 $card = fetch_card($cardId, $projectId);
 if (!$card) {

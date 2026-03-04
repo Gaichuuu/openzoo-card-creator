@@ -12,7 +12,7 @@ const BACKGROUND_ZONE_KEYS = new Set([
   'ArtBorder', 'BottomBar', 'CryptidInfoBar',
 ]);
 
-function loadImage(src: string, crossOrigin?: boolean): Promise<HTMLImageElement> {
+export function loadImage(src: string, crossOrigin?: boolean): Promise<HTMLImageElement> {
   const img = new Image();
   if (crossOrigin) img.crossOrigin = 'anonymous';
   img.src = src;
@@ -33,8 +33,8 @@ export function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([arr], { type: mime });
 }
 
-export function downloadDataUrl(dataUrl: string, filename: string) {
-  const url = URL.createObjectURL(dataUrlToBlob(dataUrl));
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.download = filename;
   link.href = url;
@@ -44,17 +44,31 @@ export function downloadDataUrl(dataUrl: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+export function sanitizeCardNameForFilename(name: string): string {
+  return (name || 'openzoo-card')
+    .replace(/\\n/g, ' ')
+    .replace(/[/\\:*?"<>|]/g, '_')
+    .trim() || 'openzoo-card';
+}
+
+export function downloadDataUrl(dataUrl: string, filename: string) {
+  downloadBlob(dataUrlToBlob(dataUrl), filename);
+}
+
 export async function exportStandardPng(
   el: HTMLElement,
   borderless: boolean,
 ): Promise<string> {
-  return toPng(el, {
+  await document.fonts.ready;
+  const opts = {
     pixelRatio: PIXEL_RATIO,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
     style: { transform: 'none', borderRadius: borderless ? '0' : undefined },
-  });
+  };
+  await toPng(el, opts);
+  return toPng(el, opts);
 }
 
 export async function exportPrintReadyPng(
@@ -98,20 +112,23 @@ async function exportPrintBorderless(
     ctx.fillRect(0, 0, printW, printH);
   }
 
-  const overlayUrl = await toPng(el, {
+  await document.fonts.ready;
+  const overlayOpts = {
     pixelRatio: pr,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
     style: { transform: 'none', borderRadius: '0' },
-    filter: (node) => {
+    filter: (node: Node) => {
       if (node instanceof HTMLElement) {
         const key = node.getAttribute('data-zone-key');
         if (key && BACKGROUND_ZONE_KEYS.has(key)) return false;
       }
       return true;
     },
-  });
+  };
+  await toPng(el, overlayOpts);
+  const overlayUrl = await toPng(el, overlayOpts);
   const overlayImg = await loadImage(overlayUrl);
   ctx.drawImage(overlayImg, bPx, bPx);
 
@@ -124,13 +141,16 @@ async function exportPrintBordered(el: HTMLElement): Promise<string> {
     ? getComputedStyle(rootZone).backgroundColor
     : 'rgb(221, 12, 34)';
 
-  const cardDataUrl = await toPng(el, {
+  await document.fonts.ready;
+  const borderedOpts = {
     pixelRatio: PIXEL_RATIO,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
     style: { transform: 'none', borderRadius: '0' },
-  });
+  };
+  await toPng(el, borderedOpts);
+  const cardDataUrl = await toPng(el, borderedOpts);
 
   const pr = PIXEL_RATIO;
   const canvas = document.createElement('canvas');

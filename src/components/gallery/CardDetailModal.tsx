@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import { TAG_COLORS } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
-import { downloadDataUrl, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
+import { downloadDataUrl, downloadBlob, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
 
 interface CardDetailModalProps {
   card: SavedCard;
@@ -68,7 +68,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
     try {
       await new Promise((r) => setTimeout(r, 500));
       hiddenCardRef.current.classList.add('card-exporting');
-      const filename = (card.cardName || 'openzoo-card').replace(/\\n/g, ' ');
+      const filename = sanitizeCardNameForFilename(card.cardName);
       const isBorderless = !!card.borderless;
 
       if (printReady) {
@@ -90,14 +90,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
     const snapshot = savedCardToSnapshot(card);
     const json = JSON.stringify(snapshot, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.download = `${(card.cardName || 'openzoo-card').replace(/\\n/g, ' ')}.json`;
-    link.href = url;
-    link.click();
-
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${sanitizeCardNameForFilename(card.cardName)}.json`);
   }
 
   return (
@@ -207,11 +200,9 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
 
           <div className="text-sm text-gold-400">
             {card.creatorName ? (
-              <>Created by <span className="text-gray-300">{card.creatorName}</span> on </>
+              <>Created by <span className="text-white">{card.creatorName}</span> on </>
             ) : 'Created '}
-            <span className="text-gray-300">
-              {card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-            </span>
+            {card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
           </div>
 
           {card.remixedFrom && (

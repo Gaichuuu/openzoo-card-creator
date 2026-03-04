@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCardStore } from '@/lib/store';
-import { downloadDataUrl, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
+import { downloadDataUrl, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
 
 interface ExportButtonProps {
   cardRef: React.RefObject<HTMLDivElement | null>;
@@ -10,7 +10,7 @@ export function ExportButton({ cardRef }: ExportButtonProps) {
   const cardName = useCardStore((s) => s.cardName);
   const borderless = useCardStore((s) => s.borderless);
   const [printReady, setPrintReady] = useState(() => localStorage.getItem('openzoo-print-ready') === '1');
-  const filename = (cardName || 'openzoo-card').replace(/\\n/g, ' ');
+  const filename = sanitizeCardNameForFilename(cardName);
 
   async function handleExport() {
     if (!cardRef.current) return;

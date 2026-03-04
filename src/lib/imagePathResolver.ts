@@ -1,3 +1,5 @@
+import { ELEMENTS } from '@/data/constants';
+
 const FOLDER_MAP: Record<string, string> = {
   'OpenZoo Banners': '/assets/Banners',
   'OpenZoo Background': '/assets',
@@ -12,11 +14,27 @@ const FOLDER_MAP: Record<string, string> = {
   'OpenZooMisc': '/assets',
 };
 
+const ALLOWED_EXTERNAL_HOSTS = [
+  'firebasestorage.googleapis.com',
+  'storage.googleapis.com',
+];
+
+function isAllowedUrl(url: string): boolean {
+  const match = url.match(/^https?:\/\/([^/:]+)/);
+  if (!match) return false;
+  const hostname = match[1];
+  return ALLOWED_EXTERNAL_HOSTS.some((h) => hostname === h || hostname.endsWith('.' + h));
+}
+
 export function resolveImagePath(rawPath: string): string {
   if (!rawPath || rawPath === 'default_image') return '';
 
-  if (rawPath.startsWith('data:') || rawPath.startsWith('blob:') || rawPath.startsWith('http') || rawPath.startsWith('/assets/')) {
+  if (rawPath.startsWith('data:') || rawPath.startsWith('blob:') || rawPath.startsWith('/assets/')) {
     return rawPath;
+  }
+
+  if (rawPath.startsWith('http://') || rawPath.startsWith('https://')) {
+    return isAllowedUrl(rawPath) ? rawPath : '';
   }
 
   for (const [dexFolder, localFolder] of Object.entries(FOLDER_MAP)) {
@@ -30,8 +48,7 @@ export function resolveImagePath(rawPath: string): string {
     return `/assets/Banners/${rawPath}`;
   }
 
-  if (['Cosmic', 'Dark', 'Earth', 'Flame', 'Forest', 'Frost', 'Light', 'Lightning', 'Neutral', 'Special', 'Spirit', 'Water']
-    .some(el => rawPath === `${el}.png`)) {
+  if (ELEMENTS.some(el => rawPath === `${el}.png`)) {
     return `/assets/AuraSymbols/${rawPath}`;
   }
 

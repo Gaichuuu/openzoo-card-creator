@@ -106,9 +106,11 @@ function buildZoneStyle(zone: Zone, styleOverride: CSSProperties): CSSProperties
     if (bg === 'none') {
       raw.backgroundColor = 'transparent';
       raw.backgroundImage = 'none';
-    } else if (bg.includes('gradient') || bg.includes('url(')) {
+    } else if (bg.includes('gradient')) {
       const lastParen = bg.lastIndexOf(')');
       raw.backgroundImage = lastParen !== -1 ? bg.slice(0, lastParen + 1) : bg;
+    } else if (bg.includes('url(')) {
+      // Reject url() in style overrides — images should go through resolveImagePath
     } else if (!raw.backgroundColor) {
       raw.backgroundColor = bg;
     }

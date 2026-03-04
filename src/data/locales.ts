@@ -69,6 +69,14 @@ const translations: Record<string, Record<Locale, string>> = {
   'Length': { en: 'Length', ja: '長さ' },
 };
 
+export function localeColon(locale: Locale): string {
+  return locale === 'ja' ? '：' : ':';
+}
+
+export function localeSp(locale: Locale): string {
+  return locale === 'ja' ? '' : ' ';
+}
+
 export function t(key: string, locale: Locale): string {
   return translations[key]?.[locale] ?? translations[key]?.en ?? key;
 }
@@ -109,8 +117,9 @@ export function formatTypesTribesLocale(
 
 export function formatMetadataLocale(label: string, value: string, locale: Locale): string {
   const localizedLabel = t(label, locale);
-  const colon = locale === 'ja' ? '：' : ': ';
-  return `{B:${localizedLabel}${colon}}${value}`;
+  const colon = localeColon(locale);
+  const sp = localeSp(locale);
+  return `{B:${localizedLabel}${colon}${sp}}${value}`;
 }
 
 export function getPSBVariable(locale: Locale): string {

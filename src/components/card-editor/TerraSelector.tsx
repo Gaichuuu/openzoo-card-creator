@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { TERRAS } from '@/data/constants';
 import { ZONE_ID_MAPS } from '@/data/layouts';
+import { stripParagraphWrap } from '@/lib/textParserUtils';
 
 const DEFAULT_TERRAS: [string, string] = ['Lake', 'Nighttime'];
 const DEFAULT_BONUSES = [
@@ -28,10 +29,9 @@ export function TerraSelector() {
     if (useCardStore.getState()._isLoadingSnapshot) {
       const s = useCardStore.getState();
       const map = ZONE_ID_MAPS[s.layoutType];
-      const stripP = (v: string) => v.replace(/^<p>/, '').replace(/<\/p>$/, '');
       const extractBonus = (key: string, suffix: string) => {
         const zoneId = map?.[key];
-        const text = zoneId != null ? stripP(s.cardData[`t${zoneId}`] || '') : '';
+        const text = zoneId != null ? stripParagraphWrap(s.cardData[`t${zoneId}`] || '') : '';
         return text.replace(` ${suffix}`, '');
       };
       setBonuses([

@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Card assets: art, thumbnails, zone images
+    match /cards/{cardId}/{fileName} {
+      // Anyone can read card images
+      allow read: if true;
+
+      // Allow uploads with size and content type restrictions
+      allow create: if
+        request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*')
+        && !request.resource.contentType.matches('image/svg.*');
+
+      // No update or delete
+      allow update, delete: if false;
+    }
+
+    // Reject all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

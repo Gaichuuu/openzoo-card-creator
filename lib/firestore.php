@@ -1,6 +1,8 @@
 <?php
 /* Firestore REST API helper */
 
+const CARD_ID_PATTERN = '/^[a-zA-Z0-9_-]{1,50}$/';
+
 function parse_firestore_fields(array $fields): array {
   $result = [];
   foreach ($fields as $key => $value) {
@@ -30,7 +32,7 @@ function parse_firestore_fields(array $fields): array {
 }
 
 function fetch_card(string $cardId, string $projectId): ?array {
-  if (!preg_match('/^[a-zA-Z0-9_-]{1,50}$/', $cardId)) {
+  if (!preg_match(CARD_ID_PATTERN, $cardId)) {
     return null;
   }
 

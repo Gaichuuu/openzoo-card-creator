@@ -1,4 +1,5 @@
 import { useCardStore } from '@/lib/store';
+import { downloadBlob, sanitizeCardNameForFilename } from '@/lib/exportUtils';
 
 export function JsonExportButton() {
   const getSnapshot = useCardStore((s) => s.getSnapshot);
@@ -8,14 +9,7 @@ export function JsonExportButton() {
     const snapshot = getSnapshot();
     const json = JSON.stringify(snapshot, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.download = `${cardName || 'openzoo-card'}.json`;
-    link.href = url;
-    link.click();
-
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${sanitizeCardNameForFilename(cardName)}.json`);
   }
 
   return (
