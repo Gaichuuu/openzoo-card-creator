@@ -77,7 +77,7 @@ export function ImageUploader() {
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
       handleFile(file);
     }
   }
@@ -111,10 +111,10 @@ export function ImageUploader() {
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/webp,image/gif"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFile(file);
+          if (file && file.type !== 'image/svg+xml') handleFile(file);
         }}
         className="hidden"
       />
