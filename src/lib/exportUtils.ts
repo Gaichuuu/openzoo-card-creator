@@ -12,12 +12,21 @@ const BACKGROUND_ZONE_KEYS = new Set([
   'ArtBorder', 'BottomBar', 'CryptidInfoBar',
 ]);
 
-const FONT_FACES = [
-  { style: 'normal', weight: 400, file: '/fonts/luxisr.ttf' },
-  { style: 'italic', weight: 400, file: '/fonts/luxisri.ttf' },
-  { style: 'normal', weight: 700, file: '/fonts/luxisb.ttf' },
-  { style: 'italic', weight: 700, file: '/fonts/luxisbi.ttf' },
+const LUXI_FONT_FACES = [
+  { family: 'Luxi Sans', style: 'normal', weight: 400, file: '/fonts/luxisr.ttf' },
+  { family: 'Luxi Sans', style: 'italic', weight: 400, file: '/fonts/luxisri.ttf' },
+  { family: 'Luxi Sans', style: 'normal', weight: 700, file: '/fonts/luxisb.ttf' },
+  { family: 'Luxi Sans', style: 'italic', weight: 700, file: '/fonts/luxisbi.ttf' },
 ];
+
+const GARAMOND_FONT_FACES = [
+  { family: 'EB Garamond', style: 'normal', weight: 400, file: '/fonts/EBGaramond-Medium.ttf' },
+  { family: 'EB Garamond', style: 'italic', weight: 400, file: '/fonts/EBGaramond-MediumItalic.ttf' },
+  { family: 'EB Garamond', style: 'normal', weight: 700, file: '/fonts/EBGaramond-Bold.ttf' },
+  { family: 'EB Garamond', style: 'italic', weight: 700, file: '/fonts/EBGaramond-BoldItalic.ttf' },
+];
+
+const FONT_FACES = [...LUXI_FONT_FACES, ...GARAMOND_FONT_FACES];
 
 let fontEmbedCSSCache: string | null = null;
 let fontEmbedCSSPending: Promise<string> | null = null;
@@ -38,7 +47,7 @@ function getFontEmbedCSS(): Promise<string> {
   if (fontEmbedCSSPending) return fontEmbedCSSPending;
   fontEmbedCSSPending = Promise.all(FONT_FACES.map(async (f) => {
     const dataUrl = await fetchAsDataUrl(f.file);
-    return `@font-face { font-family: 'Luxi Sans'; font-style: ${f.style}; font-weight: ${f.weight}; src: url('${dataUrl}') format('truetype'); }`;
+    return `@font-face { font-family: '${f.family}'; font-style: ${f.style}; font-weight: ${f.weight}; src: url('${dataUrl}') format('truetype'); }`;
   })).then((rules) => {
     fontEmbedCSSCache = rules.join('\n');
     fontEmbedCSSPending = null;

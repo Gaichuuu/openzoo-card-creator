@@ -46,10 +46,38 @@
   src: url('/fonts/luxisbi.ttf') format('truetype');
 }
 
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/EBGaramond-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: italic;
+  font-weight: 400;
+  src: url('/fonts/EBGaramond-MediumItalic.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/EBGaramond-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: italic;
+  font-weight: 700;
+  src: url('/fonts/EBGaramond-BoldItalic.ttf') format('truetype');
+}
+
 :root {
-  --font-cambria: 'Crimson Text', 'Cambria', 'Times New Roman', serif;
+  --font-cambria: 'EB Garamond', 'Cambria', 'Times New Roman', serif;
   --font-arial-black: 'Arial Black', 'Montserrat Black', sans-serif;
-  --font-lucida: 'Luxi Sans', sans-serif;
+  --font-lucida: 'EB Garamond', serif;
 }
 
 body {

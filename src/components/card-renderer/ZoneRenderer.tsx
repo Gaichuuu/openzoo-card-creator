@@ -118,10 +118,10 @@ function buildZoneStyle(zone: Zone, styleOverride: CSSProperties): CSSProperties
   delete raw.background;
 
   if (raw.fontFamily === "var(--cambria)") {
-    raw.fontFamily = "'Cambria', 'Crimson Text', 'Times New Roman', serif";
+    raw.fontFamily = "'Cambria', 'EB Garamond', 'Times New Roman', serif";
   }
   if (raw.fontFamily === "'Lucida primary'") {
-    raw.fontFamily = "'Luxi Sans', sans-serif";
+    raw.fontFamily = "'EB Garamond', serif";
   }
 
   return raw as CSSProperties;
