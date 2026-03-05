@@ -12,6 +12,36 @@ const BACKGROUND_ZONE_KEYS = new Set([
   'ArtBorder', 'BottomBar', 'CryptidInfoBar',
 ]);
 
+const FONT_FACES = [
+  { style: 'normal', weight: 400, file: '/fonts/luxisr.ttf' },
+  { style: 'italic', weight: 400, file: '/fonts/luxisri.ttf' },
+  { style: 'normal', weight: 700, file: '/fonts/luxisb.ttf' },
+  { style: 'italic', weight: 700, file: '/fonts/luxisbi.ttf' },
+];
+
+let fontEmbedCSSCache: string | null = null;
+
+async function fetchAsDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function getFontEmbedCSS(): Promise<string> {
+  if (fontEmbedCSSCache) return fontEmbedCSSCache;
+  const rules = await Promise.all(FONT_FACES.map(async (f) => {
+    const dataUrl = await fetchAsDataUrl(f.file);
+    return `@font-face { font-family: 'Luxi Sans'; font-style: ${f.style}; font-weight: ${f.weight}; src: url('${dataUrl}') format('truetype'); }`;
+  }));
+  fontEmbedCSSCache = rules.join('\n');
+  return fontEmbedCSSCache;
+}
+
 export function loadImage(src: string, crossOrigin?: boolean): Promise<HTMLImageElement> {
   const img = new Image();
   if (crossOrigin) img.crossOrigin = 'anonymous';
@@ -59,12 +89,13 @@ export async function exportStandardPng(
   el: HTMLElement,
   borderless: boolean,
 ): Promise<string> {
-  await document.fonts.ready;
+  const [fontEmbedCSS] = await Promise.all([getFontEmbedCSS(), document.fonts.ready]);
   const opts = {
     pixelRatio: PIXEL_RATIO,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
+    fontEmbedCSS,
     style: { transform: 'none', borderRadius: borderless ? '0' : undefined },
   };
   await toPng(el, opts);
@@ -112,12 +143,13 @@ async function exportPrintBorderless(
     ctx.fillRect(0, 0, printW, printH);
   }
 
-  await document.fonts.ready;
+  const [fontEmbedCSS] = await Promise.all([getFontEmbedCSS(), document.fonts.ready]);
   const overlayOpts = {
     pixelRatio: pr,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
+    fontEmbedCSS,
     style: { transform: 'none', borderRadius: '0' },
     filter: (node: Node) => {
       if (node instanceof HTMLElement) {
@@ -141,12 +173,13 @@ async function exportPrintBordered(el: HTMLElement): Promise<string> {
     ? getComputedStyle(rootZone).backgroundColor
     : 'rgb(221, 12, 34)';
 
-  await document.fonts.ready;
+  const [fontEmbedCSS] = await Promise.all([getFontEmbedCSS(), document.fonts.ready]);
   const borderedOpts = {
     pixelRatio: PIXEL_RATIO,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
+    fontEmbedCSS,
     style: { transform: 'none', borderRadius: '0' },
   };
   await toPng(el, borderedOpts);
