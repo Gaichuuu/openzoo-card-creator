@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import type { DocumentSnapshot } from 'firebase/firestore';
 import type { SavedCard, CardType, Element, CardTag } from '@/types/card';
-import { fetchCards, fetchCard } from '@/lib/galleryService';
+import { fetchCards, fetchCard, type PageCursor } from '@/lib/galleryService';
 import { GalleryCard, GalleryCardSkeleton } from './GalleryCard';
 import { CardDetailModal } from './CardDetailModal';
 import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS } from '@/data/constants';
 
 const GALLERY_ELEMENTS = ELEMENTS.filter((e) => e !== 'Special');
+const GRID_CLASS = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4';
 
 export function GalleryPage() {
   const { cardId } = useParams<{ cardId?: string }>();
@@ -22,45 +22,50 @@ export function GalleryPage() {
   const [filterElement, setFilterElement] = useState<Element | ''>('');
   const [filterTag, setFilterTag] = useState<CardTag | ''>('');
   const [searchName, setSearchName] = useState('');
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [cursor, setCursor] = useState<PageCursor | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const buildFilters = useCallback(() => ({
+    cardType: filterType || undefined,
+    element: filterElement || undefined,
+    tag: filterTag || undefined,
+  }), [filterType, filterElement, filterTag]);
 
   useEffect(() => {
     setLoading(true);
     setError(false);
     setCards([]);
-    setLastDoc(null);
+    setCursor(null);
     setHasMore(false);
-    fetchCards({ cardType: filterType || undefined, element: filterElement || undefined, tag: filterTag || undefined })
+    fetchCards(buildFilters())
       .then((result) => {
         setCards(result.cards);
-        setLastDoc(result.lastDoc);
+        setCursor(result.cursor);
         setHasMore(result.hasMore);
         setLoading(false);
       })
       .catch(() => { setError(true); setLoading(false); });
-  }, [filterType, filterElement, filterTag]);
+  }, [buildFilters]);
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore || !lastDoc) return;
+    if (loadingMoreRef.current || !hasMore || !cursor) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const result = await fetchCards(
-        { cardType: filterType || undefined, element: filterElement || undefined, tag: filterTag || undefined },
-        undefined,
-        lastDoc,
-      );
+      const result = await fetchCards(buildFilters(), cursor);
       setCards((prev) => [...prev, ...result.cards]);
-      setLastDoc(result.lastDoc);
+      setCursor(result.cursor);
       setHasMore(result.hasMore);
     } catch {
       // User can scroll again to retry
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, lastDoc, filterType, filterElement, filterTag]);
+  }, [hasMore, cursor, buildFilters]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -173,7 +178,7 @@ export function GalleryPage() {
       <div className="p-6">
         {loading ? (
           !cardId && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+            <div className={GRID_CLASS}>
               {Array.from({ length: 24 }, (_, i) => (
                 <GalleryCardSkeleton key={i} />
               ))}
@@ -186,7 +191,7 @@ export function GalleryPage() {
             {cards.length === 0 ? 'No cards published yet.' : 'No cards match your filters.'}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+          <div className={GRID_CLASS}>
             {filteredCards.map((card) => (
               <GalleryCard
                 key={card.id}
@@ -197,14 +202,13 @@ export function GalleryPage() {
           </div>
         )}
         {!loading && !error && hasMore && !searchName && (
-          <div ref={sentinelRef} className="flex justify-center py-8">
-            {loadingMore && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 w-full">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <GalleryCardSkeleton key={i} />
-                ))}
-              </div>
-            )}
+          <div ref={sentinelRef} className="h-1" />
+        )}
+        {loadingMore && (
+          <div className={`${GRID_CLASS} pt-4`}>
+            {Array.from({ length: 8 }, (_, i) => (
+              <GalleryCardSkeleton key={i} />
+            ))}
           </div>
         )}
       </div>

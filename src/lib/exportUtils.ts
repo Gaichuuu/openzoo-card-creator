@@ -20,6 +20,7 @@ const FONT_FACES = [
 ];
 
 let fontEmbedCSSCache: string | null = null;
+let fontEmbedCSSPending: Promise<string> | null = null;
 
 async function fetchAsDataUrl(url: string): Promise<string> {
   const res = await fetch(url);
@@ -32,14 +33,18 @@ async function fetchAsDataUrl(url: string): Promise<string> {
   });
 }
 
-async function getFontEmbedCSS(): Promise<string> {
-  if (fontEmbedCSSCache) return fontEmbedCSSCache;
-  const rules = await Promise.all(FONT_FACES.map(async (f) => {
+function getFontEmbedCSS(): Promise<string> {
+  if (fontEmbedCSSCache) return Promise.resolve(fontEmbedCSSCache);
+  if (fontEmbedCSSPending) return fontEmbedCSSPending;
+  fontEmbedCSSPending = Promise.all(FONT_FACES.map(async (f) => {
     const dataUrl = await fetchAsDataUrl(f.file);
     return `@font-face { font-family: 'Luxi Sans'; font-style: ${f.style}; font-weight: ${f.weight}; src: url('${dataUrl}') format('truetype'); }`;
-  }));
-  fontEmbedCSSCache = rules.join('\n');
-  return fontEmbedCSSCache;
+  })).then((rules) => {
+    fontEmbedCSSCache = rules.join('\n');
+    fontEmbedCSSPending = null;
+    return fontEmbedCSSCache;
+  });
+  return fontEmbedCSSPending;
 }
 
 export function loadImage(src: string, crossOrigin?: boolean): Promise<HTMLImageElement> {

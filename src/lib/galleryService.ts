@@ -153,9 +153,11 @@ interface FetchFilters {
   tag?: string;
 }
 
+export type PageCursor = DocumentSnapshot;
+
 export interface FetchResult {
   cards: SavedCard[];
-  lastDoc: DocumentSnapshot | null;
+  cursor: PageCursor | null;
   hasMore: boolean;
 }
 
@@ -163,8 +165,8 @@ const DEFAULT_PAGE_SIZE = 24;
 
 export async function fetchCards(
   filters?: FetchFilters,
+  cursor?: PageCursor | null,
   pageSize: number = DEFAULT_PAGE_SIZE,
-  cursor?: DocumentSnapshot | null,
 ): Promise<FetchResult> {
   const constraints: QueryConstraint[] = [];
 
@@ -185,11 +187,11 @@ export async function fetchCards(
 
   const q = query(collection(db, 'cards'), ...constraints);
   const snap = await getDocs(q);
-  const lastDoc = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+  const last = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
 
   return {
     cards: snap.docs.map((d) => docToSavedCard(d.data())),
-    lastDoc,
+    cursor: last,
     hasMore: snap.docs.length === pageSize,
   };
 }
