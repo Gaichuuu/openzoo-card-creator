@@ -8,7 +8,9 @@ import {
   where,
   orderBy,
   limit,
+  startAfter,
   Timestamp,
+  type DocumentSnapshot,
   type QueryConstraint,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -151,7 +153,19 @@ interface FetchFilters {
   tag?: string;
 }
 
-export async function fetchCards(filters?: FetchFilters): Promise<SavedCard[]> {
+export interface FetchResult {
+  cards: SavedCard[];
+  lastDoc: DocumentSnapshot | null;
+  hasMore: boolean;
+}
+
+const DEFAULT_PAGE_SIZE = 24;
+
+export async function fetchCards(
+  filters?: FetchFilters,
+  pageSize: number = DEFAULT_PAGE_SIZE,
+  cursor?: DocumentSnapshot | null,
+): Promise<FetchResult> {
   const constraints: QueryConstraint[] = [];
 
   if (filters?.cardType) {
@@ -164,10 +178,20 @@ export async function fetchCards(filters?: FetchFilters): Promise<SavedCard[]> {
     constraints.push(where('tags', 'array-contains', filters.tag));
   }
   constraints.push(orderBy('createdAt', 'desc'));
+  if (cursor) {
+    constraints.push(startAfter(cursor));
+  }
+  constraints.push(limit(pageSize));
 
   const q = query(collection(db, 'cards'), ...constraints);
   const snap = await getDocs(q);
-  return snap.docs.map((d) => docToSavedCard(d.data()));
+  const lastDoc = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+
+  return {
+    cards: snap.docs.map((d) => docToSavedCard(d.data())),
+    lastDoc,
+    hasMore: snap.docs.length === pageSize,
+  };
 }
 
 export async function fetchCard(id: string): Promise<SavedCard | null> {

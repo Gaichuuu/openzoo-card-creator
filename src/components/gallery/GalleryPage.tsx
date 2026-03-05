@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import type { DocumentSnapshot } from 'firebase/firestore';
 import type { SavedCard, CardType, Element, CardTag } from '@/types/card';
 import { fetchCards, fetchCard } from '@/lib/galleryService';
 import { GalleryCard, GalleryCardSkeleton } from './GalleryCard';
@@ -21,16 +22,56 @@ export function GalleryPage() {
   const [filterElement, setFilterElement] = useState<Element | ''>('');
   const [filterTag, setFilterTag] = useState<CardTag | ''>('');
   const [searchName, setSearchName] = useState('');
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setLoading(true);
     setError(false);
+    setCards([]);
+    setLastDoc(null);
+    setHasMore(false);
     fetchCards({ cardType: filterType || undefined, element: filterElement || undefined, tag: filterTag || undefined })
       .then((result) => {
-        setCards(result);
+        setCards(result.cards);
+        setLastDoc(result.lastDoc);
+        setHasMore(result.hasMore);
         setLoading(false);
       })
       .catch(() => { setError(true); setLoading(false); });
   }, [filterType, filterElement, filterTag]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || !lastDoc) return;
+    setLoadingMore(true);
+    try {
+      const result = await fetchCards(
+        { cardType: filterType || undefined, element: filterElement || undefined, tag: filterTag || undefined },
+        undefined,
+        lastDoc,
+      );
+      setCards((prev) => [...prev, ...result.cards]);
+      setLastDoc(result.lastDoc);
+      setHasMore(result.hasMore);
+    } catch {
+      // User can scroll again to retry
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, lastDoc, filterType, filterElement, filterTag]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMore(); },
+      { rootMargin: '200px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   useEffect(() => {
     if (!cardId) {
@@ -133,7 +174,7 @@ export function GalleryPage() {
         {loading ? (
           !cardId && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
-              {Array.from({ length: 16 }, (_, i) => (
+              {Array.from({ length: 24 }, (_, i) => (
                 <GalleryCardSkeleton key={i} />
               ))}
             </div>
@@ -153,6 +194,17 @@ export function GalleryPage() {
                 onClick={() => navigate(`/gallery/${card.id}`)}
               />
             ))}
+          </div>
+        )}
+        {!loading && !error && hasMore && !searchName && (
+          <div ref={sentinelRef} className="flex justify-center py-8">
+            {loadingMore && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 w-full">
+                {Array.from({ length: 8 }, (_, i) => (
+                  <GalleryCardSkeleton key={i} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
