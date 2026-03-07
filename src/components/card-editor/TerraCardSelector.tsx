@@ -30,6 +30,7 @@ export function TerraCardSelector() {
       const img = zoneId != null ? s.cardData[`i${zoneId}`] || '' : '';
       const m = img.match(/OpenZoo Terra\/(.+)\.png/);
       if (m && TERRAS.includes(m[1] as Terra)) setTerra(m[1] as Terra);
+      setStyleField('TerraSymbol', '{outlineWidth:0px;left:-2px}');
       return;
     }
     if (snapshotGuard.current) return;

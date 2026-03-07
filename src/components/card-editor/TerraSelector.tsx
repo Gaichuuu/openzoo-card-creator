@@ -38,6 +38,10 @@ export function TerraSelector() {
         { atk: extractBonus('Terra1ATK', 'ATK'), lp: extractBonus('Terra1LP', 'LP') },
         { atk: extractBonus('Terra2ATK', 'ATK'), lp: extractBonus('Terra2LP', 'LP') },
       ]);
+      setStyleField('Terra1ATK', BONUS_STYLE);
+      setStyleField('Terra1LP', BONUS_STYLE);
+      setStyleField('Terra2ATK', BONUS_STYLE);
+      setStyleField('Terra2LP', BONUS_STYLE);
       snapshotGuard.current = true;
       return;
     }

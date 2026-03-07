@@ -19,7 +19,14 @@ export function TraitSelector() {
   const availableTraits = isPotion ? POTION_TRAITS : isSpell ? SPELL_TRAITS : TRAITS;
 
   useEffect(() => {
-    if (useCardStore.getState()._isLoadingSnapshot) { snapshotGuard.current = true; return; }
+    if (useCardStore.getState()._isLoadingSnapshot) {
+      const traitStyle = '{width:20px;height:20px}';
+      setStyleField('Trait1', traitStyle);
+      setStyleField('Trait2', traitStyle);
+      setStyleField('Trait3', traitStyle);
+      snapshotGuard.current = true;
+      return;
+    }
     if (snapshotGuard.current) return;
     setTrait(0, 'Convert');
     const traitStyle = '{width:20px;height:20px}';

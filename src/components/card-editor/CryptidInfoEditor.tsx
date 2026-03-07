@@ -60,6 +60,8 @@ export function CryptidInfoEditor() {
         return { label: cfg.defaultLabel, value: cfg.defaultValue };
       });
       setSlots(restored);
+      setStyleField('DOB/Discovered:', '{top:0px;left:0px}');
+      setStyleField('CryptidInfoBar', '{background:linear-gradient(to top, rgb(230, 165, 10), rgb(248, 210, 50));gap:2px}');
       snapshotGuard.current = true;
       return;
     }
