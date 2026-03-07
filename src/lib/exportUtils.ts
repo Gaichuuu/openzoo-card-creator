@@ -40,6 +40,10 @@ function getFontEmbedCSS(): Promise<string> {
     const dataUrl = await fetchAsDataUrl(f.file);
     return `@font-face { font-family: '${f.family}'; font-style: ${f.style}; font-weight: ${f.weight}; src: url('${dataUrl}') format('truetype'); }`;
   })).then((rules) => {
+    rules.push(
+      "@font-face { font-family: 'Arial Black'; src: local('Arial Black'), local('Arial-Black'); }",
+      "@font-face { font-family: 'Cambria'; src: local('Cambria'); }",
+    );
     fontEmbedCSSCache = rules.join('\n');
     fontEmbedCSSPending = null;
     return fontEmbedCSSCache;
