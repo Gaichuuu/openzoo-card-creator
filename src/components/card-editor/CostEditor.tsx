@@ -35,7 +35,7 @@ export function CostEditor() {
     setStyleField(`Aura${slot}`, el ? '{border:1px solid rgba(0,0,0,1)}' : '');
     setImageField(`CostImage${slot}`, showCost ? 'CostBox.png' : '');
     setTextField(`Cost${slot}`, showCost ? cost : '');
-    const costFontSize = cost.length > 1 ? '10px' : '13px';
+    const costFontSize = cost.length >= 2 ? '10px' : '13px';
     setStyleField(`Cost${slot}`, `{fontWeight:bold;fontSize:${costFontSize};top:-1px;left:-0.5px}`);
     setStyleField(`CostImage${slot}`, showCost ? '{border:1px solid rgba(0,0,0,1)}' : '');
   };
