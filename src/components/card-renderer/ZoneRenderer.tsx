@@ -2,6 +2,7 @@ import { type CSSProperties, useRef, useLayoutEffect, useState } from 'react';
 import type { Zone } from '@/types/layout';
 import type { CardData } from '@/types/card';
 import { resolveImagePath } from '@/lib/imagePathResolver';
+import { FONT_BODY, FONT_CAMBRIA } from '@/data/constants';
 import { useCardStore } from '@/lib/store';
 import { ParsedText } from './TextParser';
 
@@ -118,10 +119,10 @@ function buildZoneStyle(zone: Zone, styleOverride: CSSProperties): CSSProperties
   delete raw.background;
 
   if (raw.fontFamily === "var(--cambria)") {
-    raw.fontFamily = "'Cambria', 'Crimson Text', 'Times New Roman', serif";
+    raw.fontFamily = FONT_CAMBRIA;
   }
   if (raw.fontFamily === "'Lucida primary'") {
-    raw.fontFamily = "'Luxi Sans', sans-serif";
+    raw.fontFamily = FONT_BODY;
   }
 
   return raw as CSSProperties;

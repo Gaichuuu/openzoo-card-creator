@@ -8,6 +8,7 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
     fontSize: '0.40em',
     display: 'inline',
     color: 'inherit',
+    letterSpacing: '0.01em',
   },
   TTL: {
     fontSize: '0.81em',
