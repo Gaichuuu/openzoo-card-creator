@@ -10,7 +10,7 @@ const DEFAULT_BONUSES = [
   { atk: '', lp: '+15' },
 ];
 
-const BONUS_STYLE = '{fontSize:8px;fontWeight:bold;letterSpacing:-0.1em;whiteSpace:nowrap;overflow:visible}';
+const BONUS_STYLE = '{fontSize:8px;fontWeight:bold;letterSpacing:-0.1em;whiteSpace:nowrap;textWrap:nowrap;overflow:visible}';
 
 function formatBonus(value: string, suffix: string): string {
   if (!value) return '';
