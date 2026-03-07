@@ -141,11 +141,11 @@ function applyStrongAgainst(
   const containerStyleKey = getStyleZoneId(layoutType, 'SAContainer');
   if (containerStyleKey) {
     const saContainerLeft = locale === 'ja' ? '19px' : '9px';
-    newData[containerStyleKey] = `{left:${saContainerLeft};width:78px;justifyContent:flex-end;gap:1px;outline:none;fontSize:8px;fontWeight:bold;letterSpacing:-0.1em;color:red;-webkit-text-stroke:0.5px white}`;
+    newData[containerStyleKey] = `{left:${saContainerLeft};width:78px;justifyContent:flex-end;gap:1px;outline:none;fontSize:9px;fontFamily:'EB Garamond', serif;fontWeight:bold;letterSpacing:-0.1em;color:red;-webkit-text-stroke:0.5px white}`;
   }
   const valueKey = getTextZoneId(layoutType, 'SAValue');
   if (valueKey) {
-    newData[valueKey] = strengths.length > 0 ? '<p>+20</p>' : '';
+    newData[valueKey] = strengths.length > 0 ? '<p>{B:+20}</p>' : '';
   }
   return strengths;
 }
