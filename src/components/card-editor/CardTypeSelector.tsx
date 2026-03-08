@@ -18,7 +18,7 @@ export function CardTypeSelector() {
         value={cardType}
         onChange={(e) => setCardType(e.target.value as CardType)}
         disabled={isRemix}
-        className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {CARD_TYPES.map((ct) => (
           <option key={ct} value={ct}>

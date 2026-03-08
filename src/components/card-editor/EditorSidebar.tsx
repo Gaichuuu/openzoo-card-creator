@@ -63,7 +63,7 @@ function TextField({ label, value, onChange, placeholder, multiline, maxLength }
           placeholder={placeholder}
           maxLength={maxLength}
           rows={3}
-          className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500 resize-y"
+          className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400 resize-y"
         />
       ) : (
         <input
@@ -72,7 +72,7 @@ function TextField({ label, value, onChange, placeholder, multiline, maxLength }
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           maxLength={maxLength}
-          className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
+          className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
         />
       )}
     </div>
@@ -360,7 +360,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
           <select
             value={locale}
             onChange={(e) => setLocale(e.target.value as Locale)}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
+            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
           >
             <option value="en">English</option>
             <option value="ja">日本語</option>
@@ -386,7 +386,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
                 }
               }
             }}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
+            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
           >
             <option value="Red">Red</option>
             <option value="Sample">Sample</option>
@@ -416,7 +416,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
             onChange={(e) => setCardName(e.target.value)}
             placeholder="Enter card name"
             maxLength={40}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
+            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
           />
         </div>
       )}

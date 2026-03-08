@@ -131,7 +131,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
             onChange={(e) => setCreatorName(e.target.value)}
             placeholder="Nickname"
             maxLength={40}
-            className="w-full bg-navy-800 border border-navy-600 text-white text-sm rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
+            className="w-full bg-navy-800 border border-navy-600 text-white text-sm rounded px-3 py-1.5 focus:outline-none focus:border-gold-400"
           />
         </div>
 

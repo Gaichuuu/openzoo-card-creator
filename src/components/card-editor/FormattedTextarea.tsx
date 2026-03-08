@@ -48,7 +48,7 @@ export function FormattedTextarea({ value, onChange, placeholder, rows = 2, head
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
-        className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500 resize-y"
+        className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400 resize-y"
       />
     </div>
   );

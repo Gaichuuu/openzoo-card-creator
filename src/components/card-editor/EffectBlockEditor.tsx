@@ -96,7 +96,7 @@ function PowerEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: (u: Pa
           onChange={(e) => onUpdate({ powerName: e.target.value })}
           placeholder="e.g. ROCK TOMB"
           maxLength={40}
-          className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+          className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400"
         />
       </div>
       <FormattedTextarea
@@ -145,7 +145,7 @@ function StatusEffectRow({
           onChange={(e) => onDurationChange(e.target.value)}
           placeholder="3"
           maxLength={4}
-          className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+          className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400"
         />
       </div>
     </div>
@@ -176,7 +176,7 @@ function AttackBlockEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
             onChange={(e) => onUpdate({ attackName: e.target.value })}
             placeholder="Attack name"
             maxLength={40}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400"
           />
         </div>
         <div className="w-16">
@@ -187,7 +187,7 @@ function AttackBlockEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
             onChange={(e) => onUpdate({ attackDamage: e.target.value })}
             placeholder="50"
             maxLength={4}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400"
           />
         </div>
       </div>
@@ -293,7 +293,7 @@ function TribalBoostEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
               onChange={(e) => onUpdate({ boostTarget: e.target.value })}
               placeholder="e.g. Sasquatch"
               maxLength={20}
-              className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+              className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400"
             />
           )}
         </div>
@@ -307,7 +307,7 @@ function TribalBoostEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
             onChange={(e) => onUpdate({ boostAtk: e.target.value })}
             placeholder="+10"
             maxLength={4}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400"
           />
         </div>
         <div className="flex-1">
@@ -318,7 +318,7 @@ function TribalBoostEditor({ block, onUpdate }: { block: EffectBlock; onUpdate: 
             onChange={(e) => onUpdate({ boostLp: e.target.value })}
             placeholder="+10"
             maxLength={4}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400"
           />
         </div>
       </div>
