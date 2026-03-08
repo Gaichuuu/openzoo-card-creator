@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* === Retro Debug Menu Theme === */
 @theme {
   --color-navy-950: #080a19;
   --color-navy-900: #0c1228;

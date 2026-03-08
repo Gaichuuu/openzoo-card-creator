@@ -7,9 +7,6 @@ type ModelViewer = HTMLElement & {
   createTexture: (uri: string) => Promise<any>;
 };
 
-const CARD_W = 380;
-const CARD_H = 540;
-
 export function Card3DHero() {
   const viewerRef = useRef<ModelViewer>(null);
   const [loaded, setLoaded] = useState(false);
@@ -73,22 +70,15 @@ export function Card3DHero() {
   if (error) return null;
 
   return (
-    <div style={{ width: CARD_W, height: CARD_H, position: 'relative' }}>
+    <div className="relative w-65 h-92.5 md:w-95 md:h-135">
       {!loaded && (
         <div
-          className="animate-pulse"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="animate-pulse absolute inset-0 flex items-center justify-center"
         >
           <div
             style={{
-              width: CARD_W * 0.78,
-              height: CARD_H * 0.82,
+              width: '78%',
+              height: '82%',
               borderRadius: 12,
               background: 'linear-gradient(135deg, rgb(30 41 59) 0%, rgb(51 65 85) 100%)',
             }}

@@ -335,7 +335,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
   };
 
   return (
-    <div className="w-80 bg-navy-900 border-r border-navy-600 overflow-y-auto p-4 space-y-4 shrink-0">
+    <div className="w-full md:w-80 bg-navy-900 md:border-r border-navy-600 overflow-y-auto p-4 space-y-4 shrink-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/" className="hover:opacity-80 transition-opacity">

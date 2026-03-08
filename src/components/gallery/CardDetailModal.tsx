@@ -5,6 +5,10 @@ import { TAG_COLORS } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
 import { downloadDataUrl, downloadBlob, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
 
+export const MODAL_CONTAINER_CLASS = 'flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
+export const MODAL_CARD_CLASS = 'h-[50vh] md:h-[80vh]';
+export const MODAL_DETAILS_CLASS = 'bg-navy-900 p-5 w-full md:w-72 space-y-4 pointer-events-auto border-gold';
+
 interface CardDetailModalProps {
   card: SavedCard;
   onClose: () => void;
@@ -99,7 +103,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
       onClick={onClose}
     >
       {/* Modal */}
-      <div className="flex gap-6 items-start mx-4 pointer-events-none">
+      <div className={MODAL_CONTAINER_CLASS}>
         {/* Card */}
         <div
           style={{ perspective: '800px' }}
@@ -110,6 +114,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
             onMouseMove={card.thumbnailUrl ? handleCardMouseMove : undefined}
             onMouseEnter={card.thumbnailUrl ? handleCardMouseEnter : undefined}
             onMouseLeave={card.thumbnailUrl ? handleCardMouseLeave : undefined}
+            className={MODAL_CARD_CLASS}
             style={{
               transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) scale(${hovering ? 1.05 : 1})`,
               transformStyle: 'preserve-3d',
@@ -118,7 +123,6 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
                 : 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
               position: 'relative',
               cursor: 'default',
-              height: '80vh',
               aspectRatio: '238/333',
             }}
           >
@@ -161,7 +165,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
 
         {/* Details panel */}
         <div
-          className="relative bg-navy-900 p-5 w-72 space-y-4 pointer-events-auto border-gold"
+          className={`relative ${MODAL_DETAILS_CLASS}`}
           onClick={(e) => e.stopPropagation()}
         >
           <button
