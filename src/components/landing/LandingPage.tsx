@@ -3,7 +3,7 @@ import { Card3DHero } from './Card3DHero';
 
 export function LandingPage() {
   return (
-    <div className="flex flex-col h-screen bg-navy-950">
+    <div className="flex flex-col h-dvh bg-navy-950">
       <div className="flex flex-1 items-center justify-center px-4 md:px-8 py-8 md:py-0 overflow-auto">
         <div className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
           <Card3DHero />

@@ -93,11 +93,12 @@ input:not([type="checkbox"]):not([type="file"]):focus,
 select:focus,
 textarea:focus {
   border-image: none;
-  border-color: #3b82f6;
+  border-color: #dcbe64;
+  outline: none;
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .card-borderless [data-zone-key="ArtBorder"],

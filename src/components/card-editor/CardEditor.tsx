@@ -15,7 +15,7 @@ export function CardEditor() {
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
+    <div className="flex flex-col md:flex-row h-dvh">
       {/* Mobile tab bar */}
       <div className="flex md:hidden border-b border-navy-600 bg-navy-900 shrink-0">
         <button

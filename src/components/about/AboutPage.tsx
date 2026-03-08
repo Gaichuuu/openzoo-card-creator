@@ -205,7 +205,7 @@ function ScpTable({ data }: { data: ScpAttribution[] }) {
 
 export function AboutPage() {
   return (
-    <div className="min-h-screen bg-navy-950 text-white">
+    <div className="min-h-dvh bg-navy-950 text-white">
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-10">
         <header className="space-y-4">
           <Link to="/" className="inline-block">

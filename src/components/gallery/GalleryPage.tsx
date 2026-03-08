@@ -29,6 +29,13 @@ export function GalleryPage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (loadingCard && !selectedCard) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [loadingCard, selectedCard]);
+
   const buildFilters = useCallback(() => ({
     cardType: filterType || undefined,
     element: filterElement || undefined,
@@ -106,7 +113,7 @@ export function GalleryPage() {
     : cards;
 
   return (
-    <div className="min-h-screen bg-navy-950 text-white">
+    <div className="min-h-dvh bg-navy-950 text-white">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-navy-950 px-4 md:px-6 py-3 flex flex-wrap items-center gap-2 md:gap-4 border-b-gold">
         <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">

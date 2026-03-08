@@ -68,7 +68,7 @@ export function CreatePage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-navy-950 text-gold-400">
+      <div className="flex h-dvh items-center justify-center bg-navy-950 text-gold-400">
         Loading card...
       </div>
     );
@@ -76,7 +76,7 @@ export function CreatePage() {
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center bg-navy-950 text-red-400">
+      <div className="flex h-dvh items-center justify-center bg-navy-950 text-red-400">
         {error}
       </div>
     );
