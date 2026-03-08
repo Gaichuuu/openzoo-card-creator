@@ -9,6 +9,7 @@ import { CARD_TYPES, ELEMENTS } from '@/data/constants';
 
 const GALLERY_ELEMENTS = ELEMENTS.filter((e) => e !== 'Special');
 const GRID_CLASS = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4';
+const FILTER_CLASS = 'bg-navy-800 text-white text-sm px-3 py-1.5 min-w-0';
 
 export function GalleryPage() {
   const { cardId } = useParams<{ cardId?: string }>();
@@ -128,7 +129,7 @@ export function GalleryPage() {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as CardType | '')}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5 min-w-0"
+            className={FILTER_CLASS}
           >
             <option value="">Types</option>
             {CARD_TYPES.map((t) => (
@@ -139,7 +140,7 @@ export function GalleryPage() {
           <select
             value={filterElement}
             onChange={(e) => setFilterElement(e.target.value as Element | '')}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5 min-w-0"
+            className={FILTER_CLASS}
           >
             <option value="">Aura</option>
             {GALLERY_ELEMENTS.map((e) => (
@@ -150,7 +151,7 @@ export function GalleryPage() {
           <select
             value={filterTag}
             onChange={(e) => setFilterTag(e.target.value as CardTag | '')}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5 min-w-0"
+            className={FILTER_CLASS}
           >
             <option value="">Tags</option>
             {CARD_TAGS.map((tag) => (
@@ -164,7 +165,7 @@ export function GalleryPage() {
             onChange={(e) => setSearchName(e.target.value)}
             placeholder="Search..."
             maxLength={50}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5 min-w-24 flex-1 max-w-64"
+            className={`${FILTER_CLASS} min-w-24 flex-1 max-w-64`}
           />
 
           {(filterType || filterElement || filterTag || searchName) && (
