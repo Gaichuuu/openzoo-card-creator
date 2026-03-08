@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { SavedCard, CardType, Element, CardTag } from '@/types/card';
 import { fetchCards, fetchCard, type PageCursor } from '@/lib/galleryService';
 import { GalleryCard, GalleryCardSkeleton } from './GalleryCard';
-import { CardDetailModal } from './CardDetailModal';
+import { CardDetailModal, MODAL_CONTAINER_CLASS, MODAL_CARD_CLASS, MODAL_DETAILS_CLASS } from './CardDetailModal';
 import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS } from '@/data/constants';
 
@@ -107,17 +107,28 @@ export function GalleryPage() {
   return (
     <div className="min-h-screen bg-navy-950 text-white">
       {/* Header + Filters */}
-      <div className="sticky top-0 z-10 bg-navy-950 px-6 py-3 flex items-center gap-4 border-b-gold">
+      <div className="sticky top-0 z-10 bg-navy-950 px-4 md:px-6 py-3 flex flex-wrap items-center gap-2 md:gap-4 border-b-gold">
         <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
           <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-7" />
         </Link>
         <h1 className="text-xl font-bold shrink-0">Gallery</h1>
 
-        <div className="flex flex-wrap gap-2 items-center flex-1 min-w-0">
+        {/* Spacer + Card Creator button — push to right on mobile header row */}
+        <div className="flex-1 md:hidden" />
+        <Link
+          to="/create"
+          className="px-3 py-2 md:px-4 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-colors border-gold shrink-0 md:order-last"
+        >
+          <span className="hidden sm:inline">Card Creator</span>
+          <span className="sm:hidden">+ Create</span>
+        </Link>
+
+        {/* Filters — inline on desktop, second row on mobile */}
+        <div className="flex items-center gap-2 w-full md:w-auto md:flex-1 md:min-w-0 overflow-x-auto">
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as CardType | '')}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5"
+            className="bg-navy-800 text-white text-sm px-3 py-1.5 min-w-0"
           >
             <option value="">Types</option>
             {CARD_TYPES.map((t) => (
@@ -128,7 +139,7 @@ export function GalleryPage() {
           <select
             value={filterElement}
             onChange={(e) => setFilterElement(e.target.value as Element | '')}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5"
+            className="bg-navy-800 text-white text-sm px-3 py-1.5 min-w-0"
           >
             <option value="">Aura</option>
             {GALLERY_ELEMENTS.map((e) => (
@@ -139,7 +150,7 @@ export function GalleryPage() {
           <select
             value={filterTag}
             onChange={(e) => setFilterTag(e.target.value as CardTag | '')}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5"
+            className="bg-navy-800 text-white text-sm px-3 py-1.5 min-w-0"
           >
             <option value="">Tags</option>
             {CARD_TAGS.map((tag) => (
@@ -153,29 +164,22 @@ export function GalleryPage() {
             onChange={(e) => setSearchName(e.target.value)}
             placeholder="Search..."
             maxLength={50}
-            className="bg-navy-800 text-white text-sm px-3 py-1.5 w-64"
+            className="bg-navy-800 text-white text-sm px-3 py-1.5 min-w-24 flex-1 max-w-64"
           />
 
           {(filterType || filterElement || filterTag || searchName) && (
             <button
               onClick={() => { setFilterType(''); setFilterElement(''); setFilterTag(''); setSearchName(''); }}
-              className="text-xs text-gold-400 hover:text-white transition-colors"
+              className="text-xs text-gold-400 hover:text-white transition-colors shrink-0"
             >
               Clear
             </button>
           )}
         </div>
-
-        <Link
-          to="/create"
-          className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-colors border-gold shrink-0"
-        >
-          Card Creator
-        </Link>
       </div>
 
       {/* Grid */}
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {loading ? (
           !cardId && (
             <div className={GRID_CLASS}>
@@ -224,9 +228,9 @@ export function GalleryPage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
           onClick={() => navigate('/gallery')}
         >
-          <div className="flex gap-6 items-start mx-4 pointer-events-none">
-            <div className="shrink-0 rounded-3xl bg-navy-800 animate-pulse" style={{ maxHeight: '80vh', aspectRatio: '238/333', width: 'auto', height: '80vh' }} />
-            <div className="bg-navy-900 p-5 w-72 space-y-4 pointer-events-auto border-gold">
+          <div className={MODAL_CONTAINER_CLASS}>
+            <div className={`shrink-0 rounded-3xl bg-navy-800 animate-pulse ${MODAL_CARD_CLASS}`} style={{ aspectRatio: '238/333' }} />
+            <div className={MODAL_DETAILS_CLASS}>
               <div className="h-5 w-40 bg-navy-700 rounded animate-pulse" />
               <div className="flex gap-2">
                 <div className="h-5 w-16 bg-navy-700 rounded animate-pulse" />

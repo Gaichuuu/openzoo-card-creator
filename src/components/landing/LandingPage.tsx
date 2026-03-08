@@ -4,27 +4,27 @@ import { Card3DHero } from './Card3DHero';
 export function LandingPage() {
   return (
     <div className="flex flex-col h-screen bg-navy-950">
-      <div className="flex flex-1 items-center justify-center px-8">
-        <div className="flex items-center gap-12">
+      <div className="flex flex-1 items-center justify-center px-4 md:px-8 py-8 md:py-0 overflow-auto">
+        <div className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
           <Card3DHero />
 
-          <div className="text-center space-y-8">
-            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-40 mx-auto" />
+          <div className="text-center space-y-6 md:space-y-8">
+            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-24 md:h-40 mx-auto" />
 
-            <p className="text-gold-300 text-xl pb-36">
+            <p className="text-gold-300 text-lg md:text-xl pb-8 md:pb-36">
               The only TCG where your surroundings matter!
             </p>
 
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               <Link
                 to="/create"
-                className="px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors text-lg border-gold"
+                className="px-6 py-3 md:px-8 md:py-4 bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors text-lg border-gold"
               >
                 Card Creator
               </Link>
               <Link
                 to="/gallery"
-                className="px-8 py-4 bg-navy-800 hover:bg-navy-700 text-gold-300 font-semibold transition-colors text-lg border-gold"
+                className="px-6 py-3 md:px-8 md:py-4 bg-navy-800 hover:bg-navy-700 text-gold-300 font-semibold transition-colors text-lg border-gold"
               >
                 Browse Gallery
               </Link>
@@ -33,7 +33,7 @@ export function LandingPage() {
         </div>
       </div>
 
-      <footer className="flex items-center justify-center gap-3 py-4 text-sm text-gray-500">
+      <footer className="flex flex-wrap items-center justify-center gap-2 md:gap-3 py-3 md:py-4 text-xs md:text-sm text-gray-500 px-4">
         <span>&copy; {new Date().getFullYear()} OpenZoo v{__APP_VERSION__}</span>
         <span className="text-navy-600">|</span>
         <Link to="/about" className="hover:text-gray-300 transition-colors">About</Link>
