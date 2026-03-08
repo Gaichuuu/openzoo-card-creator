@@ -6,7 +6,7 @@ import { CardRenderer } from '@/components/card-renderer/CardRenderer';
 import { downloadDataUrl, downloadBlob, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
 
 export const MODAL_CONTAINER_CLASS = 'flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
-export const MODAL_CARD_CLASS = 'h-[50vh] md:h-[80vh]';
+export const MODAL_CARD_CLASS = 'h-[65vh] md:h-[80vh]';
 export const MODAL_DETAILS_CLASS = 'bg-navy-900 p-5 w-full md:w-72 space-y-4 pointer-events-auto border-gold';
 
 interface CardDetailModalProps {

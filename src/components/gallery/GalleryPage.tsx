@@ -9,7 +9,7 @@ import { CARD_TYPES, ELEMENTS } from '@/data/constants';
 
 const GALLERY_ELEMENTS = ELEMENTS.filter((e) => e !== 'Special');
 const GRID_CLASS = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4';
-const FILTER_CLASS = 'bg-navy-800 text-white text-sm px-3 py-1.5 min-w-0';
+const FILTER_CLASS = 'bg-navy-800 text-white text-xs md:text-sm px-2 py-1 md:px-3 md:py-1.5 min-w-0';
 
 export function GalleryPage() {
   const { cardId } = useParams<{ cardId?: string }>();
@@ -48,7 +48,7 @@ export function GalleryPage() {
         setHasMore(result.hasMore);
         setLoading(false);
       })
-      .catch(() => { setError(true); setLoading(false); });
+      .catch((err) => { console.error('Gallery fetch failed:', err); setError(true); setLoading(false); });
   }, [buildFilters]);
 
   const loadMore = useCallback(async () => {
@@ -60,8 +60,8 @@ export function GalleryPage() {
       setCards((prev) => [...prev, ...result.cards]);
       setCursor(result.cursor);
       setHasMore(result.hasMore);
-    } catch {
-      // User can scroll again to retry
+    } catch (err) {
+      console.error('Gallery load more failed:', err);
     } finally {
       loadingMoreRef.current = false;
       setLoadingMore(false);
@@ -107,24 +107,24 @@ export function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-navy-950 text-white">
-      {/* Header + Filters */}
+      {/* Header */}
       <div className="sticky top-0 z-10 bg-navy-950 px-4 md:px-6 py-3 flex flex-wrap items-center gap-2 md:gap-4 border-b-gold">
         <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
           <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-7" />
         </Link>
         <h1 className="text-xl font-bold shrink-0">Gallery</h1>
 
-        {/* Spacer + Card Creator button — push to right on mobile header row */}
+        {/* Spacer + Card Creator */}
         <div className="flex-1 md:hidden" />
         <Link
           to="/create"
           className="px-3 py-2 md:px-4 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-colors border-gold shrink-0 md:order-last"
         >
           <span className="hidden sm:inline">Card Creator</span>
-          <span className="sm:hidden">+ Create</span>
+          <span className="sm:hidden">Create</span>
         </Link>
 
-        {/* Filters — inline on desktop, second row on mobile */}
+        {/* Filters */}
         <div className="flex items-center gap-2 w-full md:w-auto md:flex-1 md:min-w-0 overflow-x-auto">
           <select
             value={filterType}

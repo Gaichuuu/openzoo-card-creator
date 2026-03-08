@@ -49,6 +49,10 @@
   --font-arial-black: 'Arial Black', 'Montserrat Black', sans-serif;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;

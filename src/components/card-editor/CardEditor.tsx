@@ -46,7 +46,7 @@ export function CardEditor() {
       </div>
 
       {/* InfoPanel */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex overflow-hidden">
         <InfoPanel />
       </div>
 
@@ -56,7 +56,7 @@ export function CardEditor() {
           ref={cardRef}
           layoutType={layoutType}
           cardData={cardData}
-          scale={isMobile ? 1.2 : 2}
+          scale={isMobile ? 1.5 : 2}
         />
       </div>
     </div>
