@@ -45,8 +45,11 @@
   src: url('/fonts/EBGaramond-BoldItalic.ttf') format('truetype');
 }
 
-:root {
-  --font-arial-black: 'Arial Black', 'Montserrat Black', sans-serif;
+@font-face {
+  font-family: 'Archivo Black';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/ArchivoBlack-Regular.ttf') format('truetype');
 }
 
 html, body {

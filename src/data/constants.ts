@@ -158,6 +158,7 @@ export type StatusEffect = (typeof STATUS_EFFECTS)[number];
 // Font family constants
 export const FONT_BODY = "'EB Garamond', serif";
 export const FONT_CAMBRIA = "'EB Garamond', 'Cambria', 'Times New Roman', serif";
+export const FONT_TITLE = "'Archivo Black', sans-serif";
 
 // Shared style override constants used by EditorSidebar and store
 export const STYLE_TYPES_TRIBES = '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}';

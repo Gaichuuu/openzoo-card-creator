@@ -17,6 +17,7 @@ const FONT_FACES = [
   { family: 'EB Garamond', style: 'italic', weight: 400, file: '/fonts/EBGaramond-MediumItalic.ttf' },
   { family: 'EB Garamond', style: 'normal', weight: 700, file: '/fonts/EBGaramond-Bold.ttf' },
   { family: 'EB Garamond', style: 'italic', weight: 700, file: '/fonts/EBGaramond-BoldItalic.ttf' },
+  { family: 'Archivo Black', style: 'normal', weight: 400, file: '/fonts/ArchivoBlack-Regular.ttf' },
 ];
 
 let fontEmbedCSSCache: string | null = null;
@@ -41,7 +42,6 @@ function getFontEmbedCSS(): Promise<string> {
     return `@font-face { font-family: '${f.family}'; font-style: ${f.style}; font-weight: ${f.weight}; src: url('${dataUrl}') format('truetype'); }`;
   })).then((rules) => {
     rules.push(
-      "@font-face { font-family: 'Arial Black'; src: local('Arial Black'), local('Arial-Black'); }",
       "@font-face { font-family: 'Cambria'; src: local('Cambria'); }",
     );
     fontEmbedCSSCache = rules.join('\n');

@@ -2,7 +2,7 @@ import { type CSSProperties, useRef, useLayoutEffect, useState } from 'react';
 import type { Zone } from '@/types/layout';
 import type { CardData } from '@/types/card';
 import { resolveImagePath } from '@/lib/imagePathResolver';
-import { FONT_BODY, FONT_CAMBRIA } from '@/data/constants';
+import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
 import { useCardStore } from '@/lib/store';
 import { ParsedText } from './TextParser';
 
@@ -123,6 +123,9 @@ function buildZoneStyle(zone: Zone, styleOverride: CSSProperties): CSSProperties
   }
   if (raw.fontFamily === "'Lucida primary'") {
     raw.fontFamily = FONT_BODY;
+  }
+  if (raw.fontFamily === "'Arial Black'") {
+    raw.fontFamily = FONT_TITLE;
   }
 
   return raw as CSSProperties;
