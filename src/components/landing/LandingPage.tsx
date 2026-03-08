@@ -9,7 +9,7 @@ export function LandingPage() {
           <Card3DHero />
 
           <div className="text-center space-y-6 md:space-y-8">
-            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-24 md:h-40 mx-auto" />
+            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-24 md:h-40 mx-auto pt-4 md:pt-0" />
 
             <p className="text-gold-300 text-lg md:text-xl pb-8 md:pb-36">
               The only TCG where your surroundings matter!
