@@ -1,4 +1,4 @@
-import { ELEMENTS } from '@/data/constants';
+import { ELEMENTS, SETS } from '@/data/constants';
 
 const FOLDER_MAP: Record<string, string> = {
   'OpenZoo Banners': '/assets/Banners',
@@ -52,7 +52,7 @@ export function resolveImagePath(rawPath: string): string {
     return `/assets/AuraSymbols/${rawPath}`;
   }
 
-  if (rawPath.startsWith('OZLegacy') || rawPath === 'MetaPoo.png' || rawPath === 'Promo.png') {
+  if (SETS.some((s) => rawPath.startsWith(s.value))) {
     return `/assets/SetSymbols/${rawPath}`;
   }
 

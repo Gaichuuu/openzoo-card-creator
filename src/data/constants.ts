@@ -171,6 +171,19 @@ export const STYLE_CARD_NAME = '{maxHeight:23px;justifyContent:flex-start;paddin
 export const STYLE_LP = '{fontSize:19px}';
 export const STYLE_FLAVOR_TEXT = '{left:95px;justifyContent:flex-end}';
 
+export interface SetDef {
+  value: string;
+  label: string;
+  rarities: string[];
+}
+
+export const SETS: SetDef[] = [
+  { value: 'OZLegacy', label: 'Legacy', rarities: ['Bronze', 'Silver', 'Gold'] },
+  { value: 'CN', label: 'Cryptid Nation', rarities: ['Bronze', 'Silver', 'Gold'] },
+  { value: 'MetaPoo', label: 'MetaPoo', rarities: ['Bronze'] },
+  { value: 'Promo', label: 'Promo', rarities: [] },
+];
+
 const DARK_GRADIENT = 'linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))';
 export const BORDERLESS_ART_STYLE = `{left:0px;top:0px;width:238px;height:333px;backgroundImage:${DARK_GRADIENT}}`;
 export const TERRA_GRADIENT_STYLE = `{backgroundImage:${DARK_GRADIENT}}`;
