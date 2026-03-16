@@ -1,18 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { ZONE_ID_MAPS } from '@/data/layouts';
-
-interface SetDef {
-  value: string;
-  label: string;
-  rarities: string[];
-}
-
-const SETS: SetDef[] = [
-  { value: 'OZLegacy', label: 'Legacy', rarities: ['Bronze', 'Silver', 'Gold'] },
-  { value: 'MetaPoo', label: 'MetaPoo', rarities: ['Bronze'] },
-  { value: 'Promo', label: 'Promo', rarities: [] },
-];
+import { SETS } from '@/data/constants';
 
 function getFilename(set: string, rarity: string): string {
   const def = SETS.find((s) => s.value === set);
