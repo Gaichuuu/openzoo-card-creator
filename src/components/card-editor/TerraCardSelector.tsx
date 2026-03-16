@@ -46,6 +46,7 @@ export function TerraCardSelector() {
   }, [cardType]);
 
   useEffect(() => {
+    if (useCardStore.getState()._isLoadingSnapshot) return;
     if (cardType === 'Terra' || cardType === 'Special Terra') {
       setCardName(translate(terra, locale));
     }

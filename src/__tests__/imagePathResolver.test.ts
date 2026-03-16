@@ -98,6 +98,12 @@ describe('resolveImagePath', () => {
       expect(resolveImagePath('MetaPoo.png')).toBe('/assets/SetSymbols/MetaPoo.png');
     });
 
+    it('detects CN set symbols', () => {
+      expect(resolveImagePath('CNBronze.png')).toBe('/assets/SetSymbols/CNBronze.png');
+      expect(resolveImagePath('CNSilver.png')).toBe('/assets/SetSymbols/CNSilver.png');
+      expect(resolveImagePath('CNGold.png')).toBe('/assets/SetSymbols/CNGold.png');
+    });
+
     it('detects Promo set symbol', () => {
       expect(resolveImagePath('Promo.png')).toBe('/assets/SetSymbols/Promo.png');
     });
