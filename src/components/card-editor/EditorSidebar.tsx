@@ -305,6 +305,7 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
   }, [cardType, snapshotVersion]);
 
   useEffect(() => {
+    if (useCardStore.getState()._isLoadingSnapshot) return;
     if (artist) {
       setTextField('Artist', `${t('Illus.', locale)} ${artist}`);
     }
