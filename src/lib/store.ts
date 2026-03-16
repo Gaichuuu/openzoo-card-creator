@@ -103,8 +103,12 @@ function applyAuraColors(
 
   const bgColorStyleKey = getStyleZoneId(layoutType, 'BackgroundColor');
   if (bgColorStyleKey) {
-    const bgOverlay = resolveBgOverlayStyle(colorPrimary, secondary);
-    newData[bgColorStyleKey] = bgOverlay ? `{background:${bgOverlay}}` : '';
+    if (layoutType === 'Terra') {
+      newData[bgColorStyleKey] = '{background:transparent}';
+    } else {
+      const bgOverlay = resolveBgOverlayStyle(colorPrimary, secondary);
+      newData[bgColorStyleKey] = bgOverlay ? `{background:${bgOverlay}}` : '';
+    }
   }
 }
 
