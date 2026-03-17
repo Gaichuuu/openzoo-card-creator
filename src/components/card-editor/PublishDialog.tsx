@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { publishCard } from '@/lib/galleryService';
@@ -20,12 +20,14 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
   const [creatorName, setCreatorName] = useState(() => localStorage.getItem('openzoo-creator-name') || '');
   const [selectedTags, setSelectedTags] = useState<CardTag[]>(initialTags || []);
   const [publishing, setPublishing] = useState(false);
+  const publishingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [publishedId, setPublishedId] = useState<string | null>(null);
 
   async function handlePublish() {
-    if (!cardRef.current) return;
+    if (!cardRef.current || publishingRef.current) return;
+    publishingRef.current = true;
     setPublishing(true);
     setError(null);
 
@@ -75,6 +77,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       setError(`Failed to publish: ${msg}`);
     } finally {
       cardRef.current?.classList.remove('card-exporting');
+      publishingRef.current = false;
       setPublishing(false);
     }
   }
