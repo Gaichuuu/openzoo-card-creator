@@ -3,6 +3,8 @@ import { LandingPage } from '@/components/landing/LandingPage';
 import { CreatePage } from '@/components/card-editor/CreatePage';
 import { GalleryPage } from '@/components/gallery/GalleryPage';
 import { AboutPage } from '@/components/about/AboutPage';
+import { RulebookPage } from '@/components/rulebook/RulebookPage';
+import { ResourcesPage } from '@/components/resources/ResourcesPage';
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
         <Route path="/gallery" element={<GalleryPage />} />
         <Route path="/gallery/:cardId" element={<GalleryPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/rulebook" element={<RulebookPage />} />
+        <Route path="/resources" element={<ResourcesPage />} />
       </Routes>
     </BrowserRouter>
   );
