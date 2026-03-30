@@ -17,7 +17,7 @@ export type Element =
   | 'Water';
 
 export type Trait =
-  | 'Bloodsucker'
+  | 'Blood Sucker'
   | 'Burrow'
   | 'Convert'
   | 'Defender'
@@ -35,7 +35,7 @@ export type Trait =
   | 'Regen'
   | 'Self Destruct'
   | 'Spectral'
-  | 'Stoneskin'
+  | 'Stone Skin'
   | 'Trap'
   | 'Unblockable'
   | 'Venomous';

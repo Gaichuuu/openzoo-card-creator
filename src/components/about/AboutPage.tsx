@@ -10,7 +10,7 @@ interface Attribution {
 
 const STATUS_EFFECTS: Attribution[] = [
   { symbol: 'Burn', originalIcon: 'Fire spell cast', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/fire-spell-cast.html' },
-  { symbol: 'Confused', originalIcon: 'Uncertainty', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/uncertainty.html' },
+  { symbol: 'Confusion', originalIcon: 'Uncertainty', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/uncertainty.html' },
   { symbol: 'Frozen', originalIcon: 'Ice spell cast', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/ice-spell-cast.html' },
   { symbol: 'Paralyze', originalIcon: 'Bolt spell cast', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/bolt-spell-cast.html' },
   { symbol: 'Poison', originalIcon: 'Deathcab', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/deathcab.html' },
@@ -60,7 +60,7 @@ const TERRA: Attribution[] = [
 ];
 
 const TRAITS: Attribution[] = [
-  { symbol: 'Bloodsucker', originalIcon: 'Fangs', originalAuthor: 'Skoll', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/skoll/fangs.html' },
+  { symbol: 'Blood Sucker', originalIcon: 'Fangs', originalAuthor: 'Skoll', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/skoll/fangs.html' },
   { symbol: 'Burrow', originalIcon: 'Needle Drill', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/needle-drill.html' },
   { symbol: 'Convert', originalIcon: 'Rolling Energy', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/rolling-energy.html' },
   { symbol: 'Defender', originalIcon: 'Defensive Wall', originalAuthor: 'HeavenlyDog', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/heavenly-dog/defensive-wall.html' },

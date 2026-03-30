@@ -12,10 +12,10 @@ export const ATTACK_ELEMENTS = ELEMENTS.filter(
 );
 
 export const TRAITS: Trait[] = [
-  'Bloodsucker', 'Burrow', 'Convert', 'Defender', 'Destroyer',
+  'Blood Sucker', 'Burrow', 'Convert', 'Defender', 'Destroyer',
   'Equipment', 'Fear', 'First Strike', 'Flash', 'Fleet', 'Flight',
   'Immortal', 'Infectious', 'Invisible', 'Magiproof', 'Regen',
-  'Self Destruct', 'Spectral', 'Stoneskin', 'Trap', 'Unblockable', 'Venomous',
+  'Self Destruct', 'Spectral', 'Stone Skin', 'Trap', 'Unblockable', 'Venomous',
 ];
 
 export const TERRAS: Terra[] = [
@@ -150,7 +150,7 @@ export function computeStrongAgainst(
 }
 
 export const STATUS_EFFECTS = [
-  'Burn', 'Confused', 'Frozen', 'Paralyze', 'Scared',
+  'Burn', 'Confusion', 'Frozen', 'Paralyze', 'Poison', 'Scared', 'Sleep',
 ] as const;
 
 export type StatusEffect = (typeof STATUS_EFFECTS)[number];
