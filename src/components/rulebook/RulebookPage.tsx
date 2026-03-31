@@ -47,7 +47,6 @@ function auraBg(el: Element): string {
   return AURA_COLORS[el].cardBackground;
 }
 
-// Card layout diagram using a real card image with labeled callouts
 function CardLayoutDiagram() {
   const cw = 238, ch = 333;
   const sideMargin = 135;
@@ -65,7 +64,7 @@ function CardLayoutDiagram() {
 
   // Dot positions tuned to the Indrid Cold card at 238×333
   const labels: Label[] = [
-    // Top labels — above the card, lines pointing down
+    // Top labels
     { text: 'Page Type',   px: 58,  py: 14, side: 'top', lx: 48 },
     { text: 'Tribe',       px: 90, py: 14, side: 'top', lx: 100 },
     { text: 'Aura Cost',   px: 164, py: 23, side: 'top', lx: 152 },
@@ -75,7 +74,7 @@ function CardLayoutDiagram() {
     { text: 'Set/Rarity',      px: 26, py: 28,  side: 'left',  ly: 38 },
     { text: 'Spellbook Limit', px: 72, py: 44,  side: 'left',  ly: 58 },
     { text: 'Traits',          px: 24, py: 78,  side: 'left',  ly: 78 },
-    { text: 'Terra Bonuses',   px: 24, py: 144, side: 'left',  ly: 150 },
+    { text: 'Terra Bonuses',   px: 24, py: 142, side: 'left',  ly: 150 },
     { text: 'Metadata',        px: 20, py: 213, side: 'left',  ly: 204 },
     { text: '4th Wall Effects', px: 26, py: 228, side: 'left', ly: 224 },
     { text: 'Effects/Powers',  px: 62, py: 244, side: 'left',  ly: 244 },
@@ -86,8 +85,7 @@ function CardLayoutDiagram() {
 
     // Right labels
     { text: 'Life Points',           px: 224, py: 28,  side: 'right', ly: 18 },
-    { text: 'Page Name',             px: 110, py: 30,  side: 'right', ly: 60 },
-    { text: 'Art',                   px: 180, py: 130, side: 'right', ly: 130 },
+    { text: 'Page Name',             px: 110, py: 30,  side: 'right', ly: 70 },
     { text: 'Status Effect',         px: 144, py: 266, side: 'right', ly: 206 },
     { text: 'Base Damage',           px: 164, py: 266, side: 'right', ly: 234 },
     { text: 'Aura Attack Advantage', px: 196, py: 272, side: 'right', ly: 260 },
@@ -136,7 +134,7 @@ function CardLayoutDiagram() {
 
   return (
     <div className="my-6 overflow-x-auto">
-      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-2xl mx-auto" style={{ minWidth: 480 }}>
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-2xl mx-auto">
         <defs>
           <clipPath id="card-clip">
             <rect x={cx} y={cy} width={cw} height={ch} rx={10} />
@@ -153,10 +151,6 @@ function CardLayoutDiagram() {
   );
 }
 
-// Layout: two rows showing strength relationships with arrows
-// Top:    Frost  Water  Earth  Cosmic  Light  Neutral
-// Bottom: Flame  Forest Lightning Spirit Dark  Special
-// Arrows point FROM attacker TO the type they are strong against
 const WHEEL_TOP: Element[] = ['Frost', 'Water', 'Earth', 'Cosmic', 'Light', 'Neutral'];
 const WHEEL_BOT: Element[] = ['Flame', 'Forest', 'Lightning', 'Spirit', 'Dark', 'Special'];
 
@@ -164,7 +158,7 @@ function AuraWheel() {
   const colW = 100;
   const iconSize = 52;
   const labelH = 18;
-  const gap = 60; // vertical gap between rows (arrow space)
+  const gap = 60; 
   const padX = 30;
   const padY = 20;
 
@@ -204,7 +198,7 @@ function AuraWheel() {
     <div className="my-4">
       <h3 className="text-lg font-bold text-gold-300 mb-3">Aura Wheel</h3>
       <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-2xl mx-auto" style={{ minWidth: 400 }}>
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-2xl mx-auto">
         <defs>
           <marker id="arrowhead" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
             <polygon points="0 0, 6 2.5, 0 5" fill="#6b7280" />
@@ -222,9 +216,6 @@ function AuraWheel() {
           const goingUp = dy < 0;
           const horizontal = dy === 0;
 
-          // Source exit point: leave from bottom edge if going down,
-          // top edge if going up, side edge if horizontal
-          // If going down from top row, exit below the label
           const fromIsTop = WHEEL_TOP.includes(from);
           let x1 = f.cx, y1 = f.cy;
           if (goingDown) {
@@ -235,8 +226,6 @@ function AuraWheel() {
             x1 = f.cx + (dx > 0 ? iconSize / 2 + 4 : -(iconSize / 2 + 4));
           }
 
-          // Target entry point: arrive at top edge if going down,
-          // bottom edge if going up (below label), side edge if horizontal
           const toIsTop = WHEEL_TOP.includes(to);
           let x2 = t.cx, y2 = t.cy;
           if (goingDown) {
@@ -247,7 +236,6 @@ function AuraWheel() {
             x2 = t.cx + (dx > 0 ? -(iconSize / 2 + 4) : iconSize / 2 + 4);
           }
 
-          // For diagonal arrows, also offset X toward the target
           if (!horizontal) {
             const totalDx = x2 - x1;
             const totalDy = y2 - y1;
@@ -266,7 +254,7 @@ function AuraWheel() {
           );
         })}
 
-        {/* Aura icons — both rows */}
+        {/* Aura icons */}
         {[...WHEEL_TOP.map((el, col) => ({ el, col, row: 0 })),
           ...WHEEL_BOT.map((el, col) => ({ el, col, row: 1 }))].map(({ el, col, row }) => {
           const cx = iconCenterX(col);
@@ -413,7 +401,6 @@ function slugify(text: string): string {
     .trim();
 }
 
-// Static markdown bundled at build time — not user-supplied content
 function renderInline(text: string, kwRegex: RegExp | null): ReactNode {
   const parts: ReactNode[] = [];
   let remaining = text;
@@ -636,7 +623,6 @@ function GlossaryPopover({ term, definition, rect, onClose }: {
   }, [onClose]);
 
   const popoverH = 160;
-  // Flip above the keyword if near viewport bottom
   const spaceBelow = window.innerHeight - rect.bottom;
   const top = spaceBelow > popoverH + 10
     ? rect.bottom + 6
@@ -708,7 +694,7 @@ export function RulebookPage() {
         }
         const allSections = contentRef.current?.querySelectorAll('[data-section-id]');
         if (!allSections) return;
-        for (const el of allSections) {
+        for (const el of Array.from(allSections)) {
           if (visibleIds.has(el.id)) {
             setActiveId(el.id);
             return;
@@ -738,7 +724,6 @@ export function RulebookPage() {
 
   return (
     <div className="min-h-dvh bg-navy-950 text-white">
-      {/* Fixed TOC — desktop */}
       <nav className="hidden lg:block fixed top-0 left-0 w-72 h-dvh overflow-y-auto border-r border-navy-600 bg-navy-900 py-6 px-4 z-10">
         <div className="flex items-center gap-3 mb-4">
           <Link to="/" className="hover:opacity-80 transition-opacity">
@@ -796,8 +781,8 @@ export function RulebookPage() {
             ) : (
               <h3 className="text-lg font-bold text-gold-300 mb-2">{section.title}</h3>
             )}
-            {renderContent(section.content, kwRegex)}
             {section.id === 'page-layout' && <CardLayoutDiagram />}
+            {renderContent(section.content, kwRegex)}
             {section.id === 'aura-types' && <AuraWheel />}
             {section.id === 'determining-a-pages-aura-types' && <AuraCostExamples />}
             {section.id === 'terra-bonuses' && <IconGrid items={TERRAS} folder="TerraNoGlow" />}
@@ -806,7 +791,7 @@ export function RulebookPage() {
           </section>
         ))}
 
-        {/* Glossary terms as definition list */}
+        {/* Glossary */}
         {glossaryTerms.length > 0 && (
           <div className="space-y-4 mt-4 mb-8">
             {glossaryTerms.map(entry => (
@@ -820,7 +805,7 @@ export function RulebookPage() {
           </div>
         )}
 
-        {/* Post-glossary sections (e.g. Changelog) */}
+        {/* Changelog */}
         {postGlossarySections.map(section => (
           <section key={section.id} id={section.id} data-section-id className="mb-8 scroll-mt-4">
             {section.level === 2 ? (
