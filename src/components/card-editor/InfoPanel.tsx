@@ -281,6 +281,52 @@ function DesignBible() {
         </p>
       </div>
 
+      {/* Other Ordering Rules */}
+      <div>
+        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Other Ordering Rules</h4>
+        <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
+          <li><span className="text-gray-300">Terra Bonuses</span> — always alphabetical</li>
+          <li><span className="text-gray-300">Page Types</span> — alphabetical when listing multiple</li>
+          <li><span className="text-gray-300">Status Effects</span> — alphabetical (Burn, Confusion, Frozen, Paralyze, Poison, Scared, Sleep)</li>
+        </ul>
+      </div>
+
+      {/* Aura & Cost References */}
+      <div>
+        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Aura & Cost References</h4>
+        <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
+          <li>Generate: <span className="text-gray-300">"Generate 1 [Dark Aura]"</span> (digit + bracketed)</li>
+          <li>Cost: <span className="text-gray-300">"with an Aura Cost of [number]"</span></li>
+          <li><span className="text-gray-300">"costs 0 Aura to Contract"</span></li>
+        </ul>
+      </div>
+
+      {/* Traits & Terras in Effects */}
+      <div>
+        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Traits & Terras in Effects</h4>
+        <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
+          <li>Always use <span className="text-gray-300">symbol icons</span> — never write the name</li>
+          <li>Terra Bonus format: <span className="text-gray-300">[Terra] 20/20 LP</span> (no "+" prefix)</li>
+        </ul>
+      </div>
+
+      {/* Has vs Gains */}
+      <div>
+        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">"Has" vs "Gains"</h4>
+        <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
+          <li><span className="text-gray-300">"has"</span> = static conditional ("If [Terra] is active, this Beastie has [Trait]")</li>
+          <li><span className="text-gray-300">"gains"</span> = temporary increase</li>
+        </ul>
+      </div>
+
+      {/* Resolution Order */}
+      <div>
+        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Resolution Order</h4>
+        <p className="text-[10px] text-gray-400">
+          Effect text boxes resolve <span className="text-gray-300">top-down, left-to-right</span>. The first sentence resolves first, then the next, and so on. Keep this rule in mind when writing out complex effects.
+        </p>
+      </div>
+
       {/* Contractions */}
       <div>
         <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Contractions</h4>
