@@ -31,26 +31,23 @@ A Fatigued Page is turned sideways. An **Awakened** Page is upright and ready to
 
 ## Page Layout
 
-A card has the following components:
-
-- **Page Type & Tribe** — top-left area, identifies what kind of Page it is
-- **Set Icon & Rarity** — top-left bookmark; Bronze = Common, Silver = Uncommon, Gold = Rare
-- **Page Name** — bold, capitalized, below the type/tribe line
-- **Spellbook Limit** — below the Page name; format: "[#] Per Spellbook"
-- **Aura Cost & Aura Type** — top-right area; the resource cost to Contract the Page
-- **Life Points (LP)** — top-right corner; how much Damage the Page can take
-- **Traits** — left bookmark, below the set icon
-- **Terra Bonuses** — left bookmark, below the trait divider
-- **Art** — center of the card
-- **Metadata** — below art (Beasties only): DOB/Origin, GPS, Weight, Height/Length
-- **Effect Text Box** — contains all Effects: 4th Wall, Powers, Attacks, Status Effects
-- **Attack Name & Attack Damage** — within the Effect text box
-- **Aura Attack Advantage** — Aura symbol next to an Attack
-- **Type Advantage** — "strong against" area at bottom
-- **Status Effect** — icons next to Attacks
-- **Copyright & Artist** — bottom of card
-
-**Spellbook Limit** refers to the total number of copies of a Page you can have between your Spellbook and Archive combined. A Page that shares the same name with another Page may be included in the same Spellbook if the two Pages are mechanically unique from each other.
+| Component | Description |
+|-----------|-------------|
+| **Page Type & Tribe** | The Page's type, sometimes followed by a Tribe (Beasties/Artifacts only) |
+| **Set Icon & Rarity** | Which set the Page belongs to; Bronze = Common, Silver = Uncommon, Gold = Rare |
+| **Page Name** | The name of the Page |
+| **Spellbook Limit** | The maximum copies of this Page allowed in your Spellbook and Archive combined. A Page that shares the name with another Page may be included in the same Spellbook if the two Pages are mechanically unique from each other. |
+| **Aura Cost & Aura Type** | The resource cost to Contract the Page |
+| **Life Points (LP)** | How much Damage the Page can take before being Destroyed |
+| **Traits** | Abilities that modify how the Page functions |
+| **Terra Bonuses** | Stat boosts granted when specific Terra conditions are active |
+| **Metadata** | Real-world information about the cryptid (Beasties only): DOB/Origin, GPS, Weight, Height/Length |
+| **Effect Text Box** | All game Effects: 4th Wall, Static, Powers, Attacks, and Status Effects |
+| **Attack Name & Base Damage** | The Attack's name and how much Damage it deals |
+| **Status Effect** | Conditions inflicted on the target |
+| **Aura Attack Advantage** | Bonus Attack Damage (+20) dealt to that Aura Type |
+| **Type Advantage** | The Aura Types that this Page deals bonus Damage (+20) |
+| **Copyright & Artist** | Attribution for the card |
 
 ---
 
@@ -58,7 +55,7 @@ A card has the following components:
 
 ### Aura
 
-All Aura Pages can be Fatigued to generate Aura of that specific type, or through a written Effect on the Page — unless that Page is a Special Aura Type. That Aura is then used to Contract Pages. You can play any number of Basic Aura Pages in your Spellbook, but Special Aura Pages have their own Spellbook Limit. Aura Pages that are Destroyed are placed into their owner's Afterlife.
+All Aura Pages can be Fatigued to generate Aura of that specific type, or through a written Effect on the Page, unless that Page is a Special Aura Type. That Aura is then used to Contract Pages. You can play any number of Basic Aura Pages in your Spellbook, but Special Aura Pages have their own Spellbook Limit. Aura Pages that are Destroyed are placed into their owner's Afterlife.
 
 - **Basic Aura Page:** May be Fatigued to generate 1 Aura of its Aura Type.
 - **Special Aura Page:** Attributes are established through its written Effects.
@@ -166,9 +163,7 @@ Multi Aura Type Pages deal +20 Damage for **each** Aura Type they are strong aga
 
 Terra Bonuses give you boosts when you are within or nearby a certain place or object in real life. Unless otherwise specified by a Page, "nearby" means within 5 miles or within eyesight.
 
-**Terra types:** Cave, City, Dawn, Daytime, Desert, Dusk, Farm, Fog, Full Moon, Ground, Island, Lake, Lightning Storm, Meteor Shower, Mountain, Nighttime, North Pole, Ocean, Raining, River, Snowing, Stars, Suburban, Swamp, Winter, Woodlands.
-
-When an Effect causes a Page to gain a Terra Bonus, it appears as a Terra Symbol followed by any Damage bonus, then followed by the LP bonus. Example: `[Nighttime] 20/20LP`
+When an Effect causes a Page to gain a Terra Bonus, it appears as a Terra Symbol followed by any Damage bonus, then followed by the LP bonus. Example: `[Nighttime] +20 ATK/+20 LP`
 
 ### Special Terra
 
@@ -192,7 +187,7 @@ Terra Pages activate Terra Bonuses and 4th Wall Effects when you cannot satisfy 
 - Terra that has been Contracted activates Terra Bonuses for **all** Casters in the game.
 - Terra cannot be controlled by any Caster.
 - When a Terra Page is Destroyed, it leaves its slot and is placed into the Afterlife.
-- Most Terra Pages are considered "Basic" — they solely provide the Terra Bonus listed on their name and symbol.
+- Most Terra Pages are considered "Basic" and solely provide the Terra Bonus listed on their name and symbol.
 - Non-Terra Pages cannot occupy or share a Terra slot unless a Page Effect says otherwise.
 
 ---
@@ -293,14 +288,14 @@ The active Caster has priority 1 and may take Actions in any order:
 
 ### Generating Aura
 
-Aura Pages are the most important Pages in OpenZoo — they generate one Aura of their Aura Type. To generate Aura, Fatigue an Awakened Aura Page by rotating it 90°.
+Aura Pages are the most important Pages in OpenZoo. They generate one Aura of their Aura Type. To generate Aura, Fatigue an Awakened Aura Page by rotating it 90°.
 
 **Key distinctions:**
 
 - **Aura** is the resource (currency) used to Contract Pages. It dissolves at the end of each turn.
 - **Aura Pages** are the Pages that remain in the Arena and generate Aura.
 - Aura Pages may be Fatigued on **any** Caster's turn to generate Aura.
-- Generating Aura is **not** considered an Action — it does not pass priority.
+- Generating Aura is **not** considered an Action and does not pass priority.
 - Aura Pages Fatigued by an Effect do **not** generate Aura.
 
 ### How to Contract a Page
@@ -321,7 +316,7 @@ Aura Pages are the most important Pages in OpenZoo — they generate one Aura of
 
 **Important:** Fatiguing a Page to generate Aura is **not** an Action. "Any time" Effects cannot be used when an individual Aura Page is Fatigued to generate Aura. Pages that **only** generate Aura (and do nothing else) are known as Aura Effects and do not pass priority.
 
-Note: Convert **cannot** be used on an opposing Caster's turn — it does not have the "any time" clause.
+Note: Convert **cannot** be used on an opposing Caster's turn because it does not have the "any time" clause.
 
 ### Ownership vs. Control of a Page
 
@@ -341,7 +336,7 @@ The **owner** is the Caster who brought the Page to the game. The **controller**
 - If a Page enters the Arena without a specified controller, the owner is the controller.
 - If a Page Effect creates a Token without specifying control, the controller is the Controller of the Page/Effect that made the Token (unless replaced).
 
-Equipment and Terra follow separate control rules — see their respective sections.
+Equipment and Terra follow separate control rules. See their respective sections.
 
 ### Priority 1 and 2
 
@@ -371,14 +366,14 @@ Keywords appear on Pages to specify when Effects trigger and resolve.
 | **ARENA** | Persistent Effects that apply only while the Page is face-up in the Arena. |
 | **DESTROYED** | When a Page is Destroyed. |
 | **ENTER** | When a Page enters the Arena. (Contracting into the Arena counts as entering, unless the Page is a Spell or Potion.) |
-| **REVEAL** | When a Page is shown to all Casters. A Page with REVEAL is placed from your Chapter into its Discard Zone to activate its Effect. Unlike DISCARD, revealing a Page and the gained information does not have to be disclosed to other Casters unless the Effect specifies otherwise. |
-| **DISCARD** | When a Page is placed from your Chapter into its Discard Zone as an Action. Effects with "at any time" may be activated at any time or within a specified window. DISCARD does **not** activate when a Page is Discarded by another Page's Effect — only when Discarded as an Action. Activating DISCARD passes priority 2. |
+| **REVEAL** | When a Page is shown to all Casters. Revealing a Page does not activate its Effects unless stated otherwise. |
+| **DISCARD** | When a Page is placed from your Chapter into its Discard Zone as an Action. Effects with "at any time" may be activated at any time or within a specified window. DISCARD does **not** activate when a Page is Discarded by another Page's Effect. It only activates when Discarded as an Action. Activating DISCARD passes priority 2. |
 
 ### Static Effects
 
 Static Effects are Page Effects considered "rules" of the Page. They are constantly applied/checked once a game has begun. They only become active while the Page is known information (e.g., while searching your Spellbook, while in Chapter, or while in a public zone). Some Static Effects only function while in the Arena.
 
-Static Effects are not denoted by a keyword — they appear at the top of the Effect text box and are sometimes bolded or italicized.
+Static Effects are not denoted by a keyword. They appear at the top of the Effect text box and are sometimes bolded or italicized.
 
 ### Spellbook Restrictions
 
@@ -388,7 +383,7 @@ A type of Static Effect applied outside the game while constructing your Spellbo
 
 ## Rolling a Die
 
-When rolling a die — whether to inflict a Status Effect, resolve a Page Effect, or determine who goes first — always use a **six-sided die (D6)**. A D6 may also substitute for a coin flip: even numbers = "heads", odd numbers = "tails."
+When rolling a die to inflict a Status Effect, resolve a Page Effect, or determine who goes first, always use a **six-sided die (D6)**. A D6 may also substitute for a coin flip: even numbers = "heads", odd numbers = "tails."
 
 For a roll to be valid, the die must be rolled at least 6 inches above the table and rotate in the air at least twice.
 
@@ -396,7 +391,7 @@ For a roll to be valid, the die must be rolled at least 6 inches above the table
 
 ## Resolution Chains
 
-Pages with "any time" Effects or Pages that can be played on your opponent's turn can lead to a chain of Pages played in response to one another. Resolution order is **first in, last out** — the last Page played resolves first.
+Pages with "any time" Effects or Pages that can be played on your opponent's turn can lead to a chain of Pages played in response to one another. Resolution order is **first in, last out**. The last Page played resolves first.
 
 **Example:**
 
@@ -449,7 +444,7 @@ Targeting is assumed to only function within the Arena unless the Effect specifi
 
 ## Shuffling After Searching Your Spellbook
 
-If any Page Effect requires you to search your Spellbook for a specific Page, you must reveal that Page and reshuffle your Spellbook immediately afterwards — unless the Effect specifies otherwise.
+If any Page Effect requires you to search your Spellbook for a specific Page, you must reveal that Page and reshuffle your Spellbook immediately afterwards, unless the Effect specifies otherwise.
 
 ---
 
@@ -482,7 +477,7 @@ Face-up Pages without LP cannot be targeted by an Attack (except face-down Trap 
 
 The opposing Caster controlling the target may declare Defenders by Fatiguing them. The original target cannot be declared as a Defender.
 
-- Select one Attack on one of the Defenders to use — that Defender becomes the **Primary Defender**.
+- Select one Attack on one of the Defenders to use. That Defender becomes the **Primary Defender**.
 - Only non-Fatigued Beasties may be declared as Defenders. Artifacts and Casters cannot.
 - If no Defenders are declared, the original target automatically becomes the Primary Defender (and an Attack on it must be chosen). This does not Fatigue the Primary Defender.
 
@@ -585,7 +580,7 @@ Affects Beasties and Casters. Place a Frozen Indicator on the Page and Fatigue i
 
 - At the start of every turn, remove a Counter.
 - When the final Counter is removed, remove the Frozen Indicator and Awaken the Page.
-- If a Frozen Page takes Damage outside of the Combat in which it was Frozen, remove the Frozen Indicator — the Page does **not** Awaken.
+- If a Frozen Page takes Damage outside of the Combat in which it was Frozen, remove the Frozen Indicator. The Page does **not** Awaken.
 - A Frozen Page **cannot** Awaken under any circumstance.
 
 ### Burn (X)
@@ -627,7 +622,13 @@ Affects Beasties. When inflicted with Confusion, place a Confusion Indicator on 
 
 ## Traits
 
-Traits grant a Beastie or Artifact special abilities. Pages may have indicators placed on them to show they are using a specific trait or being affected by a specific trait. (A Beastie is considered "burrowed" — however, this indicator is not considered a Status Effect Indicator.)
+Traits grant a Beastie or Artifact special abilities. Pages may have indicators placed on them to show they are using a specific trait or being affected by a specific trait. A Beastie is considered "burrowed" but this indicator is not considered a Status Effect Indicator.
+
+Traits activate at different times depending on their category:
+
+- **Resolve on Contract:** Trap, Equipment
+- **Resolve when entering the Arena:** Fear, Flash, Fleet
+- **Active while in the Arena:** All other Traits (Blood Sucker, Burrow, Convert, Defender, Destroyer, First Strike, Flight, Immortal, Infectious, Invisible, Magiproof, Regen, Self Destruct, Spectral, Stone Skin, Unblockable, Venomous)
 
 | Trait | Effect |
 |-------|--------|
@@ -871,7 +872,7 @@ Damage represents any wounds or injuries a Page or Caster has received. Any time
 When a Page is Destroyed, it's removed from the Arena and placed into one of three zones: Beasties and Artifacts are placed in the Limbo (unless otherwise stated), Spells and Potions are placed in the Cemetery (unless otherwise stated), and Terra and Aura go to the Afterlife. Some Special Effects may call for Pages to be placed in the Afterlife when Destroyed.
 
 ### Discard
-To send a Page from a specified private zone to its respective Limbo, Cemetery, or Afterlife. (If no zone is specified by a Static Effect, the card being Discarded goes from the Chapter.)
+To place a Page from a specified private zone into its respective Limbo, Cemetery, or Afterlife. (If no zone is specified by a Static Effect, the card being Discarded goes from the Chapter.)
 
 ### Discard Zone(s)
 (Interchangeable: Discard File) The Limbo, Cemetery, or Afterlife.
@@ -941,7 +942,7 @@ How much Damage a Page can receive. Maximum LP is listed on the top right of the
 A card in OpenZoo.
 
 ### Page Effect
-(Interchangeable: "Effect") A Sentence, phrase, or symbol on a Page that creates an outcome after its resolution by affecting something within the game.
+(Interchangeable: "Effect") A sentence, phrase, or symbol on a Page that creates an outcome after its resolution by affecting something within the game.
 
 ### Partial Resolution
 When a Page only resolves part of its Effects rather than all of its Effects.
