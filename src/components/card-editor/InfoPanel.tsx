@@ -354,7 +354,7 @@ function DesignBible() {
 
 export function InfoPanel() {
   return (
-    <div className="w-82 bg-navy-900 border-navy-600 border-r p-2 overflow-y-auto space-y-3">
+    <div className="w-full md:w-82 bg-navy-900 border-navy-600 md:border-r p-2 overflow-y-auto space-y-3">
       <Accordion title="Token Cheat Sheet">
         <ClassesCheatSheet />
       </Accordion>

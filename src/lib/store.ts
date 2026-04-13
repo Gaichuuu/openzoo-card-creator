@@ -35,6 +35,7 @@ interface CardEditorState {
   _autoFitRatio: number;
   cardArtPositionX: number;
   cardArtPositionY: number;
+  artNeeded: boolean;
   _isLoadingSnapshot: boolean;
   _snapshotVersion: number;
   _snapshotTimer: ReturnType<typeof setTimeout> | null;
@@ -58,6 +59,7 @@ interface CardEditorState {
   setMainTextBoxNudge: (v: number) => void;
   setMainTextBoxExtraShrink: (v: number) => void;
   setCardArtPosition: (x: number, y: number) => void;
+  setArtNeeded: (v: boolean) => void;
   _setAutoFitRatio: (ratio: number) => void;
   setRawCardData: (key: string, value: string) => void;
   addEffectBlock: (type: EffectBlockType) => void;
@@ -216,6 +218,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   _autoFitRatio: 1,
   cardArtPositionX: 0,
   cardArtPositionY: 0,
+  artNeeded: false,
   _isLoadingSnapshot: false,
   _snapshotVersion: 0,
   _snapshotTimer: null,
@@ -483,6 +486,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     set({ cardArtPositionX: Math.max(-50, Math.min(50, x)), cardArtPositionY: Math.max(-50, Math.min(50, y)) });
   },
 
+  setArtNeeded: (v) => set({ artNeeded: v }),
+
   _setAutoFitRatio: (ratio) => {
     if (Math.abs(ratio - get()._autoFitRatio) > 0.001) {
       set({ _autoFitRatio: ratio });
@@ -558,6 +563,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxExtraShrink: 0,
       cardArtPositionX: 0,
       cardArtPositionY: 0,
+      artNeeded: false,
       _autoFitRatio: 1,
       _isLoadingSnapshot: false,
       _snapshotVersion: _snapshotVersion + 1,
@@ -594,6 +600,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxExtraShrink: s.mainTextBoxExtraShrink,
       cardArtPositionX: s.cardArtPositionX,
       cardArtPositionY: s.cardArtPositionY,
+      artNeeded: s.artNeeded,
     };
   },
 
@@ -635,6 +642,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxExtraShrink: snapshot.mainTextBoxExtraShrink ?? 0,
       cardArtPositionX: snapshot.cardArtPositionX ?? 0,
       cardArtPositionY: snapshot.cardArtPositionY ?? 0,
+      artNeeded: snapshot.artNeeded ?? false,
       _autoFitRatio: 1,
       _isLoadingSnapshot: true,
       _snapshotVersion: get()._snapshotVersion + 1,
