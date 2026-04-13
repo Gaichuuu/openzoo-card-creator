@@ -5,7 +5,7 @@ import { EditorSidebar } from './EditorSidebar';
 import { InfoPanel } from './InfoPanel';
 import { useIsMobile } from '@/lib/useIsMobile';
 
-type MobileTab = 'editor' | 'preview';
+type MobileTab = 'editor' | 'help' | 'preview';
 
 export function CardEditor() {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -14,30 +14,29 @@ export function CardEditor() {
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
   const isMobile = useIsMobile();
 
+  const tabs: { key: MobileTab; label: string }[] = [
+    { key: 'editor', label: 'Editor' },
+    { key: 'help', label: 'Help' },
+    { key: 'preview', label: 'Preview' },
+  ];
+
   return (
     <div className="flex flex-col md:flex-row h-dvh">
       {/* Mobile tab bar */}
       <div className="flex md:hidden border-b border-navy-600 bg-navy-900 shrink-0">
-        <button
-          onClick={() => setMobileTab('editor')}
-          className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-            mobileTab === 'editor'
-              ? 'text-gold-400 border-b-2 border-gold-400'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          Editor
-        </button>
-        <button
-          onClick={() => setMobileTab('preview')}
-          className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-            mobileTab === 'preview'
-              ? 'text-gold-400 border-b-2 border-gold-400'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          Preview
-        </button>
+        {tabs.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setMobileTab(key)}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+              mobileTab === key
+                ? 'text-gold-400 border-b-2 border-gold-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Editor sidebar */}
@@ -46,7 +45,7 @@ export function CardEditor() {
       </div>
 
       {/* InfoPanel */}
-      <div className="hidden md:flex overflow-hidden">
+      <div className={`${mobileTab === 'help' ? 'flex' : 'hidden'} md:flex overflow-hidden`}>
         <InfoPanel />
       </div>
 
