@@ -51,6 +51,8 @@ export function ImageUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
   const borderless = useCardStore((s) => s.borderless);
+  const artNeeded = useCardStore((s) => s.artNeeded);
+  const setArtNeeded = useCardStore((s) => s.setArtNeeded);
   const layoutType = CARD_TYPE_TO_LAYOUT[cardType];
   const isTerraLayout = layoutType === 'Terra';
   const isAuraLayout = layoutType === 'Aura';
@@ -131,6 +133,15 @@ export function ImageUploader() {
           <span className="text-[10px] text-gold-500">{dims.width}x{dims.height}</span>
         )}
       </div>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={artNeeded}
+          onChange={(e) => setArtNeeded(e.target.checked)}
+          className="accent-gold-400"
+        />
+        <span className="text-xs text-gray-400">Art needed</span>
+      </label>
       {artSizeMB !== null && artSizeMB > MAX_UPLOAD_MB && (
         <div className="text-[11px] text-red-400">
           Image is {artSizeMB.toFixed(1)}MB — exceeds {MAX_UPLOAD_MB}MB upload limit. Try a smaller image.

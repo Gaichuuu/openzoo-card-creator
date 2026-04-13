@@ -17,8 +17,14 @@ interface PublishDialogProps {
 export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, initialTags }: PublishDialogProps) {
   const navigate = useNavigate();
   const getSnapshot = useCardStore((s) => s.getSnapshot);
+  const artNeeded = useCardStore((s) => s.artNeeded);
   const [creatorName, setCreatorName] = useState(() => localStorage.getItem('openzoo-creator-name') || '');
-  const [selectedTags, setSelectedTags] = useState<CardTag[]>(initialTags || []);
+  const [selectedTags, setSelectedTags] = useState<CardTag[]>(() => {
+    const tags = [...(initialTags || [])];
+    if (artNeeded && !tags.includes('Art Needed')) tags.push('Art Needed');
+    if (!artNeeded) return tags.filter(t => t !== 'Art Needed');
+    return tags;
+  });
   const [publishing, setPublishing] = useState(false);
   const publishingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
