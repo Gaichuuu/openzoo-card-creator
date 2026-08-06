@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
 @theme {
+  --color-navy-990: #05060f;
   --color-navy-950: #080a19;
   --color-navy-900: #0c1228;
   --color-navy-800: #121c37;
   --color-navy-700: #1c2848;
   --color-navy-600: #263560;
+  --font-title: 'Archivo Black', sans-serif;
   --color-gold-300: #e8d88c;
   --color-gold-400: #dcbe64;
   --color-gold-500: #c8a532;
@@ -54,6 +56,7 @@
 
 html, body {
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -69,7 +72,7 @@ body {
   border-image: linear-gradient(180deg, #e8d88c, #aa821e) 1;
 }
 .border-gold-dashed {
-  border: 2px dashed #c8a532;
+  border: 1px dashed #c8a532;
 }
 .border-gold-dashed:hover {
   border-color: #e8d88c;
@@ -98,6 +101,29 @@ textarea:focus {
   border-image: none;
   border-color: #dcbe64;
   outline: none;
+}
+
+input.input-plain.input-plain,
+select.input-plain {
+  border-image: none;
+  border-color: var(--color-navy-600);
+}
+input.input-plain.input-plain:hover,
+select.input-plain:hover {
+  border-image: none;
+  border-color: var(--color-navy-600);
+}
+input.input-plain.input-plain:focus,
+select.input-plain:focus {
+  border-color: var(--color-gold-400);
+}
+
+.stroked-text-stroke img {
+  visibility: hidden;
+}
+
+.card-thumb-round {
+  border-radius: 3.05% / 2.18%;
 }
 
 #root {
@@ -143,23 +169,6 @@ textarea:focus {
   background: rgba(0, 0, 0, 0.3) !important;
   outline-color: rgba(1, 1, 1, 1) !important;
   z-index: 1 !important;
-}
-
-.card-borderless [data-zone-id="32"] *,
-.card-borderless [data-zone-key="Aura/Terra Text Box"] *,
-.card-borderless [data-zone-key="Aura/Terra Text Box 1"] * {
-  text-shadow:
-    0.1em 0 0 #FFF, 0.098em 0.02em 0 #FFF, 0.092em 0.038em 0 #FFF,
-    0.083em 0.056em 0 #FFF, 0.071em 0.071em 0 #FFF, 0.056em 0.083em 0 #FFF,
-    0.038em 0.092em 0 #FFF, 0.02em 0.098em 0 #FFF, 0 0.1em 0 #FFF,
-    -0.02em 0.098em 0 #FFF, -0.038em 0.092em 0 #FFF, -0.056em 0.083em 0 #FFF,
-    -0.071em 0.071em 0 #FFF, -0.083em 0.056em 0 #FFF, -0.092em 0.038em 0 #FFF,
-    -0.098em 0.02em 0 #FFF, -0.1em 0 0 #FFF, -0.098em -0.02em 0 #FFF,
-    -0.092em -0.038em 0 #FFF, -0.083em -0.056em 0 #FFF, -0.071em -0.071em 0 #FFF,
-    -0.056em -0.083em 0 #FFF, -0.038em -0.092em 0 #FFF, -0.02em -0.098em 0 #FFF,
-    0 -0.1em 0 #FFF, 0.02em -0.098em 0 #FFF, 0.038em -0.092em 0 #FFF,
-    0.056em -0.083em 0 #FFF, 0.071em -0.071em 0 #FFF, 0.083em -0.056em 0 #FFF,
-    0.092em -0.038em 0 #FFF, 0.098em -0.02em 0 #FFF !important;
 }
 
 .card-exporting [data-zone-key="CryptidInfoBar"] > * {
