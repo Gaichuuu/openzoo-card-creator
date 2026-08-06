@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { SiteHeader } from '@/components/SiteHeader';
+import { SiteFooter } from '@/components/SiteFooter';
 import { ELEMENTS, TRAITS, TERRAS, STATUS_EFFECTS } from '@/data/constants';
 import { FONT_BODY, FONT_TITLE } from '@/data/constants';
 
@@ -110,15 +112,29 @@ function SymbolPackSection({ group }: { group: SymbolGroup }) {
 export function ResourcesPage() {
   return (
     <div className="min-h-dvh bg-navy-950 text-white">
+      <SiteHeader sticky />
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-10">
-        <header className="mb-4">
-          <Link to="/" className="inline-block">
-            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-16" />
-          </Link>
+        <header className="space-y-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-gold-400">Resources</h1>
+          <p className="text-gray-400 max-w-3xl">
+            Everything you need to play and print OpenZoo.
+          </p>
         </header>
 
-        <section className="space-y-3 mt-0!">
-          <h1 className="text-2xl font-bold text-gold-400">Rulebook</h1>
+        <nav className="flex flex-wrap gap-2">
+          {['Rulebook', 'Print Assets', 'Fonts', 'Icons'].map((section) => (
+            <a
+              key={section}
+              href={`#${section.toLowerCase().replace(/ /g, '-')}`}
+              className="px-3 py-1 text-sm bg-navy-800 text-gold-300 hover:bg-navy-700 transition-colors border-gold"
+            >
+              {section}
+            </a>
+          ))}
+        </nav>
+
+        <section id="rulebook" className="space-y-3 scroll-mt-18">
+          <h2 className="text-2xl font-bold text-gold-400">Rulebook</h2>
           <Link to="/rulebook" className="block bg-navy-800 rounded-lg border border-navy-600 p-5 hover:border-gold-400 transition-colors">
             <div className="flex items-end justify-between gap-4">
               <div>
@@ -135,26 +151,27 @@ export function ResourcesPage() {
           </Link>
         </section>
 
-        <section className="space-y-3">
-          <h1 className="text-2xl font-bold text-gold-400">Print Assets</h1>
+        <section id="print-assets" className="space-y-3 scroll-mt-18">
+          <h2 className="text-2xl font-bold text-gold-400">Print Assets</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {PRINT_ASSETS.map(asset => <AssetCard key={asset.name} asset={asset} />)}
           </div>
         </section>
 
-        <section className="space-y-3">
-          <h1 className="text-2xl font-bold text-gold-400">Fonts</h1>
+        <section id="fonts" className="space-y-3 scroll-mt-18">
+          <h2 className="text-2xl font-bold text-gold-400">Fonts</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FontCard name="EB Garamond" fontFamily={FONT_BODY} description="Used for card body text, effects, LP, cost, and spellbook limit." url="https://fonts.google.com/specimen/EB+Garamond" />
             <FontCard name="Archivo Black" fontFamily={FONT_TITLE} description="Used for card names and strong-against text." url="https://fonts.google.com/specimen/Archivo+Black" bold />
           </div>
         </section>
 
-        <section className="space-y-5">
-          <h1 className="text-2xl font-bold text-gold-400">Icons</h1>
+        <section id="icons" className="space-y-5 scroll-mt-18">
+          <h2 className="text-2xl font-bold text-gold-400">Icons</h2>
           {SYMBOL_PACKS.map(group => <SymbolPackSection key={group.title} group={group} />)}
         </section>
       </div>
+      <SiteFooter />
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Fragment, useState, useEffect, useRef, useMemo, useCallback, type ReactNode } from 'react';
 import rulebookRaw from '@/data/rulebook.md?raw';
+import { SiteHeader } from '@/components/SiteHeader';
+import { SiteFooter } from '@/components/SiteFooter';
 import { ELEMENTS, TRAITS, TERRAS, STATUS_EFFECTS, AURA_COLORS, AURA_STRENGTHS } from '@/data/constants';
 import type { Element } from '@/types/card';
 
@@ -467,7 +468,8 @@ function addKeywordSpans(text: string, baseKey: number, kwRegex: RegExp | null):
     rest = rest.slice(m.index + m[0].length);
   }
 
-  return segments.length === 1 ? segments[0] : <>{segments}</>;
+  // Keyed: renderInline pushes this into an array of siblings.
+  return segments.length === 1 ? segments[0] : <Fragment key={`kws-${baseKey}`}>{segments}</Fragment>;
 }
 
 function renderContent(content: string, kwRegex: RegExp | null): ReactNode[] {
@@ -724,13 +726,8 @@ export function RulebookPage() {
 
   return (
     <div className="min-h-dvh bg-navy-950 text-white">
-      <nav className="hidden lg:block fixed top-0 left-0 w-72 h-dvh overflow-y-auto border-r border-navy-600 bg-navy-900 py-6 px-4 z-10">
-        <div className="flex items-center gap-3 mb-4">
-          <Link to="/" className="hover:opacity-80 transition-opacity">
-            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-6" />
-          </Link>
-          <h2 className="text-lg font-bold text-white">Rulebook</h2>
-        </div>
+      <SiteHeader sticky />
+      <nav className="hidden lg:block fixed top-15 left-0 w-72 h-[calc(100dvh-3.75rem)] overflow-y-auto border-r border-navy-600 bg-navy-900 py-6 px-4 z-10">
         <ul className="space-y-0.5">
           {tocSections.map(s => (
             <li key={s.id}>
@@ -753,13 +750,6 @@ export function RulebookPage() {
         className="min-w-0 px-6 py-8 md:px-10 md:py-12 max-w-4xl lg:ml-80"
         onClick={handleKeywordClick}
       >
-        {/* Mobile header */}
-        <div className="lg:hidden mb-6">
-          <Link to="/" className="inline-block mb-2">
-            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-10" />
-          </Link>
-        </div>
-
         <h1 className="text-3xl md:text-4xl font-bold text-gold-400 mb-8">OpenZoo Rulebook</h1>
 
         {/* Mobile TOC */}
@@ -818,6 +808,8 @@ export function RulebookPage() {
         ))}
 
       </main>
+
+      <SiteFooter className="lg:pl-80" />
 
       {popover && (
         <GlossaryPopover

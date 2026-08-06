@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { SiteHeader } from '@/components/SiteHeader';
+import { SiteFooter } from '@/components/SiteFooter';
 
 interface Attribution {
   symbol: string;
@@ -206,11 +207,10 @@ function ScpTable({ data }: { data: ScpAttribution[] }) {
 export function AboutPage() {
   return (
     <div className="min-h-dvh bg-navy-950 text-white">
+      <SiteHeader sticky />
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-10">
         <header className="space-y-4">
-          <Link to="/" className="inline-block">
-            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-16" />
-          </Link>
+          <h1 className="text-3xl md:text-4xl font-bold text-gold-400">About</h1>
           <p className="text-gray-400 max-w-3xl">
             OpenZoo is the unofficial continuation of{' '}<strong className="text-white">vintage MetaZoo</strong>, made by MetaZoo fans,{' '}
             <strong className="text-white"><em>FOR</em></strong> MetaZoo fans. Exclusively using assets within
@@ -265,6 +265,7 @@ export function AboutPage() {
           <ScpTable data={SCP_CARDS} />
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }

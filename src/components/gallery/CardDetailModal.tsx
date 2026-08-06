@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import { TAG_COLORS } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
-import { downloadDataUrl, downloadBlob, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
+import { displayCardName, downloadBlob, sanitizeCardNameForFilename } from '@/lib/exportUtils';
+import { exportCardPng, usePrintReady } from '@/lib/useCardExport';
 
 export const MODAL_CONTAINER_CLASS = 'flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
 export const MODAL_CARD_CLASS = 'h-[60vh] md:h-[80vh]';
@@ -24,7 +25,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
   const hiddenCardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
-  const [printReady, setPrintReady] = useState(() => localStorage.getItem('openzoo-print-ready') === '1');
+  const [printReady, setPrintReady] = usePrintReady();
   const [imgLoaded, setImgLoaded] = useState(false);
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50, go: 0 });
   const [hovering, setHovering] = useState(false);
@@ -70,25 +71,15 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
   async function handleExportPng() {
     if (!hiddenCardRef.current || exporting) return;
     setExporting(true);
-    try {
-      await new Promise((r) => setTimeout(r, 500));
-      hiddenCardRef.current.classList.add('card-exporting');
-      const filename = sanitizeCardNameForFilename(card.cardName);
-      const isBorderless = !!card.borderless;
-
-      if (printReady) {
-        const dataUrl = await exportPrintReadyPng(hiddenCardRef.current, isBorderless, card.cardArtUrl, true);
-        downloadDataUrl(dataUrl, `${filename}-print.png`);
-      } else {
-        const dataUrl = await exportStandardPng(hiddenCardRef.current, isBorderless);
-        downloadDataUrl(dataUrl, `${filename}.png`);
-      }
-    } catch (err) {
-      console.error('PNG export failed:', err);
-    } finally {
-      hiddenCardRef.current?.classList.remove('card-exporting');
-      setExporting(false);
-    }
+    await new Promise((r) => setTimeout(r, 500)); // let the hidden renderer settle
+    await exportCardPng(hiddenCardRef.current, {
+      printReady,
+      cardName: card.cardName,
+      borderless: !!card.borderless,
+      cardArtUrl: card.cardArtUrl,
+      crossOrigin: true,
+    });
+    setExporting(false);
   }
 
   function handleExportJson() {
@@ -177,7 +168,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
             &times;
           </button>
           <div>
-            <h2 className="text-lg font-bold text-white pr-6">{card.cardName.replace(/\\n/g, ' ')}</h2>
+            <h2 className="text-lg font-bold text-white pr-6">{displayCardName(card.cardName)}</h2>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className="text-xs px-2 py-0.5 rounded bg-navy-700 text-gray-300">
                 {card.cardType}
@@ -212,7 +203,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
 
           {card.remixedFrom && (
             <div className="text-xs text-gold-500">
-              Remixed from {card.remixedFromName ? <span className="text-gold-400">{card.remixedFromName.replace(/\\n/g, ' ')}</span> : 'another card'}
+              Remixed from {card.remixedFromName ? <span className="text-gold-400">{displayCardName(card.remixedFromName)}</span> : 'another card'}
             </div>
           )}
 
@@ -230,11 +221,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
                 type="button"
                 role="switch"
                 aria-checked={printReady}
-                onClick={() => {
-                  const next = !printReady;
-                  setPrintReady(next);
-                  localStorage.setItem('openzoo-print-ready', next ? '1' : '0');
-                }}
+                onClick={() => setPrintReady(!printReady)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                   printReady ? 'bg-green-500' : 'bg-navy-600'
                 }`}
@@ -271,6 +258,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
           cardData={card.cardData}
           scale={1}
           borderlessOverride={!!card.borderless}
+          artNeededOverride={!!card.artNeeded}
         />
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import {
   CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA,
@@ -23,6 +23,7 @@ import { SetSymbolSelector } from './SetSymbolSelector';
 import { TextBoxBuilder } from './TextBoxBuilder';
 import { FormattedTextarea } from './FormattedTextarea';
 import { ExportButton } from './ExportButton';
+import { exportCardPng } from '@/lib/useCardExport';
 import { JsonExportButton } from './JsonExportButton';
 import { JsonImportButton } from './JsonImportButton';
 import { PublishDialog } from './PublishDialog';
@@ -31,6 +32,7 @@ import type { CardTag } from '@/types/card';
 
 interface EditorSidebarProps {
   cardRef: React.RefObject<HTMLDivElement | null>;
+  clearSignal?: number;
 }
 
 const BORDER_COLORS: Record<string, string> = {
@@ -39,8 +41,38 @@ const BORDER_COLORS: Record<string, string> = {
   PT: 'rgb(204,204,204)',
 };
 
-function SectionDivider() {
-  return <hr className="border-navy-600" />;
+function SectionDivider({ alwaysVisible }: { alwaysVisible?: boolean }) {
+  return <hr className={`border-navy-600 ${alwaysVisible ? '' : 'hidden md:block'}`} />;
+}
+
+function EditorSection({ id, title, summary, openSection, onToggle, className = '', children }: {
+  id: string;
+  title: string;
+  summary?: React.ReactNode;
+  openSection: string | null;
+  onToggle: (id: string) => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const open = openSection === id;
+  return (
+    <div className={`max-md:border-b max-md:border-navy-700 ${className}`}>
+      <button
+        type="button"
+        onClick={() => onToggle(id)}
+        className="md:hidden w-full h-11 flex items-center justify-between gap-3 text-left cursor-pointer"
+      >
+        <span className="text-sm font-semibold text-white shrink-0">{title}</span>
+        <span className="flex items-center gap-2 text-xs text-gray-500 min-w-0">
+          <span className="truncate">{summary}</span>
+          <span className={`transition-transform ${open ? 'rotate-90' : ''}`}>›</span>
+        </span>
+      </button>
+      <div className={`${open ? 'flex' : 'hidden'} md:flex flex-col gap-4 max-md:pb-4`}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function TextField({ label, value, onChange, placeholder, multiline, maxLength }: {
@@ -79,7 +111,7 @@ function TextField({ label, value, onChange, placeholder, multiline, maxLength }
   );
 }
 
-export function EditorSidebar({ cardRef }: EditorSidebarProps) {
+export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
 
@@ -113,6 +145,13 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
   const locale = useCardStore((s) => s.locale);
   const setLocale = useCardStore((s) => s.setLocale);
   const snapshotVersion = useCardStore((s) => s._snapshotVersion);
+  const effectBlocks = useCardStore((s) => s.effectBlocks);
+  const artNeeded = useCardStore((s) => s.artNeeded);
+  const cardArtUrl = useCardStore((s) => s.cardArtUrl);
+  const primaryElement = useCardStore((s) => s.primaryElement);
+  const secondaryElement = useCardStore((s) => s.secondaryElement);
+  const traits = useCardStore((s) => s.traits);
+  const terras = useCardStore((s) => s.terras);
   const [lp, setLp] = useState('10');
   const [flavorText, setFlavorText] = useState('');
   const [auraEffectText, setAuraEffectText] = useState('');
@@ -120,6 +159,8 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
   const [artist, setArtist] = useState('');
   const [borderStyle, setBorderStyle] = useState('Red');
   const [showPublish, setShowPublish] = useState(false);
+  // Mobile single-open accordion (design 3b); desktop ignores this.
+  const [openSection, setOpenSection] = useState<string | null>('identity');
   const snapshotGuard = useRef(false);
   const layout = CARD_TYPE_TO_LAYOUT[cardType];
   const isBasic = layout.startsWith('Basic');
@@ -335,264 +376,341 @@ export function EditorSidebar({ cardRef }: EditorSidebarProps) {
     setTextField('LP', numeric ? `{LP}${numeric}` : '');
   };
 
+  const doClear = () => {
+    resetCard();
+    setBorderStyle('Red');
+    clearRemix();
+  };
+
+  useEffect(() => {
+    if (clearSignal === 0) return;
+    doClear();
+  }, [clearSignal]);
+
+  const toggleSection = (id: string) => setOpenSection((prev) => (prev === id ? null : id));
+
+  const showTraits = !isTerra && !isAura;
+  const showTerraSlots = !TYPES_WITHOUT_TERRA.has(cardType);
+  const showAuraSection = isBasic || isRegularAura || isToken || isTerra;
+  const showEffectSection = showTraits || isSpecialTerra || isSpecialAura;
+
+  const identitySummary = [
+    hasTribe && tribe,
+    hasLP && lp && `${lp} LP`,
+    hasSpellbookLimit && spellbookLimit,
+  ].filter(Boolean).join(' · ');
+  const auraSummary = [primaryElement, secondaryElement].filter(Boolean).join(' · ');
+  const traitsSummary = [...traits.filter(Boolean), ...terras.filter(Boolean)].join(', ');
+  const effectSummary = `${effectBlocks.length} component${effectBlocks.length === 1 ? '' : 's'}`;
+  const artSummary = artNeeded
+    ? <span className="text-red-300">Art needed</span>
+    : cardArtUrl ? 'Attached' : '';
+  const loreSummary = [
+    flavorText.trim() && 'Flavor',
+    artist.trim() && 'Artist',
+    hasMetadata && 'Metadata',
+  ].filter(Boolean).join(' · ');
+  const languageSummary = `${locale === 'ja' ? '日本語' : 'English'} · ${borderStyle === 'None' ? 'Borderless' : borderStyle}`;
+
   return (
-    <div className="w-full md:w-80 bg-navy-900 md:border-r border-navy-600 overflow-y-auto p-4 space-y-4 shrink-0">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="hover:opacity-80 transition-opacity">
-            <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-6" />
-          </Link>
-          <h2 className="text-lg font-bold text-white">Card Editor</h2>
+    <div className="w-full md:w-82 bg-navy-900 md:border-r border-navy-600 flex flex-col min-h-0 flex-1">
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+        {/* Desktop panel header */}
+        <div className="hidden md:flex items-center justify-between">
+          <h2 className="text-[15px] font-bold text-white">Card Editor</h2>
+          <button
+            onClick={() => {
+              if (window.confirm('Clear the editor and start a new card?')) doClear();
+            }}
+            className="px-3 py-1.5 text-xs text-gold-400 border border-navy-600 hover:text-red-400 hover:border-red-400/60 transition-colors cursor-pointer"
+          >
+            Clear
+          </button>
         </div>
+
+        {/* Language + Border */}
+        <EditorSection id="language" title="Language & border" summary={languageSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-7">
+          <div className="flex gap-4">
+            <div className="w-1/2 space-y-1">
+              <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
+                Language
+              </label>
+              <select
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as Locale)}
+                className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
+              >
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+              </select>
+            </div>
+            <div className="w-1/2 space-y-1">
+              <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
+                Border
+              </label>
+              <select
+                value={borderStyle}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setBorderStyle(val);
+                  if (val === 'None') {
+                    applyBorderless();
+                  } else {
+                    const color = BORDER_COLORS[val];
+                    if (borderless) {
+                      removeBorderless(color);
+                    } else {
+                      setStyleField('CardBorder', `{outlineColor:${color};background:${color}}`);
+                    }
+                  }
+                }}
+                className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
+              >
+                <option value="Red">Red</option>
+                <option value="Sample">Sample</option>
+                <option value="PT">PT</option>
+                <option value="None">Borderless</option>
+              </select>
+            </div>
+          </div>
+        </EditorSection>
+
+        <EditorSection id="identity" title="Identity & stats" summary={identitySummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-1">
+          {/* Card Type */}
+          <CardTypeSelector />
+
+          <SectionDivider />
+
+          {/* Set Symbol */}
+          <SetSymbolSelector />
+
+          {/* Card Name */}
+          {!isRegularAura && !isRegularTerra && (
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
+                Card Name
+              </label>
+              <input
+                type="text"
+                value={cardName}
+                onChange={(e) => setCardName(e.target.value)}
+                placeholder="Enter card name"
+                maxLength={40}
+                className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
+              />
+            </div>
+          )}
+
+          {/* Tribe */}
+          {hasTribe && (
+            <TextField
+              label="Tribe"
+              value={tribe}
+              onChange={setTribe}
+              placeholder="e.g. Humanoid"
+              maxLength={30}
+            />
+          )}
+
+          {(hasSpellbookLimit || hasLP) && (
+            <div className="flex gap-4">
+              {hasSpellbookLimit && (
+                <div className="w-1/2">
+                  <TextField
+                    label="Spellbook Limit"
+                    value={spellbookLimit}
+                    onChange={setSpellbookLimit}
+                    placeholder="e.g. 2"
+                    maxLength={2}
+                  />
+                </div>
+              )}
+              {hasLP && (
+                <div className="w-1/2">
+                  <TextField
+                    label="LP (Life Points)"
+                    value={lp}
+                    onChange={handleLpChange}
+                    placeholder="e.g. 10"
+                    maxLength={4}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </EditorSection>
+
+        {/* Aura */}
+        {showAuraSection && (
+          <EditorSection
+            id="aura"
+            title={isBasic ? 'Aura cost' : isTerra ? 'Terra' : 'Aura'}
+            summary={auraSummary}
+            openSection={openSection}
+            onToggle={toggleSection}
+            className="max-md:order-2"
+          >
+            {isBasic && (
+              <>
+                <CostEditor />
+                <SectionDivider />
+              </>
+            )}
+            {(isRegularAura || isToken) && (
+              <>
+                <AuraElementSelector />
+                <SectionDivider />
+              </>
+            )}
+            {isTerra && (
+              <>
+                <TerraCardSelector />
+                <SectionDivider />
+              </>
+            )}
+          </EditorSection>
+        )}
+
+        {/* Traits + Terra */}
+        {(showTraits || showTerraSlots) && (
+          <EditorSection id="traits" title="Traits & Terra" summary={traitsSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-3">
+            {showTraits && (
+              <TraitSelector />
+            )}
+            {showTerraSlots && (
+              <TerraSelector />
+            )}
+          </EditorSection>
+        )}
+
+        {/* Card Art */}
+        <EditorSection id="art" title="Card art" summary={artSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-5">
+          <SectionDivider />
+          <ImageUploader />
+        </EditorSection>
+
+        {/* Effect Text */}
+        {showEffectSection && (
+          <EditorSection id="effect" title="Effect text" summary={effectSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-4">
+            {/* Effect Text */}
+            {showTraits && (
+              <>
+                <SectionDivider />
+                <TextBoxBuilder />
+              </>
+            )}
+
+            {/* Special Terra effect text */}
+            {isSpecialTerra && (
+              <>
+                <SectionDivider />
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
+                    Effect Text
+                  </label>
+                  <FormattedTextarea
+                    value={terraEffectText}
+                    onChange={(v) => { setTerraEffectText(v); setTextField('Aura/Terra Text Box 1', v); }}
+                    placeholder="Effect text..."
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Special Aura effect text */}
+            {isSpecialAura && (
+              <>
+                <SectionDivider />
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
+                    Effect Text
+                  </label>
+                  <FormattedTextarea
+                    value={auraEffectText}
+                    onChange={(v) => { setAuraEffectText(v); setTextField('Aura/Terra Text Box', v); }}
+                    placeholder="Effect text..."
+                  />
+                </div>
+              </>
+            )}
+          </EditorSection>
+        )}
+
+        <EditorSection id="lore" title="Lore & credits" summary={loreSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-6">
+          {/* Metadata */}
+          {hasMetadata && (
+            <>
+              <SectionDivider />
+              {borderless ? (
+                <div className="text-xs text-gold-500 italic">Metadata does not appear on borderless cards.</div>
+              ) : (
+                <CryptidInfoEditor />
+              )}
+            </>
+          )}
+
+          <SectionDivider />
+
+          {/* Flavor Text */}
+          {isBasic && (borderless ? (
+            <div className="text-xs text-gold-500 italic">Flavor text does not appear on borderless cards.</div>
+          ) : (
+            <TextField
+              label="Flavor Text"
+              value={flavorText}
+              onChange={(v) => { setFlavorText(v); setTextField('FlavorText', v); }}
+              placeholder="Lore or flavor text..."
+              multiline
+              maxLength={200}
+            />
+          ))}
+
+          {/* Artist */}
+          <TextField
+            label="Artist"
+            value={artist}
+            onChange={(v) => { setArtist(v); setTextField('Artist', v ? `${t('Illus.', locale)} ${v}` : ''); }}
+            placeholder="Artist name"
+            maxLength={30}
+          />
+        </EditorSection>
+
+        <div className="flex flex-col gap-4 max-md:order-8">
+          <SectionDivider alwaysVisible />
+
+          <button
+            onClick={() => setShowPublish(true)}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 transition-colors border-gold"
+          >
+            Publish to Gallery
+          </button>
+
+          <ExportButton cardRef={cardRef} />
+
+          <div className="flex gap-2">
+            <JsonExportButton />
+            <JsonImportButton onImport={clearRemix} />
+          </div>
+
+          <div className="h-4" />
+        </div>
+      </div>
+
+      {/* Mobile action bar */}
+      <div className="flex md:hidden gap-3 px-4 pt-3 pb-5.5 border-t border-navy-600 bg-navy-900 shrink-0">
         <button
-          onClick={() => { resetCard(); setBorderStyle('Red'); clearRemix(); }}
-          className="text-xs text-gold-400 hover:text-red-400 transition-colors"
+          onClick={() => exportCardPng(cardRef.current)}
+          className="flex-1 h-12 bg-navy-800 text-gold-300 font-semibold border-gold"
         >
-          Clear
+          Export PNG
+        </button>
+        <button
+          onClick={() => setShowPublish(true)}
+          className="flex-1 h-12 bg-green-600 text-white font-semibold border-gold"
+        >
+          Publish
         </button>
       </div>
-
-      {/* Language + Border */}
-      <div className="flex gap-4">
-        <div className="w-1/2 space-y-1">
-          <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-            Language
-          </label>
-          <select
-            value={locale}
-            onChange={(e) => setLocale(e.target.value as Locale)}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
-          >
-            <option value="en">English</option>
-            <option value="ja">日本語</option>
-          </select>
-        </div>
-        <div className="w-1/2 space-y-1">
-          <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-            Border
-          </label>
-          <select
-            value={borderStyle}
-            onChange={(e) => {
-              const val = e.target.value;
-              setBorderStyle(val);
-              if (val === 'None') {
-                applyBorderless();
-              } else {
-                const color = BORDER_COLORS[val];
-                if (borderless) {
-                  removeBorderless(color);
-                } else {
-                  setStyleField('CardBorder', `{outlineColor:${color};background:${color}}`);
-                }
-              }
-            }}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
-          >
-            <option value="Red">Red</option>
-            <option value="Sample">Sample</option>
-            <option value="PT">PT</option>
-            <option value="None">Borderless</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Card Type */}
-      <CardTypeSelector />
-
-      <SectionDivider />
-
-      {/* Set Symbol */}
-      <SetSymbolSelector />
-
-      {/* Card Name */}
-      {!isRegularAura && !isRegularTerra && (
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-            Card Name
-          </label>
-          <input
-            type="text"
-            value={cardName}
-            onChange={(e) => setCardName(e.target.value)}
-            placeholder="Enter card name"
-            maxLength={40}
-            className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400"
-          />
-        </div>
-      )}
-
-      {/* Tribe */}
-      {hasTribe && (
-        <TextField
-          label="Tribe"
-          value={tribe}
-          onChange={setTribe}
-          placeholder="e.g. Humanoid"
-          maxLength={30}
-        />
-      )}
-
-      {(hasSpellbookLimit || hasLP) && (
-        <div className="flex gap-4">
-          {hasSpellbookLimit && (
-            <div className="w-1/2">
-              <TextField
-                label="Spellbook Limit"
-                value={spellbookLimit}
-                onChange={setSpellbookLimit}
-                placeholder="e.g. 2"
-                maxLength={2}
-              />
-            </div>
-          )}
-          {hasLP && (
-            <div className="w-1/2">
-              <TextField
-                label="LP (Life Points)"
-                value={lp}
-                onChange={handleLpChange}
-                placeholder="e.g. 10"
-                maxLength={4}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Aura */}
-      {isBasic && (
-        <>
-          <CostEditor />
-          <SectionDivider />
-        </>
-      )}
-      {(isRegularAura || isToken) && (
-        <>
-          <AuraElementSelector />
-          <SectionDivider />
-        </>
-      )}
-      {isTerra && (
-        <>
-          <TerraCardSelector />
-          <SectionDivider />
-        </>
-      )}
-
-      {/* Traits */}
-      {!isTerra && !isAura && (
-        <>
-          <TraitSelector />
-        </>
-      )}
-
-      {/* Terra */}
-      {!TYPES_WITHOUT_TERRA.has(cardType) && (
-        <TerraSelector />
-      )}
-
-      <SectionDivider />
-
-      {/* Card Art */}
-      <ImageUploader />
-
-      {/* Effect Text Box Builder */}
-      {!isTerra && !isAura && (
-        <>
-          <SectionDivider />
-          <TextBoxBuilder />
-        </>
-      )}
-
-      {/* Special Terra effect text */}
-      {isSpecialTerra && (
-        <>
-          <SectionDivider />
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-              Effect Text
-            </label>
-            <FormattedTextarea
-              value={terraEffectText}
-              onChange={(v) => { setTerraEffectText(v); setTextField('Aura/Terra Text Box 1', v); }}
-              placeholder="Effect text..."
-            />
-          </div>
-        </>
-      )}
-
-      {/* Special Aura effect text */}
-      {isSpecialAura && (
-        <>
-          <SectionDivider />
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-              Effect Text
-            </label>
-            <FormattedTextarea
-              value={auraEffectText}
-              onChange={(v) => { setAuraEffectText(v); setTextField('Aura/Terra Text Box', v); }}
-              placeholder="Effect text..."
-            />
-          </div>
-        </>
-      )}
-
-      {/* Metadata */}
-      {hasMetadata && (
-        <>
-          <SectionDivider />
-          {borderless ? (
-            <div className="text-xs text-gold-500 italic">Metadata does not appear on borderless cards.</div>
-          ) : (
-            <CryptidInfoEditor />
-          )}
-        </>
-      )}
-
-      <SectionDivider />
-
-      {/* Flavor Text */}
-      {isBasic && (borderless ? (
-        <div className="text-xs text-gold-500 italic">Flavor text does not appear on borderless cards.</div>
-      ) : (
-        <TextField
-          label="Flavor Text"
-          value={flavorText}
-          onChange={(v) => { setFlavorText(v); setTextField('FlavorText', v); }}
-          placeholder="Lore or flavor text..."
-          multiline
-          maxLength={200}
-        />
-      ))}
-
-      {/* Artist */}
-      <TextField
-        label="Artist"
-        value={artist}
-        onChange={(v) => { setArtist(v); setTextField('Artist', v ? `${t('Illus.', locale)} ${v}` : ''); }}
-        placeholder="Artist name"
-        maxLength={30}
-      />
-
-      <SectionDivider />
-
-      <button
-        onClick={() => setShowPublish(true)}
-        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 transition-colors border-gold"
-      >
-        Publish to Gallery
-      </button>
-
-      <ExportButton cardRef={cardRef} />
-
-      <div className="flex gap-2">
-        <JsonExportButton />
-        <JsonImportButton onImport={clearRemix} />
-      </div>
-
-      <div className="h-4" />
 
       {showPublish && (
         <PublishDialog
