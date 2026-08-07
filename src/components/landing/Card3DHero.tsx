@@ -65,7 +65,15 @@ export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCa
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
-    return applyTexture(viewer, 1, '/assets/OPZDexCardBack.png', () => setFailed(true), () => setBackApplied(true));
+    const onError = () => setFailed(true);
+    viewer.addEventListener('error', onError);
+    return () => viewer.removeEventListener('error', onError);
+  }, []);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    return applyTexture(viewer, 1, '/assets/OPZDexCardBack.png', () => setBackApplied(true), () => setBackApplied(true));
   }, []);
 
   useEffect(() => {

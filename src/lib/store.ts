@@ -472,7 +472,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardData: newData,
       cardArtPositionX: 0,
       cardArtPositionY: 0,
-      ...(get()._artNeededTouched ? {} : { artNeeded: !url }),
+      ...(get()._artNeededTouched || get()._isLoadingSnapshot ? {} : { artNeeded: !url }),
     });
   },
 
@@ -652,7 +652,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardArtPositionX: snapshot.cardArtPositionX ?? 0,
       cardArtPositionY: snapshot.cardArtPositionY ?? 0,
       artNeeded: snapshot.artNeeded ?? false,
-      _artNeededTouched: true,
+      _artNeededTouched: false,
       _autoFitRatio: 1,
       _isLoadingSnapshot: true,
       _snapshotVersion: get()._snapshotVersion + 1,

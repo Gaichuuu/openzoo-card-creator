@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { PageTitle } from '@/components/PageTitle';
-import { AURA_COLORS } from '@/data/constants';
+import { AURA_COLORS, FONT_BODY } from '@/data/constants';
 import type { Element, Terra, Trait } from '@/types/card';
 
 interface Attribution<S extends string = string> {
@@ -268,12 +268,12 @@ export function AboutPage() {
       <div className="max-w-5xl mx-auto px-6 md:px-10 pt-13 pb-18">
         <PageTitle className="mb-3.5">About OpenZoo</PageTitle>
 
-        <p className="text-[18px] leading-normal text-[#d8d8d8] m-0 mb-4" style={{ fontFamily: "'EB Garamond', Georgia, serif" }}>
+        <p className="text-[18px] leading-normal text-gray-300 m-0 mb-4" style={{ fontFamily: FONT_BODY }}>
           OpenZoo is the unofficial continuation of <strong className="text-white">vintage MetaZoo</strong>, made
           by MetaZoo fans, <em className="text-white">for</em> MetaZoo fans. Exclusively using assets within
           Creative Commons or made in-house, we plan on adding more cards to the MetaZoo card pool ad infinitum.
         </p>
-        <p className="text-[18px] leading-normal text-[#d8d8d8] m-0 mb-4" style={{ fontFamily: "'EB Garamond', Georgia, serif" }}>
+        <p className="text-[18px] leading-normal text-gray-300 m-0 mb-4" style={{ fontFamily: FONT_BODY }}>
           OpenZoo assets are provided free of charge to anyone who wants them under{' '}
           <strong className="text-white">Creative Commons 3.0</strong>, specifically{' '}
           <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className={PROSE_LINK_CLASS}>

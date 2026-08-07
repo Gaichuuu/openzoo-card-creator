@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import {
@@ -30,9 +30,13 @@ import { PublishDialog } from './PublishDialog';
 import { fetchCard } from '@/lib/galleryService';
 import type { CardTag } from '@/types/card';
 
+export interface EditorSidebarHandle {
+  confirmClear: () => void;
+}
+
 interface EditorSidebarProps {
   cardRef: React.RefObject<HTMLDivElement | null>;
-  clearSignal?: number;
+  ref?: React.Ref<EditorSidebarHandle>;
 }
 
 const BORDER_COLORS: Record<string, string> = {
@@ -111,7 +115,7 @@ function TextField({ label, value, onChange, placeholder, multiline, maxLength }
   );
 }
 
-export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) {
+export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
 
@@ -145,13 +149,11 @@ export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) 
   const locale = useCardStore((s) => s.locale);
   const setLocale = useCardStore((s) => s.setLocale);
   const snapshotVersion = useCardStore((s) => s._snapshotVersion);
-  const effectBlocks = useCardStore((s) => s.effectBlocks);
+  const effectCount = useCardStore((s) => s.effectBlocks.length);
   const artNeeded = useCardStore((s) => s.artNeeded);
-  const cardArtUrl = useCardStore((s) => s.cardArtUrl);
-  const primaryElement = useCardStore((s) => s.primaryElement);
-  const secondaryElement = useCardStore((s) => s.secondaryElement);
-  const traits = useCardStore((s) => s.traits);
-  const terras = useCardStore((s) => s.terras);
+  const hasCardArt = useCardStore((s) => Boolean(s.cardArtUrl));
+  const auraSummary = useCardStore((s) => [s.primaryElement, s.secondaryElement].filter(Boolean).join(' · '));
+  const traitsSummary = useCardStore((s) => [...s.traits.filter(Boolean), ...s.terras.filter(Boolean)].join(', '));
   const [lp, setLp] = useState('10');
   const [flavorText, setFlavorText] = useState('');
   const [auraEffectText, setAuraEffectText] = useState('');
@@ -159,7 +161,6 @@ export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) 
   const [artist, setArtist] = useState('');
   const [borderStyle, setBorderStyle] = useState('Red');
   const [showPublish, setShowPublish] = useState(false);
-  // Mobile single-open accordion (design 3b); desktop ignores this.
   const [openSection, setOpenSection] = useState<string | null>('identity');
   const snapshotGuard = useRef(false);
   const layout = CARD_TYPE_TO_LAYOUT[cardType];
@@ -383,10 +384,7 @@ export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) 
     clearRemix();
   };
 
-  useEffect(() => {
-    if (clearSignal === 0) return;
-    confirmClear();
-  }, [clearSignal]);
+  useImperativeHandle(ref, () => ({ confirmClear }));
 
   const toggleSection = (id: string) => setOpenSection((prev) => (prev === id ? null : id));
 
@@ -400,12 +398,10 @@ export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) 
     hasLP && lp && `${lp} LP`,
     hasSpellbookLimit && spellbookLimit,
   ].filter(Boolean).join(' · ');
-  const auraSummary = [primaryElement, secondaryElement].filter(Boolean).join(' · ');
-  const traitsSummary = [...traits.filter(Boolean), ...terras.filter(Boolean)].join(', ');
-  const effectSummary = `${effectBlocks.length} component${effectBlocks.length === 1 ? '' : 's'}`;
+  const effectSummary = `${effectCount} component${effectCount === 1 ? '' : 's'}`;
   const artSummary = artNeeded
     ? <span className="text-red-300">Art needed</span>
-    : cardArtUrl ? 'Attached' : '';
+    : hasCardArt ? 'Attached' : '';
   const loreSummary = [
     flavorText.trim() && 'Flavor',
     artist.trim() && 'Artist',

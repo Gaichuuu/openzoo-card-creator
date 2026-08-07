@@ -8,7 +8,7 @@ export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // must match Firebase Storage
 export const PRINT_READY_KEY = 'openzoo-print-ready';
 
 export function displayCardName(name: string): string {
-  return name.replace(/\\n/g, ' ');
+  return name.replace(/\\n/g, ' ').replace(/\n/g, ' ');
 }
 
 const PIXEL_RATIO = 4;

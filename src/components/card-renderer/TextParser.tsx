@@ -1,6 +1,6 @@
 import React from 'react';
 import { INLINE_CLASSES, INLINE_CLASS_OUTLINES, getVariables } from '@/data/inlineClasses';
-import { wrapOutline } from './StrokedText';
+import { wrapOutline } from '@/lib/outlineUtils';
 import { resolveImagePath } from '@/lib/imagePathResolver';
 import { useCardStore } from '@/lib/store';
 import { expandVariables, parseSegments, stripHtml } from '@/lib/textParserUtils';

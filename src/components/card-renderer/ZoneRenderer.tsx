@@ -3,10 +3,9 @@ import type { Zone } from '@/types/layout';
 import type { CardData } from '@/types/card';
 import { resolveImagePath } from '@/lib/imagePathResolver';
 import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
-import { applyStrokeOutline, stripInvisibleOutlines, type OutlineStyle } from '@/lib/outlineUtils';
+import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
 import { useCardStore } from '@/lib/store';
 import { ParsedText } from './TextParser';
-import { wrapOutline } from './StrokedText';
 
 function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null }) {
   const wrapperRef = useRef<HTMLSpanElement>(null);

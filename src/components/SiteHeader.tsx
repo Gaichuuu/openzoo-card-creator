@@ -17,7 +17,7 @@ export function SiteHeader({ sticky = false }: SiteHeaderProps) {
 
   return (
     <header
-      className={`${sticky ? 'sticky top-0 z-10' : 'relative'} bg-navy-950 flex items-center gap-3 md:gap-5 h-15 px-4 md:px-6 border-b border-gold-500 shrink-0`}
+      className={`${sticky ? 'sticky top-0 z-10' : 'relative'} bg-navy-950 flex items-center gap-3 md:gap-5 h-[var(--site-header-h)] px-4 md:px-6 border-b border-gold-500 shrink-0`}
     >
       <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
         <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-6.5" />

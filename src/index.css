@@ -13,6 +13,11 @@
   --color-gold-400: #dcbe64;
   --color-gold-500: #c8a532;
   --color-gold-600: #aa821e;
+  --color-keyword: #93c5fd;
+}
+
+:root {
+  --site-header-h: 3.75rem;
 }
 
 @font-face {
@@ -202,4 +207,7 @@ select.input-plain:focus {
 }
 .card-exporting [data-zone-key="FlavorText"] > * {
   transform: translateY(0.5px) !important;
+}
+.card-exporting .art-needed-overlay {
+  display: none !important;
 }

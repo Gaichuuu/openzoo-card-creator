@@ -26,7 +26,3 @@ export function StrokedText({ outline, children }: StrokedTextProps) {
     </span>
   );
 }
-
-export function wrapOutline(node: ReactNode, outline: OutlineStyle | null): ReactNode {
-  return outline ? <StrokedText outline={outline}>{node}</StrokedText> : node;
-}

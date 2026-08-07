@@ -1,8 +1,13 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { StrokedText } from '@/components/card-renderer/StrokedText';
 
 export interface ShadowStackInfo {
   radius: number;
   color: string;
+}
+
+export function wrapOutline(node: ReactNode, outline: OutlineStyle | null): ReactNode {
+  return outline ? <StrokedText outline={outline}>{node}</StrokedText> : node;
 }
 
 export interface OutlineStyle {

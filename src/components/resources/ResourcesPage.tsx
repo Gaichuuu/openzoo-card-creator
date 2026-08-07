@@ -121,7 +121,7 @@ export function ResourcesPage() {
       <div className="max-w-5xl mx-auto px-6 md:px-10 pt-12 pb-18 flex flex-col gap-11">
         <header>
           <PageTitle className="mb-3.5">Resources</PageTitle>
-          <p className="text-[20px] leading-normal text-[#d8d8d8] m-0 mb-4" style={{ fontFamily: "'EB Garamond', Georgia, serif" }}>
+          <p className="text-[20px] leading-normal text-gray-300 m-0 mb-4" style={{ fontFamily: FONT_BODY }}>
             Everything you need to get started with OpenZoo.
           </p>
           <nav className="flex flex-wrap gap-2">

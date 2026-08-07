@@ -2,7 +2,7 @@ import { useDeferredValue, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
-import { EditorSidebar } from './EditorSidebar';
+import { EditorSidebar, type EditorSidebarHandle } from './EditorSidebar';
 import { InfoPanel } from './InfoPanel';
 import { SiteHeader } from '@/components/SiteHeader';
 import { useIsMobile } from '@/lib/useIsMobile';
@@ -18,12 +18,12 @@ export function CardEditor() {
   const cardName = useCardStore((s) => s.cardName);
   const cardType = useCardStore((s) => s.cardType);
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
-  const [clearSignal, setClearSignal] = useState(0);
+  const sidebarRef = useRef<EditorSidebarHandle>(null);
   const isMobile = useIsMobile();
   const peekLayoutType = useDeferredValue(layoutType);
   const peekCardData = useDeferredValue(cardData);
 
-  const handleClear = () => setClearSignal((n) => n + 1);
+  const handleClear = () => sidebarRef.current?.confirmClear();
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
@@ -108,7 +108,7 @@ export function CardEditor() {
               </span>
             </button>
           )}
-          <EditorSidebar cardRef={cardRef} clearSignal={clearSignal} />
+          <EditorSidebar cardRef={cardRef} ref={sidebarRef} />
         </div>
 
         {/* Reference panel */}

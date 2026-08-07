@@ -218,7 +218,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
                   onClick={handleViewParent}
                   className="text-gold-400 hover:text-gold-300 transition-colors"
                 >
-                  {card.remixedFromName ? displayCardName(card.remixedFromName).replace(/\n/g, ' ') : 'another card'}
+                  {card.remixedFromName ? displayCardName(card.remixedFromName) : 'another card'}
                 </button>
               </span>
             )}
@@ -230,7 +230,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
               onClick={handleRemix}
               className="w-full py-3 text-navy-990 text-[15px] font-bold transition-[filter] hover:brightness-110"
               style={{
-                background: 'linear-gradient(180deg, #e8d88c, #c8a532 55%, #aa821e) padding-box, linear-gradient(180deg, #fff7cf, #aa821e) border-box',
+                background: 'linear-gradient(180deg, var(--color-gold-300), var(--color-gold-500) 55%, var(--color-gold-600)) padding-box, linear-gradient(180deg, var(--color-gold-100), var(--color-gold-600)) border-box',
                 border: '1px solid transparent',
               }}
             >

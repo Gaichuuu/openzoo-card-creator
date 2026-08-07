@@ -205,8 +205,8 @@ export function GalleryPage() {
   const filterType = (searchParams.get('type') || '') as CardType | '';
   const filterElement = (searchParams.get('aura') || '') as Element | '';
   const filterTag = (searchParams.get('tag') || '') as CardTag | '';
-  const filterTerra = searchParams.get('terra') || '';
-  const filterTrait = searchParams.get('trait') || '';
+  const filterTerra = filterTag ? '' : searchParams.get('terra') || '';
+  const filterTrait = filterTag || filterTerra ? '' : searchParams.get('trait') || '';
 
   const updateParams = useCallback((updates: Record<string, string>) => {
     setSearchParams((prev) => {
@@ -417,7 +417,7 @@ export function GalleryPage() {
 
       <div className="flex flex-1 min-h-0">
         {/* Facet rail */}
-        <aside className="hidden md:flex w-59 shrink-0 bg-navy-950 border-r border-navy-600 px-4.5 py-5 flex-col gap-1.5 divide-y divide-navy-600 [&>*:not(:last-child)]:pb-3.5 overflow-y-auto sticky top-15 max-h-[calc(100dvh-3.75rem)] self-start">
+        <aside className="hidden md:flex w-59 shrink-0 bg-navy-950 border-r border-navy-600 px-4.5 py-5 flex-col gap-1.5 divide-y divide-navy-600 [&>*:not(:last-child)]:pb-3.5 overflow-y-auto sticky top-(--site-header-h) max-h-[calc(100dvh-var(--site-header-h))] self-start">
           <FacetSections {...facetProps} />
         </aside>
 
@@ -503,8 +503,18 @@ export function GalleryPage() {
                 ))}
               </div>
             )}
-            {!loading && !error && hasMore && (
+            {!loading && !error && hasMore && !search && (
               <div ref={sentinelRef} className="h-1" />
+            )}
+            {!loading && !error && hasMore && search && !loadingMore && (
+              <div className="text-center pt-6">
+                <button
+                  onClick={loadMore}
+                  className="px-4 py-2 text-xs text-gold-400 border border-navy-600 hover:text-gold-300 hover:border-gold-500 transition-colors cursor-pointer"
+                >
+                  Search more cards
+                </button>
+              </div>
             )}
             {loadingMore && (
               <div className={`${gridClass} pt-4`}>

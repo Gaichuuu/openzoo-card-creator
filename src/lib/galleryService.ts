@@ -249,13 +249,14 @@ export interface GalleryCounts {
 
 const COUNTS_CACHE_KEY = 'openzoo-gallery-counts-v2';
 const COUNTS_TTL_MS = 5 * 60 * 1000;
+const PARTIAL_COUNTS_TTL_MS = 60 * 1000;
 
 function readCachedCounts(): GalleryCounts | null {
   const raw = readSessionStorage(COUNTS_CACHE_KEY);
   if (!raw) return null;
   try {
-    const { at, counts } = JSON.parse(raw) as { at: number; counts: GalleryCounts };
-    return Date.now() - at < COUNTS_TTL_MS ? counts : null;
+    const { at, counts, partial } = JSON.parse(raw) as { at: number; counts: GalleryCounts; partial?: boolean };
+    return Date.now() - at < (partial ? PARTIAL_COUNTS_TTL_MS : COUNTS_TTL_MS) ? counts : null;
   } catch {
     return null;
   }
@@ -300,9 +301,7 @@ export async function fetchGalleryCounts(facets: GalleryFacetValues): Promise<Ga
   ]);
 
   const counts: GalleryCounts = { total, byTag, byType, byElement, byTerra, byTrait };
-  if (failures === 0) {
-    writeSessionStorage(COUNTS_CACHE_KEY, JSON.stringify({ at: Date.now(), counts }));
-  }
+  writeSessionStorage(COUNTS_CACHE_KEY, JSON.stringify({ at: Date.now(), counts, partial: failures > 0 }));
   return counts;
 }
 

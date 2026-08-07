@@ -74,7 +74,7 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
         >
           <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} />
           {artNeeded && artRect && (
-            <div style={{
+            <div className="art-needed-overlay" style={{
               position: 'absolute',
               top: artRect.top,
               left: artRect.left,
