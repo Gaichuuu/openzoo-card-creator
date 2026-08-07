@@ -5,8 +5,12 @@ type ModelViewerAttributes = React.DetailedHTMLProps<
     src?: string;
     alt?: string;
     poster?: string;
+    loading?: 'auto' | 'lazy' | 'eager';
+    reveal?: 'auto' | 'manual';
     'auto-rotate'?: boolean | '';
+    'auto-rotate-delay'?: string;
     'rotation-per-second'?: string;
+    'shadow-softness'?: string;
     'camera-controls'?: boolean | '';
     'camera-orbit'?: string;
     'field-of-view'?: string;

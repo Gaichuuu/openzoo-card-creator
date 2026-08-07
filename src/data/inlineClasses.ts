@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { ELEMENTS, TERRAS, TRAITS } from './constants';
 import type { Locale } from './locales';
 import { getPSBVariable } from './locales';
+import type { OutlineStyle } from '@/lib/outlineUtils';
 
 export const INLINE_CLASSES: Record<string, CSSProperties> = {
   LP: {
@@ -68,29 +69,21 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
     justifyContent: 'center',
     verticalAlign: '0.2em',
     marginTop: '0.15em',
-    height: '1.6em',
-    lineHeight: '0',
+    height: 'auto',
+    lineHeight: '1',
+    paddingTop: '0.358em',
+    paddingBottom: '0.242em',
     textTransform: 'uppercase' as const,
     fontSize: '0.7em',
     boxShadow: '0px 0.5px 1px rgba(0, 0, 0, 0.25)',
-    textShadow: [
-      '0.15em 0em 0em rgba(0,0,0,1)',
-      '0.138em 0.058em 0em rgba(0,0,0,1)',
-      '0.106em 0.106em 0em rgba(0,0,0,1)',
-      '0.058em 0.138em 0em rgba(0,0,0,1)',
-      '0em 0.15em 0em rgba(0,0,0,1)',
-      '-0.058em 0.138em 0em rgba(0,0,0,1)',
-      '-0.106em 0.106em 0em rgba(0,0,0,1)',
-      '-0.138em 0.058em 0em rgba(0,0,0,1)',
-      '-0.15em 0em 0em rgba(0,0,0,1)',
-      '-0.138em -0.058em 0em rgba(0,0,0,1)',
-      '-0.106em -0.106em 0em rgba(0,0,0,1)',
-      '-0.058em -0.138em 0em rgba(0,0,0,1)',
-      '0em -0.15em 0em rgba(0,0,0,1)',
-      '0.058em -0.138em 0em rgba(0,0,0,1)',
-      '0.106em -0.106em 0em rgba(0,0,0,1)',
-      '0.138em -0.058em 0em rgba(0,0,0,1)',
-    ].join(', '),
+  },
+};
+
+export const INLINE_CLASS_OUTLINES: Record<string, OutlineStyle> = {
+  Power: {
+    WebkitTextStrokeWidth: '0.3em',
+    WebkitTextStrokeColor: 'rgba(0, 0, 0, 1)',
+    paintOrder: 'stroke fill',
   },
 };
 

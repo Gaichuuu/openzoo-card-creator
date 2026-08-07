@@ -36,6 +36,7 @@ interface CardEditorState {
   cardArtPositionX: number;
   cardArtPositionY: number;
   artNeeded: boolean;
+  _artNeededTouched: boolean;
   _isLoadingSnapshot: boolean;
   _snapshotVersion: number;
   _snapshotTimer: ReturnType<typeof setTimeout> | null;
@@ -218,7 +219,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   _autoFitRatio: 1,
   cardArtPositionX: 0,
   cardArtPositionY: 0,
-  artNeeded: false,
+  artNeeded: true,
+  _artNeededTouched: false,
   _isLoadingSnapshot: false,
   _snapshotVersion: 0,
   _snapshotTimer: null,
@@ -465,7 +467,13 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       newData[key] = url || '';
     }
 
-    set({ cardArtUrl: url, cardData: newData, cardArtPositionX: 0, cardArtPositionY: 0 });
+    set({
+      cardArtUrl: url,
+      cardData: newData,
+      cardArtPositionX: 0,
+      cardArtPositionY: 0,
+      ...(get()._artNeededTouched || get()._isLoadingSnapshot ? {} : { artNeeded: !url }),
+    });
   },
 
   setBorderless: (v) => {
@@ -486,7 +494,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     set({ cardArtPositionX: Math.max(-50, Math.min(50, x)), cardArtPositionY: Math.max(-50, Math.min(50, y)) });
   },
 
-  setArtNeeded: (v) => set({ artNeeded: v }),
+  setArtNeeded: (v) => set({ artNeeded: v, _artNeededTouched: true }),
 
   _setAutoFitRatio: (ratio) => {
     if (Math.abs(ratio - get()._autoFitRatio) > 0.001) {
@@ -563,7 +571,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxExtraShrink: 0,
       cardArtPositionX: 0,
       cardArtPositionY: 0,
-      artNeeded: false,
+      artNeeded: true,
+      _artNeededTouched: false,
       _autoFitRatio: 1,
       _isLoadingSnapshot: false,
       _snapshotVersion: _snapshotVersion + 1,
@@ -643,6 +652,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardArtPositionX: snapshot.cardArtPositionX ?? 0,
       cardArtPositionY: snapshot.cardArtPositionY ?? 0,
       artNeeded: snapshot.artNeeded ?? false,
+      _artNeededTouched: false,
       _autoFitRatio: 1,
       _isLoadingSnapshot: true,
       _snapshotVersion: get()._snapshotVersion + 1,

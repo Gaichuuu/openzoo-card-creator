@@ -7,10 +7,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Local files
 node_modules
 dist
 dist-ssr
 *.local
+.claude/
+CLAUDE.md
+/data/
+/docs/
+/src/cards/
+/scripts/temp/
 
 # Editor directories and files
 !.vscode/extensions.json
@@ -26,8 +33,5 @@ dist-ssr
 .deploy.env
 sitemap.xml
 api/config.php
-.claude/
-CLAUDE.md
-/data/
-/src/cards/
-/scripts/temp/
+
+

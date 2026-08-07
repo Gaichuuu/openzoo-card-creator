@@ -11,15 +11,17 @@ interface CardRendererProps {
   cardData: CardData;
   scale?: number;
   borderlessOverride?: boolean;
+  artNeededOverride?: boolean;
 }
 
 interface ArtRect { top: number; left: number; width: number; height: number }
 
 export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
-  ({ layoutType, cardData, scale = 2, borderlessOverride }, ref) => {
+  ({ layoutType, cardData, scale = 2, borderlessOverride, artNeededOverride }, ref) => {
     const storeBorderless = useCardStore((s) => s.borderless);
-    const artNeeded = useCardStore((s) => s.artNeeded);
-    const borderless = borderlessOverride !== undefined ? borderlessOverride : storeBorderless;
+    const storeArtNeeded = useCardStore((s) => s.artNeeded);
+    const artNeeded = artNeededOverride ?? storeArtNeeded;
+    const borderless = borderlessOverride ?? storeBorderless;
     const layout = LAYOUTS[layoutType];
     const [artRect, setArtRect] = useState<ArtRect | null>(null);
     const [innerEl, setInnerEl] = useState<HTMLDivElement | null>(null);
@@ -70,9 +72,9 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
             borderRadius: borderless ? '0' : '10px',
           }}
         >
-          <ZoneRenderer zone={layout.rootZone} cardData={cardData} />
+          <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} />
           {artNeeded && artRect && (
-            <div style={{
+            <div className="art-needed-overlay" style={{
               position: 'absolute',
               top: artRect.top,
               left: artRect.left,

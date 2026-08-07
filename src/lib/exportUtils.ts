@@ -5,6 +5,12 @@ export const CARD_H = 333;
 export const BLEED = 13;
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // must match Firebase Storage rules
 
+export const PRINT_READY_KEY = 'openzoo-print-ready';
+
+export function displayCardName(name: string): string {
+  return name.replace(/\\n/g, ' ').replace(/\n/g, ' ');
+}
+
 const PIXEL_RATIO = 4;
 
 const BACKGROUND_ZONE_KEYS = new Set([
@@ -84,8 +90,7 @@ export function downloadBlob(blob: Blob, filename: string) {
 }
 
 export function sanitizeCardNameForFilename(name: string): string {
-  return (name || 'openzoo-card')
-    .replace(/\\n/g, ' ')
+  return displayCardName(name || 'openzoo-card')
     .replace(/[/\\:*?"<>|]/g, '_')
     .trim() || 'openzoo-card';
 }

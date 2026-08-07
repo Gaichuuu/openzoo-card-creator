@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import { TAG_COLORS } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
-import { downloadDataUrl, downloadBlob, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
+import { displayCardName, downloadBlob, sanitizeCardNameForFilename } from '@/lib/exportUtils';
+import { exportCardPng, usePrintReady } from '@/lib/useCardExport';
 
-export const MODAL_CONTAINER_CLASS = 'flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
+export const MODAL_CONTAINER_CLASS = 'flex flex-col md:flex-row gap-4 md:gap-7 items-center mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
 export const MODAL_CARD_CLASS = 'h-[60vh] md:h-[80vh]';
-export const MODAL_DETAILS_CLASS = 'bg-navy-900 p-5 w-full md:w-72 space-y-4 pointer-events-auto border-gold';
+export const MODAL_DETAILS_CLASS = 'bg-navy-900 w-full md:w-80 pointer-events-auto border-gold flex flex-col';
 
 interface CardDetailModalProps {
   card: SavedCard;
@@ -21,10 +22,11 @@ function savedCardToSnapshot(card: SavedCard): CardSnapshot {
 
 export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const hiddenCardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
-  const [printReady, setPrintReady] = useState(() => localStorage.getItem('openzoo-print-ready') === '1');
+  const [printReady, setPrintReady] = usePrintReady();
   const [imgLoaded, setImgLoaded] = useState(false);
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50, go: 0 });
   const [hovering, setHovering] = useState(false);
@@ -43,6 +45,11 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
 
   function handleRemix() {
     navigate(`/create?remix=${card.id}`);
+  }
+
+  function handleViewParent() {
+    if (!card.remixedFrom) return;
+    navigate({ pathname: `/gallery/${card.remixedFrom}`, search: searchParams.toString() });
   }
 
   function handleCardMouseMove(e: React.MouseEvent<HTMLDivElement>) {
@@ -70,25 +77,15 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
   async function handleExportPng() {
     if (!hiddenCardRef.current || exporting) return;
     setExporting(true);
-    try {
-      await new Promise((r) => setTimeout(r, 500));
-      hiddenCardRef.current.classList.add('card-exporting');
-      const filename = sanitizeCardNameForFilename(card.cardName);
-      const isBorderless = !!card.borderless;
-
-      if (printReady) {
-        const dataUrl = await exportPrintReadyPng(hiddenCardRef.current, isBorderless, card.cardArtUrl, true);
-        downloadDataUrl(dataUrl, `${filename}-print.png`);
-      } else {
-        const dataUrl = await exportStandardPng(hiddenCardRef.current, isBorderless);
-        downloadDataUrl(dataUrl, `${filename}.png`);
-      }
-    } catch (err) {
-      console.error('PNG export failed:', err);
-    } finally {
-      hiddenCardRef.current?.classList.remove('card-exporting');
-      setExporting(false);
-    }
+    await new Promise((r) => setTimeout(r, 500)); // let the hidden renderer settle
+    await exportCardPng(hiddenCardRef.current, {
+      printReady,
+      cardName: card.cardName,
+      borderless: !!card.borderless,
+      cardArtUrl: card.cardArtUrl,
+      crossOrigin: true,
+    });
+    setExporting(false);
   }
 
   function handleExportJson() {
@@ -129,18 +126,18 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
           >
             {/* Skeleton placeholder */}
             {!imgLoaded && (
-              <div className="absolute inset-0 bg-navy-800 rounded-3xl animate-pulse" />
+              <div className="card-thumb-round absolute inset-0 bg-navy-800 animate-pulse" />
             )}
             {card.thumbnailUrl ? (
               <img
                 src={card.thumbnailUrl}
                 alt={card.cardName}
                 onLoad={() => setImgLoaded(true)}
-                className="border border-navy-600 rounded-3xl"
-                style={{ display: 'block', width: '100%', height: '100%', pointerEvents: 'none', opacity: imgLoaded ? 1 : 0 }}
+                className="card-thumb-round border border-navy-600"
+                style={{ display: 'block', width: '100%', height: '100%', pointerEvents: 'none', opacity: imgLoaded ? 1 : 0, boxShadow: '0 34px 66px rgba(0,0,0,.72)' }}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-navy-800 rounded-3xl">
+              <div className="card-thumb-round absolute inset-0 flex items-center justify-center text-gray-400 bg-navy-800">
                 No preview
               </div>
             )}
@@ -150,7 +147,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  borderRadius: '24px',
+                  borderRadius: 'calc(4.31% + 1px) / calc(3.08% + 1px)',
                   background: `radial-gradient(farthest-corner circle at ${tilt.gx}% ${tilt.gy}%, hsla(0,0%,100%,0.8) 10%, hsla(0,0%,100%,0.65) 20%, hsla(0,0%,0%,0.5) 90%)`,
                   opacity: tilt.go,
                   mixBlendMode: 'overlay',
@@ -169,97 +166,117 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
           className={`relative ${MODAL_DETAILS_CLASS}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 text-gold-400 hover:text-white transition-colors text-xl leading-none"
-            aria-label="Close"
-          >
-            &times;
-          </button>
-          <div>
-            <h2 className="text-lg font-bold text-white pr-6">{card.cardName.replace(/\\n/g, ' ')}</h2>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="text-xs px-2 py-0.5 rounded bg-navy-700 text-gray-300">
-                {card.cardType}
+          {/* Header */}
+          <div className="relative px-5 pt-4.5 pb-4 border-b border-navy-600">
+            <button
+              onClick={onClose}
+              className="absolute top-2.5 right-3 text-gold-400 hover:text-white transition-colors text-xl leading-none"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <span className="block text-[10px] uppercase tracking-[.18em] text-gold-500 mb-1.75 mr-6.5">
+              {card.cardType}
+            </span>
+            <h2
+              className="font-title font-normal text-[22px] leading-[1.1] m-0 mr-5"
+              style={{
+                backgroundImage: 'linear-gradient(180deg, #ffffff 20%, #d8d3c2 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+              }}
+            >
+              {displayCardName(card.cardName)}
+            </h2>
+          </div>
+
+          {/* Spec block */}
+          <div className="px-5 py-4 flex flex-col gap-3">
+            {card.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.25">
+                {card.tags.map((tag) => {
+                  const colors = TAG_COLORS[tag as CardTag];
+                  return (
+                    <span key={tag} className={`text-[11px] px-2 py-0.75 ${colors.bg} ${colors.text}`}>
+                      {tag}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <span className="text-[13px] text-gray-400 leading-normal">
+              {card.creatorName ? (
+                <>Created by <span className="text-white font-semibold">{card.creatorName}</span> on </>
+              ) : 'Created on '}
+              {card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+            </span>
+            {card.remixedFrom && (
+              <span className="text-[13px] text-gray-400 leading-normal">
+                Remixed from{' '}
+                <button
+                  onClick={handleViewParent}
+                  className="text-gold-400 hover:text-gold-300 transition-colors"
+                >
+                  {card.remixedFromName ? displayCardName(card.remixedFromName) : 'another card'}
+                </button>
               </span>
-              {card.primaryElement && (
-                <span className="text-xs px-2 py-0.5 rounded bg-navy-700 text-gray-300">
-                  {card.primaryElement}
-                </span>
-              )}
-              {card.secondaryElement && (
-                <span className="text-xs px-2 py-0.5 rounded bg-navy-700 text-gray-300">
-                  {card.secondaryElement}
-                </span>
-              )}
-              {card.tags.map((tag) => {
-                const colors = TAG_COLORS[tag as CardTag];
-                return (
-                  <span key={tag} className={`text-xs px-2 py-0.5 rounded ${colors.bg} ${colors.text}`}>
-                    {tag}
-                  </span>
-                );
-              })}
-            </div>
+            )}
           </div>
 
-          <div className="text-sm text-gold-400">
-            {card.creatorName ? (
-              <>Created by <span className="text-white">{card.creatorName}</span> on </>
-            ) : 'Created '}
-            {card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-          </div>
-
-          {card.remixedFrom && (
-            <div className="text-xs text-gold-500">
-              Remixed from {card.remixedFromName ? <span className="text-gold-400">{card.remixedFromName.replace(/\\n/g, ' ')}</span> : 'another card'}
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="space-y-2 pt-2">
+          {/* Primary action */}
+          <div className="px-5 py-4.5">
             <button
               onClick={handleRemix}
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors text-sm border-gold"
+              className="w-full py-3 text-navy-990 text-[15px] font-bold transition-[filter] hover:brightness-110"
+              style={{
+                background: 'linear-gradient(180deg, var(--color-gold-300), var(--color-gold-500) 55%, var(--color-gold-600)) padding-box, linear-gradient(180deg, var(--color-gold-100), var(--color-gold-600)) border-box',
+                border: '1px solid transparent',
+              }}
             >
               Remix this Card
             </button>
-            <div className="flex items-center justify-end gap-2 cursor-pointer select-none">
-              <span className="text-sm text-gray-300">Print Ready</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={printReady}
-                onClick={() => {
-                  const next = !printReady;
-                  setPrintReady(next);
-                  localStorage.setItem('openzoo-print-ready', next ? '1' : '0');
-                }}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  printReady ? 'bg-green-500' : 'bg-navy-600'
-                }`}
-              >
-                <span
-                  className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
-                    printReady ? 'translate-x-4.5' : 'translate-x-0.75'
+          </div>
+
+          {/* Download bar */}
+          <div className="mt-auto px-5 pt-3.5 pb-4 border-t border-navy-600 bg-navy-950 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-[.14em] text-gold-500">Download</span>
+              <span className="inline-flex items-center gap-2">
+                <span className="text-xs text-gray-400">Print Ready</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={printReady}
+                  aria-label="Print Ready"
+                  onClick={() => setPrintReady(!printReady)}
+                  className={`relative inline-flex h-4.75 w-8.5 items-center rounded-full transition-colors ${
+                    printReady ? 'bg-green-500' : 'bg-navy-600'
                   }`}
-                />
+                >
+                  <span
+                    className={`inline-block h-3.25 w-3.25 rounded-full bg-white transition-transform ${
+                      printReady ? 'translate-x-4.5' : 'translate-x-0.75'
+                    }`}
+                  />
+                </button>
+              </span>
+            </div>
+            <div className="flex gap-2.25">
+              <button
+                onClick={handleExportPng}
+                disabled={exporting}
+                className="flex-1 py-2.25 bg-green-600 hover:bg-green-500 disabled:bg-navy-800 disabled:text-gold-500 text-white font-semibold transition-colors text-[13px] border-gold"
+              >
+                {exporting ? 'Exporting...' : 'PNG'}
+              </button>
+              <button
+                onClick={handleExportJson}
+                className="flex-1 py-2.25 bg-navy-700 hover:bg-navy-600 text-white transition-colors text-[13px] border-gold"
+              >
+                JSON
               </button>
             </div>
-            <button
-              onClick={handleExportPng}
-              disabled={exporting}
-              className="w-full px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-navy-800 disabled:text-gold-500 text-white font-semibold transition-colors text-sm border-gold"
-            >
-              {exporting ? 'Exporting...' : (<><svg className="inline-block w-4 h-4 mr-1.5 -mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3a1 1 0 011 1v7.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 11.586V4a1 1 0 011-1z"/><path d="M4 15a1 1 0 011 1h10a1 1 0 110 2H5a1 1 0 01-1-1v0a1 1 0 011-1z"/></svg>Export PNG</>)}
-            </button>
-            <button
-              onClick={handleExportJson}
-              className="w-full px-4 py-2 bg-navy-700 hover:bg-navy-600 text-white transition-colors text-sm border-gold"
-            >
-              <svg className="inline-block w-4 h-4 mr-1.5 -mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3a1 1 0 011 1v7.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 11.586V4a1 1 0 011-1z"/><path d="M4 15a1 1 0 011 1h10a1 1 0 110 2H5a1 1 0 01-1-1v0a1 1 0 011-1z"/></svg>
-              Export JSON
-            </button>
           </div>
         </div>
       </div>
@@ -271,6 +288,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
           cardData={card.cardData}
           scale={1}
           borderlessOverride={!!card.borderless}
+          artNeededOverride={!!card.artNeeded}
         />
       </div>
     </div>

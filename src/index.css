@@ -1,15 +1,23 @@
 @import "tailwindcss";
 
 @theme {
+  --color-navy-990: #05060f;
   --color-navy-950: #080a19;
   --color-navy-900: #0c1228;
   --color-navy-800: #121c37;
   --color-navy-700: #1c2848;
   --color-navy-600: #263560;
+  --font-title: 'Archivo Black', sans-serif;
+  --color-gold-100: #fff7cf;
   --color-gold-300: #e8d88c;
   --color-gold-400: #dcbe64;
   --color-gold-500: #c8a532;
   --color-gold-600: #aa821e;
+  --color-keyword: #93c5fd;
+}
+
+:root {
+  --site-header-h: 3.75rem;
 }
 
 @font-face {
@@ -53,7 +61,13 @@
 }
 
 html, body {
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -64,12 +78,25 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
+.text-gold-gradient {
+  background-image: linear-gradient(180deg, #fff7cf 10%, #e8d88c 38%, #dcbe64 60%, #aa821e 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-gold-400);
+  outline-offset: 2px;
+}
+
 .border-gold {
   border: 1px solid transparent;
   border-image: linear-gradient(180deg, #e8d88c, #aa821e) 1;
 }
 .border-gold-dashed {
-  border: 2px dashed #c8a532;
+  border: 1px dashed #c8a532;
 }
 .border-gold-dashed:hover {
   border-color: #e8d88c;
@@ -98,6 +125,29 @@ textarea:focus {
   border-image: none;
   border-color: #dcbe64;
   outline: none;
+}
+
+input.input-plain.input-plain,
+select.input-plain {
+  border-image: none;
+  border-color: var(--color-navy-600);
+}
+input.input-plain.input-plain:hover,
+select.input-plain:hover {
+  border-image: none;
+  border-color: var(--color-navy-600);
+}
+input.input-plain.input-plain:focus,
+select.input-plain:focus {
+  border-color: var(--color-gold-400);
+}
+
+.stroked-text-stroke img {
+  visibility: hidden;
+}
+
+.card-thumb-round {
+  border-radius: calc(4.31% + 1px) / calc(3.08% + 1px);
 }
 
 #root {
@@ -145,23 +195,6 @@ textarea:focus {
   z-index: 1 !important;
 }
 
-.card-borderless [data-zone-id="32"] *,
-.card-borderless [data-zone-key="Aura/Terra Text Box"] *,
-.card-borderless [data-zone-key="Aura/Terra Text Box 1"] * {
-  text-shadow:
-    0.1em 0 0 #FFF, 0.098em 0.02em 0 #FFF, 0.092em 0.038em 0 #FFF,
-    0.083em 0.056em 0 #FFF, 0.071em 0.071em 0 #FFF, 0.056em 0.083em 0 #FFF,
-    0.038em 0.092em 0 #FFF, 0.02em 0.098em 0 #FFF, 0 0.1em 0 #FFF,
-    -0.02em 0.098em 0 #FFF, -0.038em 0.092em 0 #FFF, -0.056em 0.083em 0 #FFF,
-    -0.071em 0.071em 0 #FFF, -0.083em 0.056em 0 #FFF, -0.092em 0.038em 0 #FFF,
-    -0.098em 0.02em 0 #FFF, -0.1em 0 0 #FFF, -0.098em -0.02em 0 #FFF,
-    -0.092em -0.038em 0 #FFF, -0.083em -0.056em 0 #FFF, -0.071em -0.071em 0 #FFF,
-    -0.056em -0.083em 0 #FFF, -0.038em -0.092em 0 #FFF, -0.02em -0.098em 0 #FFF,
-    0 -0.1em 0 #FFF, 0.02em -0.098em 0 #FFF, 0.038em -0.092em 0 #FFF,
-    0.056em -0.083em 0 #FFF, 0.071em -0.071em 0 #FFF, 0.083em -0.056em 0 #FFF,
-    0.092em -0.038em 0 #FFF, 0.098em -0.02em 0 #FFF !important;
-}
-
 .card-exporting [data-zone-key="CryptidInfoBar"] > * {
   transform: translateY(0.5px) !important;
 }
@@ -174,4 +207,7 @@ textarea:focus {
 }
 .card-exporting [data-zone-key="FlavorText"] > * {
   transform: translateY(0.5px) !important;
+}
+.card-exporting .art-needed-overlay {
+  display: none !important;
 }

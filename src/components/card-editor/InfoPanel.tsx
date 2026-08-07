@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { ELEMENTS, TRAITS, TERRAS, STATUS_EFFECTS } from '@/data/constants';
+import { useLocalStorageState } from '@/lib/useLocalStorageState';
 
 function Accordion({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -27,7 +28,7 @@ function CopyChip({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-navy-700 hover:bg-navy-600 text-gray-300 hover:text-white rounded text-[10px] font-mono transition-colors"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 max-md:px-2 max-md:py-1 bg-navy-700 hover:bg-navy-600 text-gray-300 hover:text-white rounded text-[10px] max-md:text-xs font-mono transition-colors"
       title={`Copy: ${text}`}
     >
       {text}
@@ -36,7 +37,13 @@ function CopyChip({ text }: { text: string }) {
   );
 }
 
-function TokenTable() {
+function matches(query: string, ...haystacks: string[]): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  return haystacks.some((h) => h.toLowerCase().includes(q));
+}
+
+function TokenTable({ query = '' }: { query?: string }) {
   const tokens = [
     ['{B:text}', 'Bold'],
     ['{I:text}', 'Italic'],
@@ -47,7 +54,8 @@ function TokenTable() {
     ['{Power:NAME}', 'Pill badge'],
     ['{Star}', '4th Wall star icon'],
     ['\\n', 'Line break'],
-  ];
+  ].filter(([token, desc]) => matches(query, token, desc));
+  if (tokens.length === 0) return null;
   return (
     <div>
       <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Formatting</h4>
@@ -63,12 +71,14 @@ function TokenTable() {
   );
 }
 
-function IconGroup({ title, items }: { title: string; items: readonly string[] }) {
+function IconGroup({ title, items, query = '' }: { title: string; items: readonly string[]; query?: string }) {
+  const shown = items.filter((name) => matches(query, name, title));
+  if (shown.length === 0) return null;
   return (
     <div>
-      <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">{title} ({items.length})</h4>
+      <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">{title} ({shown.length})</h4>
       <div className="flex flex-wrap gap-0.5">
-        {items.map((name) => (
+        {shown.map((name) => (
           <CopyChip key={name} text={`{${name}}`} />
         ))}
       </div>
@@ -76,21 +86,23 @@ function IconGroup({ title, items }: { title: string; items: readonly string[] }
   );
 }
 
-function ClassesCheatSheet() {
+function ClassesCheatSheet({ query = '' }: { query?: string }) {
   return (
     <>
-      <TokenTable />
-      <IconGroup title="Aura" items={ELEMENTS} />
-      <IconGroup title="Traits" items={TRAITS} />
-      <IconGroup title="Terra" items={TERRAS} />
-      <IconGroup title="Status Effects" items={STATUS_EFFECTS} />
-      <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Custom Icon</h4>
-        <CopyChip text="{path/to/image.png, scale, offset}" />
-        <p className="text-[10px] text-gray-400 mt-0.5">
-          scale = height in em (0.9), offset = vertical shift (0.1)
-        </p>
-      </div>
+      <TokenTable query={query} />
+      <IconGroup title="Aura" items={ELEMENTS} query={query} />
+      <IconGroup title="Traits" items={TRAITS} query={query} />
+      <IconGroup title="Terra" items={TERRAS} query={query} />
+      <IconGroup title="Status Effects" items={STATUS_EFFECTS} query={query} />
+      {matches(query, 'custom icon') && (
+        <div>
+          <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Custom Icon</h4>
+          <CopyChip text="{path/to/image.png, scale, offset}" />
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            scale = height in em (0.9), offset = vertical shift (0.1)
+          </p>
+        </div>
+      )}
     </>
   );
 }
@@ -352,15 +364,65 @@ function DesignBible() {
   );
 }
 
-export function InfoPanel() {
+const REFERENCE_COLLAPSED_KEY = 'openzoo-reference-collapsed';
+const COLLAPSE_BUTTON_CLASS = 'w-6.5 h-6.5 border border-navy-600 text-gray-300 hover:text-white hover:border-gold-400 transition-colors text-xs cursor-pointer';
+const EYEBROW_CLASS = 'text-[11px] font-bold tracking-[.14em] uppercase text-gold-500';
+
+interface InfoPanelProps {
+  collapsible?: boolean;
+  searchable?: boolean;
+}
+
+export function InfoPanel({ collapsible = false, searchable = false }: InfoPanelProps) {
+  const [collapsed, setCollapsed] = useLocalStorageState(
+    REFERENCE_COLLAPSED_KEY,
+    (raw) => collapsible && raw === '1',
+    (v) => (v ? '1' : '0'),
+  );
+  const [query, setQuery] = useState('');
+
+  const toggleCollapsed = () => setCollapsed(!collapsed);
+
+  if (collapsible && collapsed) {
+    return (
+      <div className="w-10 bg-navy-900 border-navy-600 md:border-r flex flex-col items-center gap-3 py-3 shrink-0">
+        <button onClick={toggleCollapsed} title="Expand reference panel" className={COLLAPSE_BUTTON_CLASS}>
+          ‹
+        </button>
+        <span className={EYEBROW_CLASS} style={{ writingMode: 'vertical-rl' }}>
+          Reference
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full md:w-82 bg-navy-900 border-navy-600 md:border-r p-2 overflow-y-auto space-y-3">
-      <Accordion title="Token Cheat Sheet">
-        <ClassesCheatSheet />
-      </Accordion>
-      <Accordion title="Design Tips">
-        <DesignBible />
-      </Accordion>
+    <div className="w-full md:w-74 bg-navy-900 border-navy-600 md:border-r flex flex-col overflow-hidden shrink-0">
+      {collapsible && (
+        <div className="flex items-center justify-between px-3.5 py-3 border-b border-navy-700 shrink-0">
+          <span className={EYEBROW_CLASS}>Reference</span>
+          <button onClick={toggleCollapsed} title="Collapse reference panel" className={COLLAPSE_BUTTON_CLASS}>
+            ›
+          </button>
+        </div>
+      )}
+      <div className="p-2 overflow-y-auto space-y-3">
+        {searchable && (
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search tokens and terms…"
+            className="input-plain w-full bg-navy-800 px-3 py-2.5 text-sm text-white placeholder-gray-500"
+          />
+        )}
+        <Accordion title="Token Cheat Sheet">
+          <ClassesCheatSheet query={query} />
+        </Accordion>
+        <Accordion title="Design Tips" defaultOpen={false}>
+          <DesignBible />
+        </Accordion>
+      </div>
     </div>
   );
 }

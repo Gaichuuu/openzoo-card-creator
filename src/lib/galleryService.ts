@@ -1,8 +1,11 @@
 import {
+  and,
   collection,
   doc,
+  getCountFromServer,
   getDoc,
   getDocs,
+  or,
   setDoc,
   query,
   where,
@@ -11,10 +14,13 @@ import {
   startAfter,
   Timestamp,
   type DocumentSnapshot,
-  type QueryConstraint,
+  type QueryCompositeFilterConstraint,
+  type QueryFilterConstraint,
+  type QueryNonFilterConstraint,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
+import { readSessionStorage, writeSessionStorage, removeSessionStorage } from './safeStorage';
 import { dataUrlToBlob, MAX_UPLOAD_BYTES } from './exportUtils';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element } from '@/types/card';
@@ -107,6 +113,7 @@ export async function publishCard(
   };
 
   await setDoc(doc(db, 'cards', cardId), savedCard);
+  invalidateCountsCache();
   return cardId;
 }
 
@@ -115,6 +122,8 @@ function blockToPlain(block: EffectBlock): Record<string, unknown> {
 }
 
 function docToSavedCard(data: Record<string, unknown>): SavedCard {
+  const tags: CardTag[] = Array.isArray(data.tags) ? data.tags as CardTag[]
+    : data.status === 'testing' ? ['Playtesting' as CardTag] : [];
   return {
     id: data.id as string,
     cardType: data.cardType as CardType,
@@ -135,11 +144,11 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     mainTextBoxExtraShrink: (data.mainTextBoxExtraShrink ?? 0) as number,
     cardArtPositionX: (data.cardArtPositionX ?? 0) as number,
     cardArtPositionY: (data.cardArtPositionY ?? 0) as number,
+    artNeeded: (data.artNeeded ?? tags.includes('Art Needed')) as boolean,
     thumbnailUrl: (data.thumbnailUrl || '') as string,
     cardArtUrl: (data.cardArtUrl || '') as string,
     creatorName: (data.creatorName || '') as string,
-    tags: Array.isArray(data.tags) ? data.tags as CardTag[]
-      : data.status === 'testing' ? ['Playtesting' as CardTag] : [],
+    tags,
     remixedFrom: (data.remixedFrom || null) as string | null,
     remixedFromName: (data.remixedFromName || '') as string,
     createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
@@ -151,7 +160,11 @@ interface FetchFilters {
   cardType?: string;
   element?: string;
   tag?: string;
+  terra?: string;
+  trait?: string;
 }
+
+export type GallerySort = 'newest' | 'name';
 
 export type PageCursor = DocumentSnapshot;
 
@@ -163,29 +176,50 @@ export interface FetchResult {
 
 const DEFAULT_PAGE_SIZE = 24;
 
+function elementFilter(element: string): QueryCompositeFilterConstraint {
+  return or(
+    where('primaryElement', '==', element),
+    where('secondaryElement', '==', element),
+  );
+}
+
+function filterClauses(filters?: FetchFilters): QueryFilterConstraint[] {
+  const clauses: QueryFilterConstraint[] = [];
+  if (filters?.cardType) {
+    clauses.push(where('cardType', '==', filters.cardType));
+  }
+  if (filters?.element) {
+    clauses.push(elementFilter(filters.element));
+  }
+  if (filters?.tag) {
+    clauses.push(where('tags', 'array-contains', filters.tag));
+  } else if (filters?.terra) {
+    clauses.push(where('terras', 'array-contains', filters.terra));
+  } else if (filters?.trait) {
+    clauses.push(where('traits', 'array-contains', filters.trait));
+  }
+  return clauses;
+}
+
 export async function fetchCards(
   filters?: FetchFilters,
   cursor?: PageCursor | null,
   pageSize: number = DEFAULT_PAGE_SIZE,
+  sort: GallerySort = 'newest',
 ): Promise<FetchResult> {
-  const constraints: QueryConstraint[] = [];
-
-  if (filters?.cardType) {
-    constraints.push(where('cardType', '==', filters.cardType));
-  }
-  if (filters?.element) {
-    constraints.push(where('primaryElement', '==', filters.element));
-  }
-  if (filters?.tag) {
-    constraints.push(where('tags', 'array-contains', filters.tag));
-  }
-  constraints.push(orderBy('createdAt', 'desc'));
+  const clauses = filterClauses(filters);
+  const constraints: QueryNonFilterConstraint[] = [
+    sort === 'name' ? orderBy('cardName', 'asc') : orderBy('createdAt', 'desc'),
+  ];
   if (cursor) {
     constraints.push(startAfter(cursor));
   }
   constraints.push(limit(pageSize));
 
-  const q = query(collection(db, 'cards'), ...constraints);
+  const cards = collection(db, 'cards');
+  const q = clauses.length > 0
+    ? query(cards, and(...clauses), ...constraints)
+    : query(cards, ...constraints);
   const snap = await getDocs(q);
   const last = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
 
@@ -196,24 +230,90 @@ export async function fetchCards(
   };
 }
 
+export interface GalleryFacetValues {
+  tags: readonly string[];
+  cardTypes: readonly string[];
+  elements: readonly string[];
+  terras: readonly string[];
+  traits: readonly string[];
+}
+
+export interface GalleryCounts {
+  total?: number;
+  byTag: Record<string, number>;
+  byType: Record<string, number>;
+  byElement: Record<string, number>;
+  byTerra: Record<string, number>;
+  byTrait: Record<string, number>;
+}
+
+const COUNTS_CACHE_KEY = 'openzoo-gallery-counts-v2';
+const COUNTS_TTL_MS = 5 * 60 * 1000;
+const PARTIAL_COUNTS_TTL_MS = 60 * 1000;
+
+function readCachedCounts(): GalleryCounts | null {
+  const raw = readSessionStorage(COUNTS_CACHE_KEY);
+  if (!raw) return null;
+  try {
+    const { at, counts, partial } = JSON.parse(raw) as { at: number; counts: GalleryCounts; partial?: boolean };
+    return Date.now() - at < (partial ? PARTIAL_COUNTS_TTL_MS : COUNTS_TTL_MS) ? counts : null;
+  } catch {
+    return null;
+  }
+}
+
+function invalidateCountsCache(): void {
+  removeSessionStorage(COUNTS_CACHE_KEY);
+}
+
+export async function fetchGalleryCounts(facets: GalleryFacetValues): Promise<GalleryCounts> {
+  const cached = readCachedCounts();
+  if (cached) return cached;
+
+  const cards = collection(db, 'cards');
+  let failures = 0;
+  const count = async (filter?: QueryCompositeFilterConstraint) => {
+    try {
+      return (await getCountFromServer(filter ? query(cards, filter) : query(cards))).data().count;
+    } catch (err) {
+      failures++;
+      console.error('Gallery count query failed:', err);
+      return undefined;
+    }
+  };
+  const countAll = async (values: readonly string[], build: (v: string) => QueryCompositeFilterConstraint) => {
+    const counts = await Promise.all(values.map((v) => count(build(v))));
+    const record: Record<string, number> = {};
+    values.forEach((v, i) => {
+      const n = counts[i];
+      if (n !== undefined) record[v] = n;
+    });
+    return record;
+  };
+
+  const [total, byTag, byType, byElement, byTerra, byTrait] = await Promise.all([
+    count(),
+    countAll(facets.tags, (v) => and(where('tags', 'array-contains', v))),
+    countAll(facets.cardTypes, (v) => and(where('cardType', '==', v))),
+    countAll(facets.elements, elementFilter),
+    countAll(facets.terras, (v) => and(where('terras', 'array-contains', v))),
+    countAll(facets.traits, (v) => and(where('traits', 'array-contains', v))),
+  ]);
+
+  const counts: GalleryCounts = { total, byTag, byType, byElement, byTerra, byTrait };
+  writeSessionStorage(COUNTS_CACHE_KEY, JSON.stringify({ at: Date.now(), counts, partial: failures > 0 }));
+  return counts;
+}
+
+export async function fetchFilteredCount(filters?: FetchFilters): Promise<number> {
+  const clauses = filterClauses(filters);
+  const cards = collection(db, 'cards');
+  const q = clauses.length > 0 ? query(cards, and(...clauses)) : query(cards);
+  return (await getCountFromServer(q)).data().count;
+}
+
 export async function fetchCard(id: string): Promise<SavedCard | null> {
   const snap = await getDoc(doc(db, 'cards', id));
   if (!snap.exists()) return null;
   return docToSavedCard(snap.data());
-}
-
-export async function fetchRandomCard(): Promise<SavedCard | null> {
-  try {
-    const q = query(
-      collection(db, 'cards'),
-      orderBy('createdAt', 'desc'),
-      limit(20),
-    );
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    const docs = snap.docs.map((d) => docToSavedCard(d.data()));
-    return docs[Math.floor(Math.random() * docs.length)];
-  } catch {
-    return null;
-  }
 }

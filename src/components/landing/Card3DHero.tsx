@@ -1,80 +1,112 @@
 import { useEffect, useRef, useState } from 'react';
 import '@google/model-viewer';
-import { fetchRandomCard } from '@/lib/galleryService';
+import type { SavedCard } from '@/types/card';
 
 type ModelViewer = HTMLElement & {
   model?: { materials: any[] };
   createTexture: (uri: string) => Promise<any>;
 };
 
-export function Card3DHero() {
+interface Card3DHeroProps {
+  className?: string;
+  frontCard?: SavedCard | null;
+  frontPending?: boolean;
+}
+
+function waitForModel(viewer: ModelViewer): Promise<void> {
+  return new Promise((resolve) => {
+    if (viewer.model) {
+      resolve();
+    } else {
+      viewer.addEventListener('load', () => resolve(), { once: true });
+    }
+  });
+}
+
+function applyTexture(
+  viewer: ModelViewer,
+  materialIndex: number,
+  url: string,
+  onFail: () => void,
+  onApplied?: () => void,
+): () => void {
+  let cancelled = false;
+
+  (async () => {
+    await waitForModel(viewer);
+    if (cancelled) return;
+
+    const materials = viewer.model?.materials;
+    if (!materials || materials.length < 2) {
+      onFail();
+      return;
+    }
+
+    const texture = await viewer.createTexture(url);
+    if (cancelled) return;
+    if (texture) {
+      materials[materialIndex].pbrMetallicRoughness.baseColorTexture.setTexture(texture);
+    }
+    onApplied?.();
+  })().catch((e) => {
+    console.error('Failed to apply card texture:', e);
+    if (!cancelled) onFail();
+  });
+
+  return () => { cancelled = true; };
+}
+
+export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCard, frontPending = false }: Card3DHeroProps) {
   const viewerRef = useRef<ModelViewer>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [backApplied, setBackApplied] = useState(false);
+  const [frontApplied, setFrontApplied] = useState(false);
 
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
-
-    let cancelled = false;
-
-    async function applyTextures() {
-      await new Promise<void>((resolve) => {
-        if (viewer!.model) {
-          resolve();
-        } else {
-          viewer!.addEventListener('load', () => resolve(), { once: true });
-        }
-      });
-
-      if (cancelled) return;
-
-      const materials = viewer!.model?.materials;
-      if (!materials || materials.length < 2) {
-        setError(true);
-        return;
-      }
-
-      try {
-        const backTexture = await viewer!.createTexture('/assets/OPZDexCardBack.png');
-        if (cancelled) return;
-        if (backTexture) {
-          materials[1].pbrMetallicRoughness.baseColorTexture.setTexture(backTexture);
-        }
-      } catch (e) {
-        console.error('Failed to apply card back texture:', e);
-      }
-
-      try {
-        const card = await fetchRandomCard();
-        if (cancelled) return;
-        if (card?.thumbnailUrl) {
-          const frontTexture = await viewer!.createTexture(card.thumbnailUrl);
-          if (cancelled) return;
-          if (frontTexture) {
-            materials[0].pbrMetallicRoughness.baseColorTexture.setTexture(frontTexture);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to apply card front texture:', e);
-      }
-
-      if (!cancelled) setLoaded(true);
-    }
-
-    applyTextures().catch(() => setError(true));
-
-    return () => { cancelled = true; };
+    const onError = () => setFailed(true);
+    viewer.addEventListener('error', onError);
+    return () => viewer.removeEventListener('error', onError);
   }, []);
 
-  if (error) return null;
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    return applyTexture(viewer, 1, '/assets/OPZDexCardBack.png', () => setBackApplied(true), () => setBackApplied(true));
+  }, []);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || !frontCard?.thumbnailUrl) return;
+    const onFail = () => {
+      viewer.model?.materials?.[0]?.pbrMetallicRoughness.setBaseColorFactor([0, 0, 0, 1]);
+      setFrontApplied(true);
+    };
+    return applyTexture(viewer, 0, frontCard.thumbnailUrl, onFail, () => setFrontApplied(true));
+  }, [frontCard]);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || frontPending || frontCard?.thumbnailUrl) return;
+    let cancelled = false;
+    (async () => {
+      await waitForModel(viewer);
+      if (cancelled) return;
+      viewer.model?.materials?.[0]?.pbrMetallicRoughness.setBaseColorFactor([0, 0, 0, 1]);
+    })().catch(() => { /* leave the default material */ });
+    return () => { cancelled = true; };
+  }, [frontPending, frontCard]);
+
+  if (failed) return null;
+
+  const revealed = backApplied
+    && (frontApplied || (!frontPending && !frontCard?.thumbnailUrl));
 
   return (
-    <div className="relative w-65 h-92.5 md:w-95 md:h-135">
-      {!loaded && (
-        <div
-          className="animate-pulse absolute inset-0 flex items-center justify-center"
-        >
+    <div className={`relative ${className}`}>
+      {!revealed && (
+        <div className="animate-pulse absolute inset-0 flex items-center justify-center">
           <div
             style={{
               width: '78%',
@@ -89,21 +121,27 @@ export function Card3DHero() {
       <model-viewer
         ref={viewerRef as any}
         src="/models/card.glb?v=3"
+        loading="eager"
+        reveal="auto"
         auto-rotate
+        auto-rotate-delay="0"
         rotation-per-second="30deg"
         camera-orbit="0deg 90deg 2.5m"
         field-of-view="25deg"
         disable-zoom
         disable-pan
         interaction-prompt="none"
+        shadow-intensity="1.4"
+        shadow-softness="0.9"
         alt="3D OpenZoo card"
         style={{
           width: '100%',
           height: '100%',
           position: 'relative',
-          opacity: loaded ? 1 : 0,
+          opacity: revealed ? 1 : 0,
           transition: 'opacity 0.5s ease-in',
           '--poster-color': 'transparent',
+          '--progress-bar-color': 'transparent',
         } as any}
       />
     </div>

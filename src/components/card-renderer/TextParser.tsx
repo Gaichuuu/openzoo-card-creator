@@ -1,5 +1,6 @@
 import React from 'react';
-import { INLINE_CLASSES, getVariables } from '@/data/inlineClasses';
+import { INLINE_CLASSES, INLINE_CLASS_OUTLINES, getVariables } from '@/data/inlineClasses';
+import { wrapOutline } from '@/lib/outlineUtils';
 import { resolveImagePath } from '@/lib/imagePathResolver';
 import { useCardStore } from '@/lib/store';
 import { expandVariables, parseSegments, stripHtml } from '@/lib/textParserUtils';
@@ -64,10 +65,11 @@ function renderSegments(segments: Segment[], keyPrefix: string = ''): React.Reac
       return renderInlineImage(seg.content, key);
     }
     const style = INLINE_CLASSES[seg.className] || {};
+    const outline = INLINE_CLASS_OUTLINES[seg.className] || null;
     const innerSegments = parseSegments(seg.content);
     return (
       <span key={key} style={style}>
-        {renderSegments(innerSegments, `${key}-`)}
+        {wrapOutline(renderSegments(innerSegments, `${key}-`), outline)}
       </span>
     );
   });

@@ -4,61 +4,828 @@
       "collectionGroup": "cards",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "cardType", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "cards",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "primaryElement", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "cards",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "tags", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "cards",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "cardType", "order": "ASCENDING" },
-        { "fieldPath": "primaryElement", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "cards",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "cardType", "order": "ASCENDING" },
-        { "fieldPath": "tags", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "cards",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "primaryElement", "order": "ASCENDING" },
-        { "fieldPath": "tags", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "cards",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "cardType", "order": "ASCENDING" },
-        { "fieldPath": "primaryElement", "order": "ASCENDING" },
-        { "fieldPath": "tags", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "primaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "terras",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cardType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "secondaryElement",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "traits",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "cardName",
+          "order": "ASCENDING"
+        }
       ]
     }
   ]

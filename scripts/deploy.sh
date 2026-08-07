@@ -19,6 +19,9 @@ echo "==> Building project..."
 cd "$PROJECT_ROOT"
 npm run build
 
+echo "==> Deploying Firestore indexes..."
+firebase deploy --only firestore:indexes --project openzoo
+
 echo "==> Generating sitemap..."
 npx tsx scripts/generate-sitemap.ts
 
