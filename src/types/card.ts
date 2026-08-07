@@ -83,7 +83,7 @@ export type CardData = Record<string, string>;
 
 export type CardTag = 'Playtesting' | 'Mockup' | 'Final' | 'Parody' | 'Proxy' | 'Art Needed';
 
-export const CARD_TAGS: CardTag[] = ['Playtesting', 'Mockup', 'Final', 'Parody', 'Proxy', 'Art Needed'];
+export const CARD_TAGS: CardTag[] = ['Art Needed', 'Final', 'Mockup', 'Parody', 'Playtesting', 'Proxy'];
 
 export const TAG_COLORS: Record<CardTag, { bg: string; badgeBg: string; text: string }> = {
   Playtesting:  { bg: 'bg-yellow-900', badgeBg: 'bg-yellow-900/90', text: 'text-yellow-300' },

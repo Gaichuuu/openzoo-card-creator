@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { PRINT_READY_KEY, downloadDataUrl, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
+import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
 
 export { PRINT_READY_KEY };
 
 export function usePrintReady(): [boolean, (v: boolean) => void] {
-  const [printReady, setState] = useState(() => localStorage.getItem(PRINT_READY_KEY) === '1');
+  const [printReady, setState] = useState(() => readLocalStorage(PRINT_READY_KEY) === '1');
   const setPrintReady = (v: boolean) => {
     setState(v);
-    localStorage.setItem(PRINT_READY_KEY, v ? '1' : '0');
+    writeLocalStorage(PRINT_READY_KEY, v ? '1' : '0');
   };
   return [printReady, setPrintReady];
 }
@@ -25,7 +26,7 @@ export async function exportCardPng(card: HTMLDivElement | null, options: Export
   if (!card) return;
   const store = useCardStore.getState();
   const {
-    printReady = localStorage.getItem(PRINT_READY_KEY) === '1',
+    printReady = readLocalStorage(PRINT_READY_KEY) === '1',
     cardName = store.cardName,
     borderless = store.borderless,
     cardArtUrl = store.cardArtUrl,

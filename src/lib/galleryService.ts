@@ -238,7 +238,7 @@ export interface GalleryFacetValues {
 }
 
 export interface GalleryCounts {
-  total: number;
+  total?: number;
   byTag: Record<string, number>;
   byType: Record<string, number>;
   byElement: Record<string, number>;
@@ -269,12 +269,23 @@ export async function fetchGalleryCounts(facets: GalleryFacetValues): Promise<Ga
   if (cached) return cached;
 
   const cards = collection(db, 'cards');
-  const count = async (filter?: QueryCompositeFilterConstraint) =>
-    (await getCountFromServer(filter ? query(cards, filter) : query(cards))).data().count;
+  let failures = 0;
+  const count = async (filter?: QueryCompositeFilterConstraint) => {
+    try {
+      return (await getCountFromServer(filter ? query(cards, filter) : query(cards))).data().count;
+    } catch (err) {
+      failures++;
+      console.error('Gallery count query failed:', err);
+      return undefined;
+    }
+  };
   const countAll = async (values: readonly string[], build: (v: string) => QueryCompositeFilterConstraint) => {
     const counts = await Promise.all(values.map((v) => count(build(v))));
     const record: Record<string, number> = {};
-    values.forEach((v, i) => { record[v] = counts[i]; });
+    values.forEach((v, i) => {
+      const n = counts[i];
+      if (n !== undefined) record[v] = n;
+    });
     return record;
   };
 
@@ -288,9 +299,11 @@ export async function fetchGalleryCounts(facets: GalleryFacetValues): Promise<Ga
   ]);
 
   const counts: GalleryCounts = { total, byTag, byType, byElement, byTerra, byTrait };
-  try {
-    sessionStorage.setItem(COUNTS_CACHE_KEY, JSON.stringify({ at: Date.now(), counts }));
-  } catch { /* quota exceeded or unavailable */ }
+  if (failures === 0) {
+    try {
+      sessionStorage.setItem(COUNTS_CACHE_KEY, JSON.stringify({ at: Date.now(), counts }));
+    } catch { /* quota exceeded or unavailable */ }
+  }
   return counts;
 }
 

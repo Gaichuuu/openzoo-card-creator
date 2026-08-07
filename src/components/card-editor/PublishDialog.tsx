@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { publishCard } from '@/lib/galleryService';
-import { exportStandardPng } from '@/lib/exportUtils';
+import { exportStandardPng, displayCardName } from '@/lib/exportUtils';
 import { CARD_TAGS, TAG_COLORS } from '@/types/card';
 import type { CardTag } from '@/types/card';
+import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
 
 interface PublishDialogProps {
   cardRef: React.RefObject<HTMLDivElement | null>;
@@ -18,7 +19,8 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
   const navigate = useNavigate();
   const getSnapshot = useCardStore((s) => s.getSnapshot);
   const artNeeded = useCardStore((s) => s.artNeeded);
-  const [creatorName, setCreatorName] = useState(() => localStorage.getItem('openzoo-creator-name') || '');
+  const cardName = useCardStore((s) => s.cardName);
+  const [creatorName, setCreatorName] = useState(() => readLocalStorage('openzoo-creator-name') || '');
   const [selectedTags, setSelectedTags] = useState<CardTag[]>(() => {
     const tags = [...(initialTags || [])];
     if (artNeeded && !tags.includes('Art Needed')) tags.push('Art Needed');
@@ -73,7 +75,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       }
 
       const trimmed = creatorName.trim();
-      if (trimmed) localStorage.setItem('openzoo-creator-name', trimmed);
+      if (trimmed) writeLocalStorage('openzoo-creator-name', trimmed);
 
       setPublishedId(cardId);
       setSuccess(true);
@@ -88,28 +90,58 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
     }
   }
 
+  function closeAfterSuccess() {
+    useCardStore.getState().resetCard();
+    onClose();
+  }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      if (success) closeAfterSuccess();
+      else onClose();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [success, onClose]);
+
   if (success) {
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-        onClick={(e) => { if (e.target === e.currentTarget) { useCardStore.getState().resetCard(); onClose(); } }}
+        onClick={(e) => { if (e.target === e.currentTarget) closeAfterSuccess(); }}
       >
-        <div className="relative bg-navy-900 p-6 max-w-sm w-full mx-4 text-center space-y-4 border-gold">
-          <button
-            onClick={() => { useCardStore.getState().resetCard(); onClose(); }}
-            className="absolute top-3 right-3 text-gold-400 hover:text-white transition-colors text-xl leading-none"
-            aria-label="Close"
-          >
-            &times;
-          </button>
-          <div className="text-green-400 text-lg font-semibold">Published!</div>
-          <p className="text-gold-400 text-sm">Your card is now in the gallery.</p>
-          <button
-            onClick={() => navigate(publishedId ? `/gallery/${publishedId}` : '/gallery')}
-            className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors text-sm border-gold"
-          >
-            View in Gallery
-          </button>
+        <div className="relative bg-navy-900 max-w-140 w-full mx-4 border-gold">
+          <div className="flex items-center justify-end pt-3 px-3.5">
+            <button
+              onClick={closeAfterSuccess}
+              className="w-7.5 h-7.5 flex items-center justify-center text-gold-400 hover:text-white transition-colors text-[22px] leading-none"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div className="px-8.5 pt-1.5 pb-8.5 text-center">
+            <div className="text-[11px] uppercase tracking-[.18em] text-gold-500 mb-2.5">Published</div>
+            <h3 className="text-gold-gradient font-title font-normal text-[28px] m-0 mb-3">It&rsquo;s in the book</h3>
+            <p className="text-sm text-gray-400 m-0 mb-6">
+              {displayCardName(cardName) || 'Your card'} is now in the gallery for anyone to remix.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <button
+                onClick={() => navigate(publishedId ? `/gallery/${publishedId}` : '/gallery')}
+                className="px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-colors border-gold"
+              >
+                View in Gallery
+              </button>
+              <button
+                onClick={closeAfterSuccess}
+                className="px-6 py-2.5 bg-navy-800 hover:bg-navy-700 text-gold-300 text-sm font-semibold transition-colors border-gold"
+              >
+                Make another
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -120,67 +152,73 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative bg-navy-900 p-6 max-w-sm w-full mx-4 space-y-4 border-gold">
+      <div className="relative bg-navy-900 max-w-140 w-full mx-4 border-gold">
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gold-400 hover:text-white transition-colors text-xl leading-none"
+          className="absolute top-2 right-2.5 w-7.5 h-7.5 flex items-center justify-center text-gold-400 hover:text-white transition-colors text-[22px] leading-none"
           aria-label="Close"
         >
           &times;
         </button>
-        <h2 className="text-lg font-bold text-white">Publish to Gallery</h2>
 
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-            Created by (optional)
-          </label>
-          <input
-            type="text"
-            value={creatorName}
-            onChange={(e) => setCreatorName(e.target.value)}
-            placeholder="Nickname"
-            maxLength={40}
-            className="w-full bg-navy-800 border border-navy-600 text-white text-sm rounded px-3 py-1.5 focus:outline-none focus:border-gold-400"
-          />
+        <div className="pt-5 px-6.5 pb-4 border-b border-navy-600">
+          <h2 className="text-gold-gradient font-title font-normal text-2xl m-0 mr-8.5">Add to the Gallery</h2>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-            Tags (optional)
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            {CARD_TAGS.map((tag) => {
-              const active = selectedTags.includes(tag);
-              const colors = TAG_COLORS[tag];
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setSelectedTags((prev) =>
-                    active ? prev.filter((t) => t !== tag) : [...prev, tag]
-                  )}
-                  className={`text-xs px-2.5 py-1 rounded border transition-colors ${
-                    active
-                      ? `${colors.bg} ${colors.text} border-transparent`
-                      : 'bg-navy-800 text-gold-400 border-navy-600 hover:border-navy-600'
-                  }`}
-                >
-                  {tag}
-                </button>
-              );
-            })}
+        <div className="pt-5.5 px-6.5 pb-6 flex flex-col gap-5.5">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold text-gold-400 uppercase tracking-widest">
+              Created by (optional)
+            </label>
+            <input
+              type="text"
+              value={creatorName}
+              onChange={(e) => setCreatorName(e.target.value)}
+              placeholder="Nickname"
+              maxLength={40}
+              className="w-full bg-navy-950 text-white text-[15px] px-3 py-2.5"
+            />
+            <p className="text-[11px] text-gray-500 m-0">Username shown on the card in the gallery.</p>
           </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] font-semibold text-gold-400 uppercase tracking-widest">
+              Tags (optional)
+            </label>
+            <div className="flex flex-wrap gap-1.75">
+              {CARD_TAGS.map((tag) => {
+                const active = selectedTags.includes(tag);
+                const colors = TAG_COLORS[tag];
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => setSelectedTags((prev) =>
+                      active ? prev.filter((t) => t !== tag) : [...prev, tag]
+                    )}
+                    className={`text-xs px-3 py-1.25 border transition-colors ${
+                      active
+                        ? `${colors.bg} ${colors.text} border-transparent`
+                        : 'bg-transparent text-gray-400 border-navy-600 hover:border-gold-500 hover:text-gray-300'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-red-400 text-sm">{error}</div>
+          )}
         </div>
 
-        {error && (
-          <div className="text-red-400 text-sm">{error}</div>
-        )}
-
-        <div className="pt-2">
+        <div className="flex items-center justify-end px-6.5 py-4 border-t border-navy-600 bg-navy-950">
           <button
             onClick={handlePublish}
             disabled={publishing}
-            className="w-full px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-navy-600 disabled:cursor-not-allowed text-white font-semibold transition-colors text-sm border-gold"
+            className="px-7.5 py-2.75 bg-green-600 hover:bg-green-500 disabled:bg-navy-600 disabled:cursor-not-allowed text-white font-semibold transition-colors text-sm border-gold"
           >
             {publishing ? (
               <>

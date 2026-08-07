@@ -8,6 +8,7 @@
   --color-navy-700: #1c2848;
   --color-navy-600: #263560;
   --font-title: 'Archivo Black', sans-serif;
+  --color-gold-100: #fff7cf;
   --color-gold-300: #e8d88c;
   --color-gold-400: #dcbe64;
   --color-gold-500: #c8a532;
@@ -55,8 +56,13 @@
 }
 
 html, body {
-  overflow-x: hidden;
   overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -65,6 +71,19 @@ body {
   background-color: #080a19;
   color: #e0e0e0;
   font-family: system-ui, -apple-system, sans-serif;
+}
+
+.text-gold-gradient {
+  background-image: linear-gradient(180deg, #fff7cf 10%, #e8d88c 38%, #dcbe64 60%, #aa821e 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-gold-400);
+  outline-offset: 2px;
 }
 
 .border-gold {

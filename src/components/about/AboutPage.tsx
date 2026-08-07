@@ -1,5 +1,9 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { AURA_COLORS } from '@/data/constants';
+import type { Element } from '@/types/card';
 
 interface Attribution {
   symbol: string;
@@ -57,7 +61,7 @@ const TERRA: Attribution[] = [
   { symbol: 'Suburban', originalIcon: 'House', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/house.html' },
   { symbol: 'Swamp', originalIcon: 'Swamp', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/swamp.html' },
   { symbol: 'Winter', originalIcon: 'Igloo', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/igloo.html' },
-  { symbol: 'Woods', originalIcon: 'Forest', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/forest.html' },
+  { symbol: 'Woodlands', originalIcon: 'Forest', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/forest.html' },
 ];
 
 const TRAITS: Attribution[] = [
@@ -125,145 +129,242 @@ const SCP_CARDS: ScpAttribution[] = [
   { card: 'SCP Logo', article: 'SCP Medal', authors: 'Aelanna', sourceUrl: 'http://scp-wiki.wikidot.com/dr-mackenzie-s-sketchbook' },
 ];
 
-const ExternalLinkIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-4.5-6H18m0 0v4.5m0-4.5L10.5 13.5" />
-  </svg>
-);
+type TabKey = 'aura' | 'status' | 'terra' | 'traits' | 'sets' | 'scp';
 
-function AttributionTable({ title, data }: { title: string; data: Attribution[] }) {
+interface TabConfig {
+  key: TabKey;
+  label: string;
+  data: Attribution[] | ScpAttribution[];
+  iconFolder?: string;
+}
+
+const TABS: TabConfig[] = [
+  { key: 'aura', label: 'Aura', data: AURAS, iconFolder: 'AuraSymbols' },
+  { key: 'status', label: 'Status', data: STATUS_EFFECTS, iconFolder: 'StatusEffects' },
+  { key: 'terra', label: 'Terra', data: TERRA, iconFolder: 'TerraNoGlow' },
+  { key: 'traits', label: 'Traits', data: TRAITS, iconFolder: 'TraitsNoGlow' },
+  { key: 'sets', label: 'Sets', data: SET_SYMBOLS },
+  { key: 'scp', label: 'SCP', data: SCP_CARDS },
+];
+
+const TH_CLASS = 'py-2.75 px-3 border-b border-navy-600 text-gray-500 text-[11px] uppercase tracking-[.1em]';
+const TD_CLASS = 'py-2.5 px-3 border-b border-navy-800';
+
+function SymbolCell({ symbol, folder }: { symbol: string; folder?: string }) {
+  const auraColor = folder === 'AuraSymbols' ? AURA_COLORS[symbol as Element]?.cardBackground : undefined;
   return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-bold text-gold-400">{title}</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left table-fixed">
-          <thead>
-            <tr className="border-b border-navy-600 text-gold-300">
-              <th className="py-2 pr-4 w-[24%]">Symbol</th>
-              <th className="py-2 pr-4 w-[24%]">Original Icon</th>
-              <th className="py-2 pr-4 w-[24%]">Author</th>
-              <th className="py-2 pr-4 w-[20%]">License</th>
-              <th className="py-2 w-[8%] text-right">Source</th>
+    <span className="inline-flex items-center gap-2.5">
+      {folder && (
+        <img
+          src={`/assets/${folder}/${encodeURIComponent(symbol)}.png`}
+          alt=""
+          className="w-6 h-6 rounded-[3px]"
+          style={auraColor ? { backgroundColor: auraColor } : undefined}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+      )}
+      {symbol}
+    </span>
+  );
+}
+
+function SourceLink({ url }: { url: string }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-gold-400 hover:text-gold-300 transition-colors"
+      aria-label="View original source"
+    >
+      ↗
+    </a>
+  );
+}
+
+function AttributionTable({ data, iconFolder }: { data: Attribution[]; iconFolder?: string }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm text-left border-collapse">
+        <thead>
+          <tr>
+            <th className={`${TH_CLASS} pl-0 w-[24%]`}>Symbol</th>
+            <th className={`${TH_CLASS} w-[28%]`}>Original icon</th>
+            <th className={`${TH_CLASS} w-[24%]`}>Author</th>
+            <th className={`${TH_CLASS} w-[16%]`}>License</th>
+            <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row) => (
+            <tr key={row.symbol}>
+              <td className={`${TD_CLASS} pl-0 text-white`}><SymbolCell symbol={row.symbol} folder={iconFolder} /></td>
+              <td className={`${TD_CLASS} text-gray-300`}>{row.originalIcon}</td>
+              <td className={`${TD_CLASS} text-gray-300`}>{row.originalAuthor}</td>
+              <td className={`${TD_CLASS} text-gray-400 whitespace-nowrap`}>{row.originalLicense}</td>
+              <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
             </tr>
-          </thead>
-          <tbody>
-            {data.map((row) => (
-              <tr key={row.symbol} className="border-b border-navy-800 text-gray-300">
-                <td className="py-1.5 pr-4 font-medium text-white">{row.symbol}</td>
-                <td className="py-1.5 pr-4">{row.originalIcon}</td>
-                <td className="py-1.5 pr-4">{row.originalAuthor}</td>
-                <td className="py-1.5 pr-4 whitespace-nowrap">{row.originalLicense}</td>
-                <td className="py-1.5 text-right">
-                  <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 inline-block">
-                    <ExternalLinkIcon />
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
 function ScpTable({ data }: { data: ScpAttribution[] }) {
   return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-bold text-gold-400">SCP Cards</h2>
-      <p className="text-sm text-gray-400">
-        Cards based on <a href="https://scp-wiki.wikidot.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">SCP Foundation</a> content, licensed under CC BY-SA.
-      </p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left table-fixed">
-          <thead>
-            <tr className="border-b border-navy-600 text-gold-300">
-              <th className="py-2 pr-4 w-[24%]">Card</th>
-              <th className="py-2 pr-4 w-[28%]">SCP Article</th>
-              <th className="py-2 pr-4 w-[40%]">Author(s)</th>
-              <th className="py-2 w-[8%] text-right">Source</th>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm text-left border-collapse">
+        <thead>
+          <tr>
+            <th className={`${TH_CLASS} pl-0 w-[24%]`}>Card</th>
+            <th className={`${TH_CLASS} w-[28%]`}>SCP Article</th>
+            <th className={`${TH_CLASS} w-[40%]`}>Author(s)</th>
+            <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row) => (
+            <tr key={row.card}>
+              <td className={`${TD_CLASS} pl-0 text-white whitespace-nowrap`}>{row.card}</td>
+              <td className={`${TD_CLASS} text-gray-300`}>{row.article}</td>
+              <td className={`${TD_CLASS} text-gray-300`}>{row.authors}</td>
+              <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
             </tr>
-          </thead>
-          <tbody>
-            {data.map((row) => (
-              <tr key={row.card} className="border-b border-navy-800 text-gray-300">
-                <td className="py-1.5 pr-4 font-medium text-white whitespace-nowrap">{row.card}</td>
-                <td className="py-1.5 pr-4">{row.article}</td>
-                <td className="py-1.5 pr-4">{row.authors}</td>
-                <td className="py-1.5 text-right">
-                  <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 inline-block">
-                    <ExternalLinkIcon />
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
+const PROSE_LINK_CLASS = 'text-gold-400 hover:text-gold-300 transition-colors';
+
 export function AboutPage() {
+  const [activeTab, setActiveTab] = useState<TabKey>('aura');
+  const tab = TABS.find(t => t.key === activeTab)!;
+
   return (
     <div className="min-h-dvh bg-navy-950 text-white">
       <SiteHeader sticky />
-      <div className="max-w-5xl mx-auto px-6 py-12 space-y-10">
-        <header className="space-y-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-gold-400">About</h1>
-          <p className="text-gray-400 max-w-3xl">
-            OpenZoo is the unofficial continuation of{' '}<strong className="text-white">vintage MetaZoo</strong>, made by MetaZoo fans,{' '}
-            <strong className="text-white"><em>FOR</em></strong> MetaZoo fans. Exclusively using assets within
-            Creative Commons or made in-house, we plan on adding more cards to the MetaZoo card pool
-            ad infinitum. OpenZoo assets are provided free of charge to anyone who wants them under{' '}
-            <strong className="text-white">Creative Commons 3.0</strong>, specifically{' '}
-            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-              CC BY-SA 3.0
-            </a>.
-          </p>
-          <p className="text-gray-400 max-w-3xl">
-            All OpenZoo symbols are created by <strong className="text-white">Jack Penman</strong> unless
-            otherwise noted. Original icons are sourced from{' '}
-            <a href="https://game-icons.net/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-              game-icons.net
-            </a>{' '}
-            and used under their respective licenses.
-          </p>
-        </header>
+      <div className="max-w-5xl mx-auto px-6 md:px-10 pt-13 pb-18">
+        <h1 className="text-gold-gradient font-title font-normal text-4xl md:text-[46px] leading-[1.05] m-0 mb-3.5">About OpenZoo</h1>
 
-        <nav className="flex flex-wrap gap-2">
-          {['Status Effects', 'Auras', 'Terra', 'Traits', 'Set Symbols', 'SCP Cards'].map((section) => (
+        <p className="text-[18px] leading-normal text-[#d8d8d8] m-0 mb-4" style={{ fontFamily: "'EB Garamond', Georgia, serif" }}>
+          OpenZoo is the unofficial continuation of <strong className="text-white">vintage MetaZoo</strong>, made
+          by MetaZoo fans, <em className="text-white">for</em> MetaZoo fans. Exclusively using assets within
+          Creative Commons or made in-house, we plan on adding more cards to the MetaZoo card pool ad infinitum.
+        </p>
+        <p className="text-[18px] leading-normal text-[#d8d8d8] m-0 mb-4" style={{ fontFamily: "'EB Garamond', Georgia, serif" }}>
+          OpenZoo assets are provided free of charge to anyone who wants them under{' '}
+          <strong className="text-white">Creative Commons 3.0</strong>, specifically{' '}
+          <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className={PROSE_LINK_CLASS}>
+            CC BY-SA 3.0
+          </a>.
+        </p>
+
+        <section id="contribute" className="mt-10 mb-11 scroll-mt-18">
+          <h2 className="font-title font-normal text-[22px] text-gold-400 m-0 mb-2.5">Contribute</h2>
+          <p className="text-[15px] leading-[1.7] text-gray-400 max-w-155 m-0 mb-5">
+            There&rsquo;s no application and no account. Make a card and publish it.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-x-10 gap-y-6 max-w-3xl mb-6">
+            <div>
+              <h3 className="text-xs font-semibold text-white uppercase tracking-wider m-0 mb-2.5">OpenZoo TCG</h3>
+              <ul className="list-disc pl-5 text-[15px] leading-[1.7] text-gray-400 m-0 space-y-1.5">
+                <li>
+                  Create a card with the OpenZoo <Link to="/create" className={PROSE_LINK_CLASS}>Card Editor</Link>.
+                  <ul className="list-[circle] pl-5 mt-1 space-y-1">
+                    <li>Make a mockup, parody, proxy, or whatever you want.</li>
+                  </ul>
+                </li>
+                <li>
+                  Try cards tagged{' '}
+                  <Link to="/gallery?tag=Playtesting" className={PROSE_LINK_CLASS}>Playtesting</Link> and share what you find.
+                </li>
+                <li>
+                  Make artwork for cards tagged{' '}
+                  <Link to="/gallery?tag=Art+Needed" className={PROSE_LINK_CLASS}>Art Needed</Link>.
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold text-white uppercase tracking-wider m-0 mb-2.5">OpenZoo codebase</h3>
+              <ul className="list-disc pl-5 text-[15px] leading-[1.7] text-gray-400 m-0 space-y-1.5">
+                <li>
+                  The project is open source on <a href="https://github.com/Gaichuuu/openzoo-card-creator" target="_blank" rel="noopener noreferrer" className={PROSE_LINK_CLASS}>GitHub</a>.
+                  <ul className="list-[circle] pl-5 mt-1 space-y-1">
+                    <li>Anyone can clone this project and open a pull request.</li>
+                  </ul>
+                </li>
+                <li>
+                  Feedback and feature requests:{' '}
+                  <a href="https://github.com/Gaichuuu/openzoo-card-creator/issues" target="_blank" rel="noopener noreferrer" className={PROSE_LINK_CLASS}>open a ticket</a>.
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
             <a
-              key={section}
-              href={`#${section.toLowerCase().replace(/ /g, '-')}`}
-              className="px-3 py-1 text-sm bg-navy-800 text-gold-300 hover:bg-navy-700 transition-colors border-gold"
+              href="https://discord.gg/2jQPtQceqT"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5.5 py-2.75 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-colors border-gold"
             >
-              {section}
+              Join the Discord
             </a>
-          ))}
-        </nav>
+            <Link
+              to="/gallery?tag=Art+Needed"
+              className="px-5.5 py-2.75 bg-navy-800 hover:bg-navy-700 text-gold-300 text-sm font-semibold transition-colors border-gold"
+            >
+              Art Needed
+            </Link>
+          </div>
+        </section>
 
-        <div id="status-effects">
-          <AttributionTable title="Status Effect Symbols" data={STATUS_EFFECTS} />
-        </div>
-        <div id="auras">
-          <AttributionTable title="Aura Symbols" data={AURAS} />
-        </div>
-        <div id="terra">
-          <AttributionTable title="Terra Symbols" data={TERRA} />
-        </div>
-        <div id="traits">
-          <AttributionTable title="Trait Symbols" data={TRAITS} />
-        </div>
-        <div id="set-symbols">
-          <AttributionTable title="Set Symbols" data={SET_SYMBOLS} />
-          <p className="text-sm text-gray-400 mt-2">
-            Each set symbol has Bronze, Silver, and Gold rarity variants.
+        <section id="attribution" className="scroll-mt-18">
+          <h2 className="font-title font-normal text-[22px] text-gold-400 m-0 mb-2.5">Attribution</h2>
+          <p className="text-[15px] leading-[1.7] text-gray-400 m-0 mb-5">
+            All OpenZoo symbols are created by{' '}
+            <a href="https://github.com/Gaichuuu" target="_blank" rel="noopener noreferrer" className="text-white font-semibold hover:text-gold-300 transition-colors">Jack Penman</a>{' '}
+            unless otherwise noted. Original icons come from{' '}
+            <a href="https://game-icons.net/" target="_blank" rel="noopener noreferrer" className={PROSE_LINK_CLASS}>game-icons.net</a>;<br/>
+            SCP-themed cards reference{' '}
+            <a href="https://scp-wiki.wikidot.com/" target="_blank" rel="noopener noreferrer" className={PROSE_LINK_CLASS}>SCP Foundation</a>{' '}
+            content under CC BY-SA 3.0.
           </p>
-        </div>
-        <div id="scp-cards">
-          <ScpTable data={SCP_CARDS} />
-        </div>
+
+          <div className="flex flex-wrap gap-2 mb-3" role="tablist" aria-label="Attribution tables">
+            {TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={activeTab === key}
+                onClick={() => setActiveTab(key)}
+                className={`px-2.75 py-1 text-[13px] bg-navy-800 border border-navy-600 rounded transition-colors cursor-pointer ${
+                  activeTab === key ? 'text-gold-300' : 'text-gray-500 hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab.key === 'scp' ? (
+            <ScpTable data={tab.data as ScpAttribution[]} />
+          ) : (
+            <>
+              <AttributionTable data={tab.data as Attribution[]} iconFolder={tab.iconFolder} />
+              {tab.key === 'sets' && (
+                <p className="text-[13px] text-gray-500 mt-3.5">
+                  Each set symbol has Bronze, Silver, and Gold rarity variants.
+                </p>
+              )}
+            </>
+          )}
+        </section>
       </div>
       <SiteFooter />
     </div>

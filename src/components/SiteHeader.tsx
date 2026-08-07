@@ -59,7 +59,7 @@ export function SiteHeader({ children, sticky = false, transparent = false }: Si
       {menuOpen && (
         <nav className="md:hidden absolute top-full left-0 right-0 z-20 flex flex-col bg-navy-950 border-b border-gold-500 py-1.5">
           {NAV_LINKS.map(({ label, to }) => (
-            <Link key={to} to={to} className={`px-5 py-3 text-sm ${linkClass(to)}`}>
+            <Link key={to} to={to} onClick={() => setMenuOpen(false)} className={`px-5 py-3 text-sm ${linkClass(to)}`}>
               {label}
             </Link>
           ))}

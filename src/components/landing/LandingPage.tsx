@@ -16,6 +16,24 @@ function stripTierClass(slot: number): string {
   return 'md:max-2xl:hidden';
 }
 
+function StripThumb({ url, alt }: { url: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <span className="relative block w-full aspect-238/333">
+      {!loaded && (
+        <span className="absolute inset-0 block rounded-[7px] border border-navy-600 bg-navy-800 animate-pulse" />
+      )}
+      <img
+        src={url}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        className={`w-full h-full object-cover rounded-[7px] border border-navy-600 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      />
+    </span>
+  );
+}
+
 function useRecentCards(): { cards: SavedCard[]; heroCard: SavedCard | null; loading: boolean } {
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [heroCard, setHeroCard] = useState<SavedCard | null>(null);
@@ -41,7 +59,7 @@ function useRecentCards(): { cards: SavedCard[]; heroCard: SavedCard | null; loa
 
 export function LandingPage() {
   const { cards: recentCards, heroCard, loading } = useRecentCards();
-  const justPublished = recentCards.slice(0, 9);
+  const justPublished = recentCards.slice(0, 6);
 
   return (
     <div className="flex flex-col min-h-dvh bg-navy-950">
@@ -49,7 +67,7 @@ export function LandingPage() {
         {/* Layer 1 — wallpaper */}
         <div
           aria-hidden="true"
-          className="absolute -inset-15 grid grid-cols-4 md:grid-cols-8 gap-4.5 opacity-16"
+          className="absolute -inset-15 grid grid-cols-4 md:grid-cols-8 gap-4.5 opacity-15"
           style={{ transform: 'rotate(-10deg) scale(1.14)', transformOrigin: 'center' }}
         >
           {/* Downscaled tile */}
@@ -67,65 +85,55 @@ export function LandingPage() {
         <div
           aria-hidden="true"
           className="absolute inset-0"
-          style={{ background: 'radial-gradient(75% 75% at 36% 44%, rgba(8,10,25,.55) 0%, rgba(8,10,25,.8) 100%)' }}
+          style={{ background: 'radial-gradient(66% 66% at 50% 40%, rgba(8,10,25,.45) 0%, rgba(8,10,25,.88) 100%)' }}
         />
 
         {/* Layer 3 — content */}
         <div className="relative flex flex-col flex-1">
           <SiteHeader sticky />
 
-          {/* Hero */}
-          <div className="flex flex-col-reverse lg:flex-row flex-1 items-center w-full max-w-375 mx-auto px-4 md:px-10 py-8 lg:py-0 gap-8 lg:gap-0">
-            <div className="lg:flex-1 lg:min-w-0 text-center lg:text-left">
+          {/* Hero — type block + card */}
+          <div className="flex flex-col lg:flex-row flex-1 items-center justify-center px-4 md:px-15 pt-8 lg:pt-10 pb-2 gap-8 lg:gap-18">
+            <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-135">
               <h1
-                className="font-title font-normal text-[52px] md:text-[72px] lg:text-[clamp(44px,4.8vw,72px)] leading-[1.02] m-0"
-                style={{
-                  letterSpacing: '-.01em',
-                  backgroundImage: 'linear-gradient(180deg, #fff7cf 10%, #e8d88c 38%, #dcbe64 60%, #aa821e 96%)',
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                }}
+                className="text-gold-gradient font-title font-normal text-[52px] md:text-[72px] lg:text-[90px] leading-[.94] tracking-[-.018em] m-0"
               >
-                OpenZoo</h1>
-                <h2
-                className="pt-2.5 font-title font-normal text-[32px] md:text-[42px] lg:text-[clamp(30px,3.3vw,48px)] leading-[1.02] text-white m-0"
-                style={{ textWrap: 'balance' }}
-                >Trading Card Game
+                OpenZoo
+              </h1>
+              <h2 className="font-title font-normal text-[22px] md:text-[26px] lg:text-[30px] leading-[1.02] tracking-widest uppercase text-white mt-3 m-0">
+                Trading Card Game
               </h2>
-              <p className="text-lg md:text-xl leading-relaxed italic text-gray-400 mt-4 max-w-117.5 mx-auto lg:mx-0" style={{ textWrap: 'pretty' }}>
-              The only TCG where your <span className="text-gray-300 font-semibold">surroundings</span> matter!
+              <p className="text-xl leading-relaxed italic text-gray-400 mt-4.5" style={{ textWrap: 'pretty' }}>
+                The only TCG where your <span className="text-gray-300 font-semibold">surroundings</span> matter!
               </p>
-              <div className="flex flex-col sm:flex-row flex-wrap justify-center lg:justify-start gap-3.5 mt-9">
+              <div className="flex flex-col sm:flex-row flex-wrap justify-center lg:justify-start gap-3.5 mt-8.5">
                 <Link
                   to="/create"
-                  className="px-7.5 py-3.75 bg-green-600 hover:bg-green-500 text-white text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
+                  className="px-8 py-3.75 bg-green-600 hover:bg-green-500 text-white text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
                 >
                   Create a card
                 </Link>
                 <Link
                   to="/rulebook"
-                  className="px-7.5 py-3.75 bg-navy-800 hover:bg-navy-700 text-gold-300 text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
+                  className="px-8 py-3.75 bg-navy-800 hover:bg-navy-700 text-gold-300 text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
                 >
                   Read the rules
                 </Link>
               </div>
             </div>
-            <div className="flex lg:flex-1 justify-center min-w-0">
-              <Card3DHero className="w-65 h-92.5 md:w-100 md:h-138 shrink-0" frontCard={heroCard} frontPending={loading} />
-            </div>
-            <div className="hidden lg:block lg:flex-1" />
+            <Card3DHero className="w-65 h-92.5 md:w-100 md:h-142 shrink-0" frontCard={heroCard} frontPending={loading} />
           </div>
 
           {/* Recent strip */}
           {(loading || justPublished.length > 0) && (
-            <div className="shrink-0 px-4 md:px-10 pb-6.5">
-              <div className="flex items-center gap-3.5 pt-0 pb-4">
-                <span className="text-xs tracking-[.16em] uppercase text-gray-400">Recently published</span>
-              </div>
-              <div className="flex gap-4 overflow-x-auto md:overflow-visible">
+            <div className="shrink-0 px-4 md:px-10 pt-8.5 pb-6.5">
+              <div className="md:w-fit md:mx-auto">
+                <div className="pb-4">
+                  <span className="text-xs tracking-[.16em] uppercase text-gray-400">Recently published</span>
+                </div>
+                <div className="flex gap-4 overflow-x-auto md:overflow-visible">
                 {loading &&
-                  Array.from({ length: 9 }, (_, i) => (
+                  Array.from({ length: 6 }, (_, i) => (
                     <div
                       key={i}
                       className={`relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 ${stripTierClass(i + 1)}`}
@@ -141,12 +149,7 @@ export function LandingPage() {
                     className={`relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform ${stripTierClass(i + 1)}`}
                   >
                     {card.thumbnailUrl ? (
-                      <img
-                        src={card.thumbnailUrl}
-                        alt={displayCardName(card.cardName)}
-                        loading="lazy"
-                        className="w-full aspect-238/333 object-cover rounded-[7px] border border-navy-600"
-                      />
+                      <StripThumb url={card.thumbnailUrl} alt={displayCardName(card.cardName)} />
                     ) : (
                       <div className="w-full aspect-238/333 rounded-[7px] border border-navy-600 bg-navy-800" />
                     )}
@@ -167,6 +170,7 @@ export function LandingPage() {
                     Browse the gallery →
                   </span>
                 </Link>
+                </div>
               </div>
             </div>
           )}

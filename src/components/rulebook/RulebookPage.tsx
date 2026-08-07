@@ -23,7 +23,19 @@ function getIconPath(name: string): string | null {
 function GameIcon({ name, size = 5 }: { name: string; size?: number }) {
   const path = getIconPath(name);
   if (!path) return null;
-  return <img src={path} alt={name} className="inline-block align-text-bottom mr-1.5" style={{ width: size * 4, height: size * 4 }} />;
+  const isElement = ELEMENT_SET.has(name) || name === 'Special Aura';
+  return (
+    <img
+      src={path}
+      alt={name}
+      className="inline-block align-text-bottom mr-1.5"
+      style={{
+        width: size * 4,
+        height: size * 4,
+        ...(isElement ? { backgroundColor: auraBg((name === 'Special Aura' ? 'Special' : name) as Element), borderRadius: 3 } : {}),
+      }}
+    />
+  );
 }
 
 function IconGrid({ items, folder, iconMap }: { items: readonly string[]; folder: string; iconMap?: Record<string, string> }) {
@@ -461,7 +473,7 @@ function addKeywordSpans(text: string, baseKey: number, kwRegex: RegExp | null):
     }
     if (m.index > 0) segments.push(rest.slice(0, m.index));
     segments.push(
-      <span key={`kw-${k++}`} className="keyword-link underline decoration-dotted cursor-help" style={{ textDecorationColor: 'var(--color-blue-200)' }} data-term={m[1]}>
+      <span key={`kw-${k++}`} className="keyword-link underline decoration-dotted cursor-help" style={{ textDecorationColor: '#93c5fd' }} data-term={m[1]}>
         {m[1]}
       </span>
     );
@@ -487,12 +499,16 @@ function renderContent(content: string, kwRegex: RegExp | null): ReactNode[] {
   const flushTable = () => {
     if (!tableHeaders.length) return;
     elements.push(
-      <div key={`t-${elements.length}`} className="overflow-x-auto my-3">
-        <table className="w-full text-sm text-left">
+      <div key={`t-${elements.length}`} className="overflow-x-auto my-4">
+        <table className="w-full text-[15px] text-left border-collapse">
           <thead>
-            <tr className="border-b border-navy-600 text-gold-300">
+            <tr>
               {tableHeaders.map((h, i) => (
-                <th key={i} className="py-2 pr-4" style={tableAligns[i] === 'center' ? { textAlign: 'center' } : undefined}>
+                <th
+                  key={i}
+                  className="py-2.5 px-3 border-b border-gold-600 text-gold-300 text-[11px] uppercase tracking-[.12em]"
+                  style={tableAligns[i] === 'center' ? { textAlign: 'center' } : undefined}
+                >
                   {renderInline(h, kwRegex)}
                 </th>
               ))}
@@ -500,9 +516,13 @@ function renderContent(content: string, kwRegex: RegExp | null): ReactNode[] {
           </thead>
           <tbody>
             {tableRows.map((row, ri) => (
-              <tr key={ri} className="border-b border-navy-800 text-gray-300">
+              <tr key={ri} className="odd:bg-[rgba(18,28,55,.5)]">
                 {row.map((cell, ci) => (
-                  <td key={ci} className="py-2 pr-4 align-middle" style={tableAligns[ci] === 'center' ? { textAlign: 'center' } : undefined}>
+                  <td
+                    key={ci}
+                    className={`py-2.75 px-3 align-middle leading-normal ${ci === 0 ? 'text-white' : 'text-gray-300'}`}
+                    style={tableAligns[ci] === 'center' ? { textAlign: 'center' } : undefined}
+                  >
                     {renderInline(cell, kwRegex)}
                   </td>
                 ))}
@@ -530,7 +550,7 @@ function renderContent(content: string, kwRegex: RegExp | null): ReactNode[] {
     if (!listItems.length) return;
     const Tag = listOrdered ? 'ol' : 'ul';
     elements.push(
-      <Tag key={`l-${elements.length}`} className={`text-sm text-gray-300 leading-relaxed ${listOrdered ? 'list-decimal' : 'list-disc'} list-outside ml-5 my-2 space-y-1`}>
+      <Tag key={`l-${elements.length}`} className={`text-[17px] text-gray-300 leading-[1.75] ${listOrdered ? 'list-decimal' : 'list-disc'} list-outside pl-5.5 my-3 space-y-1.5`}>
         {listItems.map((item, i) => (
           <li key={i}>{renderInline(item, kwRegex)}</li>
         ))}
@@ -595,7 +615,7 @@ function renderContent(content: string, kwRegex: RegExp | null): ReactNode[] {
     if (line.startsWith('<!-- ') || line.trim() === '' || line.startsWith('#') || line.startsWith('####')) continue;
 
     elements.push(
-      <p key={`p-${elements.length}`} className="text-sm text-gray-300 leading-relaxed my-2">
+      <p key={`p-${elements.length}`} className="text-[17px] text-gray-300 leading-[1.75] my-3.5" style={{ textWrap: 'pretty' }}>
         {renderInline(line, kwRegex)}
       </p>
     );
@@ -645,8 +665,20 @@ function GlossaryPopover({ term, definition, rect, onClose }: {
   );
 }
 
+function parseVersionInfo(raw: string): { version: string; updated: string } {
+  const m = raw.match(/^### Version ([^\s~]+) ~ (.+)$/m);
+  return { version: m?.[1] ?? '0.1', updated: m?.[2]?.trim() ?? '' };
+}
+
+interface TocNode {
+  section: Section;
+  number: string;
+  children: Section[];
+}
+
 export function RulebookPage() {
   const { sections, glossary } = useMemo(() => parseRulebook(rulebookRaw), []);
+  const versionInfo = useMemo(() => parseVersionInfo(rulebookRaw), []);
   const [activeId, setActiveId] = useState('');
   const [popover, setPopover] = useState<{ term: string; definition: string; rect: DOMRect } | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -660,6 +692,31 @@ export function RulebookPage() {
       return s.level === 3;
     });
   }, [sections]);
+
+  const sectionNumbers = useMemo(() => {
+    const map: Record<string, string> = {};
+    let n = 0;
+    for (const s of sections) {
+      if (s.level === 2) map[s.id] = String(++n).padStart(2, '0');
+    }
+    return map;
+  }, [sections]);
+
+  const tocTree = useMemo(() => {
+    const tree: TocNode[] = [];
+    for (const s of tocSections) {
+      if (s.level === 2) tree.push({ section: s, number: sectionNumbers[s.id], children: [] });
+      else if (tree.length > 0) tree[tree.length - 1].children.push(s);
+    }
+    return tree;
+  }, [tocSections, sectionNumbers]);
+
+  const activeBranchId = useMemo(() => {
+    const node = tocTree.find(
+      n => n.section.id === activeId || n.children.some(c => c.id === activeId)
+    );
+    return node?.section.id ?? '';
+  }, [tocTree, activeId]);
 
   const mainSections = useMemo(() => {
     const glossaryIdx = sections.findIndex(s => s.title === 'Glossary');
@@ -711,6 +768,15 @@ export function RulebookPage() {
     return () => observer.disconnect();
   }, []);
 
+  const howToUseContent = useMemo(() => {
+    const first = sections[0];
+    if (!first) return '';
+    return first.content
+      .split('\n')
+      .filter(l => !l.trim().startsWith('**If'))
+      .join('\n');
+  }, [sections]);
+
   const closePopover = useCallback(() => setPopover(null), []);
 
   const handleKeywordClick = useCallback((e: React.MouseEvent) => {
@@ -724,53 +790,115 @@ export function RulebookPage() {
     setPopover({ term: entry.term, definition: entry.definition, rect });
   }, [glossary]);
 
+  const sectionHeader = (section: Section) =>
+    section.level === 2 ? (
+      <div className="flex items-baseline gap-3.5 mb-4">
+        <span className="font-mono text-[13px] text-gold-600">{sectionNumbers[section.id]}</span>
+        <h2 className="font-title font-normal text-[24px] md:text-[28px] text-gold-400 m-0">{section.title}</h2>
+      </div>
+    ) : (
+      <h3 className="text-[19px] font-bold text-gold-300 mt-7 mb-2.5">{section.title}</h3>
+    );
+
   return (
     <div className="min-h-dvh bg-navy-950 text-white">
       <SiteHeader sticky />
-      <nav className="hidden lg:block fixed top-15 left-0 w-72 h-[calc(100dvh-3.75rem)] overflow-y-auto border-r border-navy-600 bg-navy-900 py-6 px-4 z-10">
-        <ul className="space-y-0.5">
-          {tocSections.map(s => (
-            <li key={s.id}>
+      <nav className="hidden lg:block fixed top-15 left-0 w-68 h-[calc(100dvh-3.75rem)] overflow-y-auto border-r border-navy-600 bg-navy-900 py-6.5 px-5 z-10">
+        <span className="block text-[10px] uppercase tracking-[.18em] text-gold-500 mb-4">Contents</span>
+        <div className="flex flex-col gap-0.5">
+          {tocTree.map(({ section, number, children }) => (
+            <Fragment key={section.id}>
               <a
-                href={`#${s.id}`}
-                className={`block text-xs py-0.5 transition-colors ${
-                  s.level === 3 ? 'pl-3 text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-white font-medium'
-                } ${activeId === s.id ? 'text-gold-400!' : ''}`}
+                href={`#${section.id}`}
+                className={`flex gap-2.5 py-1 text-[13px] transition-colors ${
+                  activeBranchId === section.id ? 'text-gold-400 font-semibold' : 'text-gray-400 hover:text-gray-200'
+                }`}
               >
-                {s.title}
+                <span className={`font-mono text-[11px] pt-0.5 w-4.5 shrink-0 ${activeBranchId === section.id ? 'text-gold-600' : 'text-gray-600'}`}>
+                  {number}
+                </span>
+                {section.title}
               </a>
-            </li>
+              {children.length > 0 && (
+                <div className="flex flex-col gap-px ml-1.5 pl-5 pt-0.5 pb-1.5 border-l border-navy-600">
+                  {children.map(c => (
+                    <a
+                      key={c.id}
+                      href={`#${c.id}`}
+                      className={`text-xs py-0.75 transition-colors ${
+                        activeId === c.id ? 'text-gold-300' : 'text-gray-500 hover:text-gray-300'
+                      }`}
+                    >
+                      {c.title}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </Fragment>
           ))}
-        </ul>
+        </div>
       </nav>
 
       {/* Main content */}
       <main
         ref={contentRef}
-        className="min-w-0 px-6 py-8 md:px-10 md:py-12 max-w-4xl lg:ml-80"
+        className="min-w-0 px-6 py-8 md:px-10 lg:ml-68 lg:px-14 lg:pt-11 lg:pb-16"
         onClick={handleKeywordClick}
       >
-        <h1 className="text-3xl md:text-4xl font-bold text-gold-400 mb-8">OpenZoo Rulebook</h1>
+        <div className="max-w-4xl">
+        {/* Masthead */}
+        <div>
+          <span className="block text-[11px] uppercase tracking-[.2em] text-gold-500 mb-3">
+            Version {versionInfo.version}{versionInfo.updated ? ` · Updated ${versionInfo.updated}` : ''}
+          </span>
+          <h1 className="text-gold-gradient font-title font-normal text-4xl md:text-[46px] leading-[1.05] m-0 mb-8">OpenZoo Rulebook</h1>
+        </div>
 
         {/* Mobile TOC */}
-        <details className="lg:hidden mb-8 bg-navy-800 rounded-lg border border-navy-600">
+        <details className="lg:hidden mb-8 bg-navy-800 border border-navy-600">
           <summary className="px-4 py-3 text-sm font-bold text-gold-300 cursor-pointer">Table of Contents</summary>
           <ul className="px-4 pb-3 space-y-1">
-            {tocSections.filter(s => s.level === 2).map(s => (
-              <li key={s.id}>
-                <a href={`#${s.id}`} className="text-sm text-gray-400 hover:text-white">{s.title}</a>
+            {tocTree.map(({ section, number }) => (
+              <li key={section.id} className="flex gap-2">
+                <span className="font-mono text-xs text-gray-600 pt-0.5">{number}</span>
+                <a href={`#${section.id}`} className="text-sm text-gray-400 hover:text-white">{section.title}</a>
               </li>
             ))}
           </ul>
         </details>
 
-        {mainSections.map(section => (
-          <section key={section.id} id={section.id} data-section-id className="mb-8 scroll-mt-4">
-            {section.level === 2 ? (
-              <h2 className="text-xl md:text-2xl font-bold text-gold-400 mb-3 pb-2 border-b border-navy-700">{section.title}</h2>
-            ) : (
-              <h3 className="text-lg font-bold text-gold-300 mb-2">{section.title}</h3>
-            )}
+        {/* How to Use This Rulebook */}
+        {sections[0] && (
+          <section id={sections[0].id} data-section-id className="scroll-mt-4 mb-6">
+            {sectionHeader(sections[0])}
+            {renderContent(howToUseContent, kwRegex)}
+            {/* Entry-point callouts */}
+            <div className="flex flex-col sm:flex-row gap-3 mt-5">
+              <div className="flex-1 px-4.5 py-4 bg-navy-900 border-gold">
+                <span className="block text-[10px] uppercase tracking-[.16em] text-gold-500 mb-1.75">New player</span>
+                <p className="text-sm leading-relaxed text-gray-300 m-0">
+                  Start with <a href="#basic-openzoo-language" className="text-gold-400 hover:text-gold-300">Basic OpenZoo Language</a>,
+                  then read straight through to <a href="#playing-openzoo" className="text-gold-400 hover:text-gold-300">Playing OpenZoo</a>.
+                </p>
+              </div>
+              <div className="flex-1 px-4.5 py-4 bg-navy-900 border border-navy-600">
+                <span className="block text-[10px] uppercase tracking-[.16em] text-gray-500 mb-1.75">Veteran Caster</span>
+                <p className="text-sm leading-relaxed text-gray-400 m-0">
+                  Jump to <a href="#advanced-rules" className="text-gold-400 hover:text-gold-300">Advanced Rules</a> for the full details.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {mainSections.slice(1).map(section => (
+          <section
+            key={section.id}
+            id={section.id}
+            data-section-id
+            className={`scroll-mt-4 ${section.level === 2 ? 'mt-13 first:mt-0' : 'mt-0'} mb-6`}
+          >
+            {sectionHeader(section)}
             {section.id === 'page-layout' && <CardLayoutDiagram />}
             {renderContent(section.content, kwRegex)}
             {section.id === 'aura-types' && <AuraWheel />}
@@ -786,8 +914,8 @@ export function RulebookPage() {
           <div className="space-y-4 mt-4 mb-8">
             {glossaryTerms.map(entry => (
               <div key={entry.id} id={entry.id} data-section-id className="scroll-mt-4">
-                <dt className="text-sm font-bold text-gold-300">{entry.title}</dt>
-                <dd className="text-sm text-gray-300 leading-relaxed mt-0.5">
+                <dt className="text-[17px] font-bold text-gold-300">{entry.title}</dt>
+                <dd className="text-[15px] text-gray-300 leading-relaxed mt-0.5 ml-0">
                   {renderInline(entry.content.trim(), null)}
                 </dd>
               </div>
@@ -797,19 +925,21 @@ export function RulebookPage() {
 
         {/* Changelog */}
         {postGlossarySections.map(section => (
-          <section key={section.id} id={section.id} data-section-id className="mb-8 scroll-mt-4">
-            {section.level === 2 ? (
-              <h2 className="text-xl md:text-2xl font-bold text-gold-400 mb-3 pb-2 border-b border-navy-700">{section.title}</h2>
-            ) : (
-              <h3 className="text-lg font-bold text-gold-300 mb-2">{section.title}</h3>
-            )}
+          <section
+            key={section.id}
+            id={section.id}
+            data-section-id
+            className={`scroll-mt-4 ${section.level === 2 ? 'mt-13' : 'mt-0'} mb-6`}
+          >
+            {sectionHeader(section)}
             {renderContent(section.content, kwRegex)}
           </section>
         ))}
 
+        </div>
       </main>
 
-      <SiteFooter className="lg:pl-80" />
+      <SiteFooter className="lg:pl-68" />
 
       {popover && (
         <GlossaryPopover

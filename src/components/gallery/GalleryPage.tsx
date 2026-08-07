@@ -16,6 +16,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { CardDetailModal, MODAL_CONTAINER_CLASS, MODAL_CARD_CLASS, MODAL_DETAILS_CLASS } from './CardDetailModal';
 import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS, TERRAS, TRAITS } from '@/data/constants';
+import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
 
 const FACET_ORDER: Element[] = [
   'Dark', 'Light', 'Water', 'Flame', 'Forest', 'Frost',
@@ -42,12 +43,12 @@ const SORT_KEY = 'openzoo-gallery-sort';
 const DENSITY_KEY = 'openzoo-gallery-density';
 
 function storedSort(): GallerySort {
-  const v = localStorage.getItem(SORT_KEY);
+  const v = readLocalStorage(SORT_KEY);
   return v === 'name' ? 'name' : 'newest';
 }
 
 function storedDensity(): Density {
-  const v = localStorage.getItem(DENSITY_KEY);
+  const v = readLocalStorage(DENSITY_KEY);
   return v === 'large' || v === 'compact' ? v : 'comfortable';
 }
 
@@ -248,11 +249,11 @@ export function GalleryPage() {
   const [density, setDensityState] = useState<Density>(storedDensity);
   const setSort = (value: GallerySort) => {
     setSortState(value);
-    try { localStorage.setItem(SORT_KEY, value); } catch { /* unavailable */ }
+    writeLocalStorage(SORT_KEY, value);
   };
   const setDensity = (value: Density) => {
     setDensityState(value);
-    try { localStorage.setItem(DENSITY_KEY, value); } catch { /* unavailable */ }
+    writeLocalStorage(DENSITY_KEY, value);
   };
   const [counts, setCounts] = useState<GalleryCounts | null>(null);
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
@@ -322,6 +323,10 @@ export function GalleryPage() {
     if (facetCount === 1 && counts) {
       if (filterTag) { setFilteredCount(counts.byTag[filterTag] ?? null); return; }
       if (filterType) { setFilteredCount(counts.byType[filterType] ?? null); return; }
+      if (filterElement && counts.byElement[filterElement] !== undefined) {
+        setFilteredCount(counts.byElement[filterElement]);
+        return;
+      }
     }
     let stale = false;
     fetchFilteredCount(buildFilters())
@@ -380,7 +385,7 @@ export function GalleryPage() {
       else navigate({ pathname: '/gallery', search: searchParams.toString() }, { replace: true });
     }).finally(() => { if (!stale) setLoadingCard(false); });
     return () => { stale = true; };
-  }, [cardId, cards, navigate]);
+  }, [cardId, cards, navigate, searchParams]);
 
   const search = searchName.trim().toLowerCase();
   const filteredCards = useMemo(() => (search
@@ -393,6 +398,7 @@ export function GalleryPage() {
   const shownCount =
     (search ? filteredCards.length : hasFilters ? filteredCount : counts?.total)
     ?? filteredCards.length;
+  const countInexact = Boolean(search && hasMore);
 
   const gridClass = density === 'compact' ? GRID_COMPACT : density === 'large' ? GRID_LARGE : GRID_COMFORTABLE;
 
@@ -426,7 +432,7 @@ export function GalleryPage() {
               maxLength={50}
               className="input-plain w-full max-w-60 min-w-0 shrink bg-navy-800 rounded px-2 py-1 text-sm text-white placeholder-gray-500"
             />
-            <div className="hidden sm:block text-[13px] text-gray-400 whitespace-nowrap">{shownCount} card{shownCount === 1 ? '' : 's'}</div>
+            <div className="hidden sm:block text-[13px] text-gray-400 whitespace-nowrap">{shownCount}{countInexact ? '+' : ''} card{shownCount === 1 && !countInexact ? '' : 's'}</div>
             <div className="hidden sm:block md:hidden w-px h-4.5 bg-navy-600" />
             <button
               onClick={() => setMobileFiltersOpen((open) => !open)}
@@ -509,7 +515,7 @@ export function GalleryPage() {
                 ))}
               </div>
             )}
-            {!loading && !error && hasMore && (
+            {!loading && !error && hasMore && !search && (
               <div ref={sentinelRef} className="h-1" />
             )}
             {loadingMore && (
@@ -537,17 +543,19 @@ export function GalleryPage() {
           onClick={() => navigate({ pathname: '/gallery', search: searchParams.toString() })}
         >
           <div className={MODAL_CONTAINER_CLASS}>
-            <div className={`shrink-0 rounded-3xl bg-navy-800 animate-pulse ${MODAL_CARD_CLASS}`} style={{ aspectRatio: '238/333' }} />
-            <div className={MODAL_DETAILS_CLASS}>
-              <div className="h-5 w-40 bg-navy-700 rounded animate-pulse" />
+            <div className={`shrink-0 rounded-[14px] bg-navy-800 animate-pulse ${MODAL_CARD_CLASS}`} style={{ aspectRatio: '238/333' }} />
+            <div className={`${MODAL_DETAILS_CLASS} p-5 gap-4`}>
+              <div className="h-3 w-24 bg-navy-700 rounded animate-pulse" />
+              <div className="h-6 w-40 bg-navy-700 rounded animate-pulse" />
               <div className="flex gap-2">
                 <div className="h-5 w-16 bg-navy-700 rounded animate-pulse" />
                 <div className="h-5 w-16 bg-navy-700 rounded animate-pulse" />
               </div>
               <div className="h-4 w-32 bg-navy-700 rounded animate-pulse" />
-              <div className="space-y-2 pt-2">
-                <div className="h-9 w-full bg-navy-700 rounded animate-pulse" />
-                <div className="h-9 w-full bg-navy-700 rounded animate-pulse" />
+              <div className="h-10 w-full bg-navy-700 rounded animate-pulse" />
+              <div className="flex gap-2">
+                <div className="h-9 flex-1 bg-navy-700 rounded animate-pulse" />
+                <div className="h-9 flex-1 bg-navy-700 rounded animate-pulse" />
               </div>
             </div>
           </div>

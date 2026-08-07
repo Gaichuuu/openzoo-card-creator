@@ -71,8 +71,20 @@ export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCa
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer || !frontCard?.thumbnailUrl) return;
-    return applyTexture(viewer, 0, frontCard.thumbnailUrl, setFailed, () => setFrontApplied(true));
+    return applyTexture(viewer, 0, frontCard.thumbnailUrl, () => setFrontApplied(true), () => setFrontApplied(true));
   }, [frontCard]);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || frontPending || frontCard?.thumbnailUrl) return;
+    let cancelled = false;
+    (async () => {
+      await waitForModel(viewer);
+      if (cancelled) return;
+      viewer.model?.materials?.[0]?.pbrMetallicRoughness.setBaseColorFactor([0, 0, 0, 1]);
+    })().catch(() => { /* leave the default material */ });
+    return () => { cancelled = true; };
+  }, [frontPending, frontCard]);
 
   if (failed) return null;
 
