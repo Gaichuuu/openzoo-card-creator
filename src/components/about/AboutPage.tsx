@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { PageTitle } from '@/components/PageTitle';
 import { AURA_COLORS } from '@/data/constants';
-import type { Element } from '@/types/card';
+import type { Element, Terra, Trait } from '@/types/card';
 
-interface Attribution {
-  symbol: string;
+interface Attribution<S extends string = string> {
+  symbol: S;
   originalIcon: string;
   originalAuthor: string;
   originalLicense: string;
@@ -23,7 +24,7 @@ const STATUS_EFFECTS: Attribution[] = [
   { symbol: 'Sleep', originalIcon: 'Night sleep', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/night-sleep.html' },
 ];
 
-const AURAS: Attribution[] = [
+const AURAS: Attribution<Element>[] = [
   { symbol: 'Water', originalIcon: 'Big wave', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/big-wave.html' },
   { symbol: 'Flame', originalIcon: 'Small fire', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/small-fire.html' },
   { symbol: 'Forest', originalIcon: 'Pine tree', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/pine-tree.html' },
@@ -36,7 +37,7 @@ const AURAS: Attribution[] = [
   { symbol: 'Spirit', originalIcon: 'Ghost', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/ghost.html' },
 ];
 
-const TERRA: Attribution[] = [
+const TERRA: Attribution<Terra>[] = [
   { symbol: 'Cave', originalIcon: 'Cave Entrance', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/cave-entrance.html' },
   { symbol: 'City', originalIcon: 'Modern City', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/modern-city.html' },
   { symbol: 'Dawn', originalIcon: 'Sunrise', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/sunrise.html' },
@@ -64,7 +65,7 @@ const TERRA: Attribution[] = [
   { symbol: 'Woodlands', originalIcon: 'Forest', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/forest.html' },
 ];
 
-const TRAITS: Attribution[] = [
+const TRAITS: Attribution<Trait>[] = [
   { symbol: 'Blood Sucker', originalIcon: 'Fangs', originalAuthor: 'Skoll', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/skoll/fangs.html' },
   { symbol: 'Burrow', originalIcon: 'Needle Drill', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/needle-drill.html' },
   { symbol: 'Convert', originalIcon: 'Rolling Energy', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/rolling-energy.html' },
@@ -134,7 +135,7 @@ type TabKey = 'aura' | 'status' | 'terra' | 'traits' | 'sets' | 'scp';
 interface TabConfig {
   key: TabKey;
   label: string;
-  data: Attribution[] | ScpAttribution[];
+  data?: Attribution[];
   iconFolder?: string;
 }
 
@@ -144,7 +145,7 @@ const TABS: TabConfig[] = [
   { key: 'terra', label: 'Terra', data: TERRA, iconFolder: 'TerraNoGlow' },
   { key: 'traits', label: 'Traits', data: TRAITS, iconFolder: 'TraitsNoGlow' },
   { key: 'sets', label: 'Sets', data: SET_SYMBOLS },
-  { key: 'scp', label: 'SCP', data: SCP_CARDS },
+  { key: 'scp', label: 'SCP' },
 ];
 
 const ANCHOR_TO_TAB: Record<string, TabKey> = {
@@ -265,7 +266,7 @@ export function AboutPage() {
     <div className="min-h-dvh bg-navy-950 text-white">
       <SiteHeader sticky />
       <div className="max-w-5xl mx-auto px-6 md:px-10 pt-13 pb-18">
-        <h1 className="text-gold-gradient font-title font-normal text-4xl md:text-[46px] leading-[1.05] m-0 mb-3.5">About OpenZoo</h1>
+        <PageTitle className="mb-3.5">About OpenZoo</PageTitle>
 
         <p className="text-[18px] leading-normal text-[#d8d8d8] m-0 mb-4" style={{ fontFamily: "'EB Garamond', Georgia, serif" }}>
           OpenZoo is the unofficial continuation of <strong className="text-white">vintage MetaZoo</strong>, made
@@ -369,17 +370,17 @@ export function AboutPage() {
             ))}
           </div>
 
-          {tab.key === 'scp' ? (
-            <ScpTable data={tab.data as ScpAttribution[]} />
-          ) : (
+          {tab.data ? (
             <>
-              <AttributionTable data={tab.data as Attribution[]} iconFolder={tab.iconFolder} />
+              <AttributionTable data={tab.data} iconFolder={tab.iconFolder} />
               {tab.key === 'sets' && (
                 <p className="text-[13px] text-gray-500 mt-3.5">
                   Each set symbol has Bronze, Silver, and Gold rarity variants.
                 </p>
               )}
             </>
+          ) : (
+            <ScpTable data={SCP_CARDS} />
           )}
         </section>
       </div>

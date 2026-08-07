@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
+import { readSessionStorage, writeSessionStorage, removeSessionStorage } from './safeStorage';
 import { dataUrlToBlob, MAX_UPLOAD_BYTES } from './exportUtils';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element } from '@/types/card';
@@ -250,9 +251,9 @@ const COUNTS_CACHE_KEY = 'openzoo-gallery-counts-v2';
 const COUNTS_TTL_MS = 5 * 60 * 1000;
 
 function readCachedCounts(): GalleryCounts | null {
+  const raw = readSessionStorage(COUNTS_CACHE_KEY);
+  if (!raw) return null;
   try {
-    const raw = sessionStorage.getItem(COUNTS_CACHE_KEY);
-    if (!raw) return null;
     const { at, counts } = JSON.parse(raw) as { at: number; counts: GalleryCounts };
     return Date.now() - at < COUNTS_TTL_MS ? counts : null;
   } catch {
@@ -261,7 +262,7 @@ function readCachedCounts(): GalleryCounts | null {
 }
 
 function invalidateCountsCache(): void {
-  try { sessionStorage.removeItem(COUNTS_CACHE_KEY); } catch { /* unavailable */ }
+  removeSessionStorage(COUNTS_CACHE_KEY);
 }
 
 export async function fetchGalleryCounts(facets: GalleryFacetValues): Promise<GalleryCounts> {
@@ -300,9 +301,7 @@ export async function fetchGalleryCounts(facets: GalleryFacetValues): Promise<Ga
 
   const counts: GalleryCounts = { total, byTag, byType, byElement, byTerra, byTrait };
   if (failures === 0) {
-    try {
-      sessionStorage.setItem(COUNTS_CACHE_KEY, JSON.stringify({ at: Date.now(), counts }));
-    } catch { /* quota exceeded or unavailable */ }
+    writeSessionStorage(COUNTS_CACHE_KEY, JSON.stringify({ at: Date.now(), counts }));
   }
   return counts;
 }

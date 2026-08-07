@@ -27,7 +27,7 @@ function applyTexture(
   viewer: ModelViewer,
   materialIndex: number,
   url: string,
-  onFail: (v: boolean) => void,
+  onFail: () => void,
   onApplied?: () => void,
 ): () => void {
   let cancelled = false;
@@ -38,7 +38,7 @@ function applyTexture(
 
     const materials = viewer.model?.materials;
     if (!materials || materials.length < 2) {
-      onFail(true);
+      onFail();
       return;
     }
 
@@ -50,7 +50,7 @@ function applyTexture(
     onApplied?.();
   })().catch((e) => {
     console.error('Failed to apply card texture:', e);
-    if (!cancelled) onFail(true);
+    if (!cancelled) onFail();
   });
 
   return () => { cancelled = true; };
@@ -65,7 +65,7 @@ export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCa
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
-    return applyTexture(viewer, 1, '/assets/OPZDexCardBack.png', setFailed, () => setBackApplied(true));
+    return applyTexture(viewer, 1, '/assets/OPZDexCardBack.png', () => setFailed(true), () => setBackApplied(true));
   }, []);
 
   useEffect(() => {

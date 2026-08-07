@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { PageTitle } from '@/components/PageTitle';
 import { ELEMENTS, TRAITS, TERRAS, STATUS_EFFECTS } from '@/data/constants';
 import { FONT_BODY, FONT_TITLE } from '@/data/constants';
 
@@ -119,7 +120,7 @@ export function ResourcesPage() {
       <SiteHeader sticky />
       <div className="max-w-5xl mx-auto px-6 md:px-10 pt-12 pb-18 flex flex-col gap-11">
         <header>
-          <h1 className="text-gold-gradient font-title font-normal text-4xl md:text-[46px] leading-[1.05] m-0 mb-3.5">Resources</h1>
+          <PageTitle className="mb-3.5">Resources</PageTitle>
           <p className="text-[20px] leading-normal text-[#d8d8d8] m-0 mb-4" style={{ fontFamily: "'EB Garamond', Georgia, serif" }}>
             Everything you need to get started with OpenZoo.
           </p>

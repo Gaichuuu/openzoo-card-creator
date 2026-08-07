@@ -2,6 +2,7 @@ import { Fragment, useState, useEffect, useRef, useMemo, useCallback, type React
 import rulebookRaw from '@/data/rulebook.md?raw';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { PageTitle } from '@/components/PageTitle';
 import { ELEMENTS, TRAITS, TERRAS, STATUS_EFFECTS, AURA_COLORS, AURA_STRENGTHS } from '@/data/constants';
 import type { Element } from '@/types/card';
 
@@ -851,7 +852,7 @@ export function RulebookPage() {
           <span className="block text-[11px] uppercase tracking-[.2em] text-gold-500 mb-3">
             Version {versionInfo.version}{versionInfo.updated ? ` · Updated ${versionInfo.updated}` : ''}
           </span>
-          <h1 className="text-gold-gradient font-title font-normal text-4xl md:text-[46px] leading-[1.05] m-0 mb-8">OpenZoo Rulebook</h1>
+          <PageTitle className="mb-8">OpenZoo Rulebook</PageTitle>
         </div>
 
         {/* Mobile TOC */}

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useDeferredValue, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
@@ -20,12 +20,10 @@ export function CardEditor() {
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
   const [clearSignal, setClearSignal] = useState(0);
   const isMobile = useIsMobile();
+  const peekLayoutType = useDeferredValue(layoutType);
+  const peekCardData = useDeferredValue(cardData);
 
-  const handleClear = () => {
-    if (window.confirm('Clear the editor and start a new card?')) {
-      setClearSignal((n) => n + 1);
-    }
-  };
+  const handleClear = () => setClearSignal((n) => n + 1);
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
@@ -99,7 +97,7 @@ export function CardEditor() {
               aria-label="Open full-size preview"
             >
               <span className="shrink-0 overflow-hidden" style={{ width: '110px', height: '153px' }}>
-                <CardRenderer layoutType={layoutType} cardData={cardData} scale={0.46} />
+                <CardRenderer layoutType={peekLayoutType} cardData={peekCardData} scale={0.46} />
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block text-xs font-semibold text-gray-300">Live preview</span>

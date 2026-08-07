@@ -1,17 +1,10 @@
-import { useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { PRINT_READY_KEY, downloadDataUrl, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
-import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
-
-export { PRINT_READY_KEY };
+import { readLocalStorage } from '@/lib/safeStorage';
+import { useLocalStorageState } from '@/lib/useLocalStorageState';
 
 export function usePrintReady(): [boolean, (v: boolean) => void] {
-  const [printReady, setState] = useState(() => readLocalStorage(PRINT_READY_KEY) === '1');
-  const setPrintReady = (v: boolean) => {
-    setState(v);
-    writeLocalStorage(PRINT_READY_KEY, v ? '1' : '0');
-  };
-  return [printReady, setPrintReady];
+  return useLocalStorageState(PRINT_READY_KEY, (raw) => raw === '1', (v) => (v ? '1' : '0'));
 }
 
 interface ExportCardOptions {

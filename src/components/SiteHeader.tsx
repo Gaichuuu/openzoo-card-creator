@@ -1,14 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NAV_LINKS } from '@/data/navLinks';
 
 interface SiteHeaderProps {
-  children?: ReactNode;
   sticky?: boolean;
-  transparent?: boolean;
 }
 
-export function SiteHeader({ children, sticky = false, transparent = false }: SiteHeaderProps) {
+export function SiteHeader({ sticky = false }: SiteHeaderProps) {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -19,7 +17,7 @@ export function SiteHeader({ children, sticky = false, transparent = false }: Si
 
   return (
     <header
-      className={`${sticky ? 'sticky top-0 z-10' : 'relative'} ${transparent ? '' : 'bg-navy-950'} flex items-center gap-3 md:gap-5 h-15 px-4 md:px-6 border-b border-gold-500 shrink-0`}
+      className={`${sticky ? 'sticky top-0 z-10' : 'relative'} bg-navy-950 flex items-center gap-3 md:gap-5 h-15 px-4 md:px-6 border-b border-gold-500 shrink-0`}
     >
       <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
         <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-6.5" />
@@ -39,7 +37,6 @@ export function SiteHeader({ children, sticky = false, transparent = false }: Si
         <span className="sm:hidden">Create</span>
       </Link>
       <div className="flex-1" />
-      {children}
       <button
         onClick={() => setMenuOpen((open) => !open)}
         className="md:hidden w-11 h-11 -mr-2 flex items-center justify-center text-gray-300 shrink-0"

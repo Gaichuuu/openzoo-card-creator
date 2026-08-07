@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { ELEMENTS, TRAITS, TERRAS, STATUS_EFFECTS } from '@/data/constants';
-import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
+import { useLocalStorageState } from '@/lib/useLocalStorageState';
 
 function Accordion({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -374,17 +374,14 @@ interface InfoPanelProps {
 }
 
 export function InfoPanel({ collapsible = false, searchable = false }: InfoPanelProps) {
-  const [collapsed, setCollapsed] = useState(
-    () => collapsible && readLocalStorage(REFERENCE_COLLAPSED_KEY) === '1',
+  const [collapsed, setCollapsed] = useLocalStorageState(
+    REFERENCE_COLLAPSED_KEY,
+    (raw) => collapsible && raw === '1',
+    (v) => (v ? '1' : '0'),
   );
   const [query, setQuery] = useState('');
 
-  const toggleCollapsed = () => {
-    setCollapsed((c) => {
-      writeLocalStorage(REFERENCE_COLLAPSED_KEY, c ? '0' : '1');
-      return !c;
-    });
-  };
+  const toggleCollapsed = () => setCollapsed(!collapsed);
 
   if (collapsible && collapsed) {
     return (

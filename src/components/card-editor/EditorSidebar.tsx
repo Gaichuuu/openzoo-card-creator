@@ -376,7 +376,8 @@ export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) 
     setTextField('LP', numeric ? `{LP}${numeric}` : '');
   };
 
-  const doClear = () => {
+  const confirmClear = () => {
+    if (!window.confirm('Clear the editor and start a new card?')) return;
     resetCard();
     setBorderStyle('Red');
     clearRemix();
@@ -384,7 +385,7 @@ export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) 
 
   useEffect(() => {
     if (clearSignal === 0) return;
-    doClear();
+    confirmClear();
   }, [clearSignal]);
 
   const toggleSection = (id: string) => setOpenSection((prev) => (prev === id ? null : id));
@@ -419,9 +420,7 @@ export function EditorSidebar({ cardRef, clearSignal = 0 }: EditorSidebarProps) 
         <div className="hidden md:flex items-center justify-between">
           <h2 className="text-[15px] font-bold text-white">Card Editor</h2>
           <button
-            onClick={() => {
-              if (window.confirm('Clear the editor and start a new card?')) doClear();
-            }}
+            onClick={confirmClear}
             className="px-3 py-1.5 text-xs text-gold-400 border border-navy-600 hover:text-red-400 hover:border-red-400/60 transition-colors cursor-pointer"
           >
             Clear
