@@ -126,18 +126,18 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
           >
             {/* Skeleton placeholder */}
             {!imgLoaded && (
-              <div className="absolute inset-0 bg-navy-800 rounded-[14px] animate-pulse" />
+              <div className="card-thumb-round absolute inset-0 bg-navy-800 animate-pulse" />
             )}
             {card.thumbnailUrl ? (
               <img
                 src={card.thumbnailUrl}
                 alt={card.cardName}
                 onLoad={() => setImgLoaded(true)}
-                className="border border-navy-600 rounded-[14px]"
+                className="card-thumb-round border border-navy-600"
                 style={{ display: 'block', width: '100%', height: '100%', pointerEvents: 'none', opacity: imgLoaded ? 1 : 0, boxShadow: '0 34px 66px rgba(0,0,0,.72)' }}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-navy-800 rounded-[14px]">
+              <div className="card-thumb-round absolute inset-0 flex items-center justify-center text-gray-400 bg-navy-800">
                 No preview
               </div>
             )}
@@ -147,7 +147,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  borderRadius: '14px',
+                  borderRadius: 'calc(4.31% + 1px) / calc(3.08% + 1px)',
                   background: `radial-gradient(farthest-corner circle at ${tilt.gx}% ${tilt.gy}%, hsla(0,0%,100%,0.8) 10%, hsla(0,0%,100%,0.65) 20%, hsla(0,0%,0%,0.5) 90%)`,
                   opacity: tilt.go,
                   mixBlendMode: 'overlay',
@@ -194,18 +194,15 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
           {/* Spec block */}
           <div className="px-5 py-4 flex flex-col gap-3">
             {card.tags.length > 0 && (
-              <div className="flex items-center justify-between gap-3">
-                {/* <span className="text-xs text-gray-500">Tags</span> */}
-                <span className="flex flex-wrap justify-end gap-1.25">
-                  {card.tags.map((tag) => {
-                    const colors = TAG_COLORS[tag as CardTag];
-                    return (
-                      <span key={tag} className={`text-[11px] px-2 py-0.75 ${colors.bg} ${colors.text}`}>
-                        {tag}
-                      </span>
-                    );
-                  })}
-                </span>
+              <div className="flex flex-wrap gap-1.25">
+                {card.tags.map((tag) => {
+                  const colors = TAG_COLORS[tag as CardTag];
+                  return (
+                    <span key={tag} className={`text-[11px] px-2 py-0.75 ${colors.bg} ${colors.text}`}>
+                      {tag}
+                    </span>
+                  );
+                })}
               </div>
             )}
             <span className="text-[13px] text-gray-400 leading-normal">
@@ -233,7 +230,7 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
               onClick={handleRemix}
               className="w-full py-3 text-navy-990 text-[15px] font-bold transition-[filter] hover:brightness-110"
               style={{
-                background: 'linear-gradient(#c8a532,#aa821e) padding-box, linear-gradient(180deg, #fff7cf, #aa821e) border-box',
+                background: 'linear-gradient(180deg, #e8d88c, #c8a532 55%, #aa821e) padding-box, linear-gradient(180deg, #fff7cf, #aa821e) border-box',
                 border: '1px solid transparent',
               }}
             >

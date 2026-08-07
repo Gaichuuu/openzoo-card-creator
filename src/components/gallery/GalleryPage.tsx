@@ -16,19 +16,16 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { CardDetailModal, MODAL_CONTAINER_CLASS, MODAL_CARD_CLASS, MODAL_DETAILS_CLASS } from './CardDetailModal';
 import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS, TERRAS, TRAITS } from '@/data/constants';
-import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
+import { useLocalStorageState } from '@/lib/useLocalStorageState';
 
 const FACET_ORDER: Element[] = [
   'Dark', 'Light', 'Water', 'Flame', 'Forest', 'Frost',
   'Earth', 'Lightning', 'Spirit', 'Cosmic', 'Neutral',
 ];
-const facetOrderOf = (e: Element) => {
-  const i = FACET_ORDER.indexOf(e);
-  return i === -1 ? FACET_ORDER.length : i;
-};
-const FACET_ELEMENTS: Element[] = ELEMENTS
-  .filter((e) => e !== 'Special')
-  .sort((a, b) => facetOrderOf(a) - facetOrderOf(b));
+const FACET_ELEMENTS: Element[] = [
+  ...FACET_ORDER,
+  ...ELEMENTS.filter((e) => e !== 'Special' && !FACET_ORDER.includes(e)),
+];
 
 const GRID_LARGE = 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6';
 const GRID_COMFORTABLE = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4.5';
@@ -42,15 +39,11 @@ type Density = 'large' | 'comfortable' | 'compact';
 const SORT_KEY = 'openzoo-gallery-sort';
 const DENSITY_KEY = 'openzoo-gallery-density';
 
-function storedSort(): GallerySort {
-  const v = readLocalStorage(SORT_KEY);
-  return v === 'name' ? 'name' : 'newest';
-}
-
-function storedDensity(): Density {
-  const v = readLocalStorage(DENSITY_KEY);
-  return v === 'large' || v === 'compact' ? v : 'comfortable';
-}
+const DENSITY_OPTIONS: { value: Density; label: string }[] = [
+  { value: 'large', label: 'L' },
+  { value: 'comfortable', label: 'M' },
+  { value: 'compact', label: 'S' },
+];
 
 interface FacetSectionsProps {
   counts: GalleryCounts | null;
@@ -245,16 +238,21 @@ export function GalleryPage() {
     [updateParams],
   );
 
-  const [sort, setSortState] = useState<GallerySort>(storedSort);
-  const [density, setDensityState] = useState<Density>(storedDensity);
-  const setSort = (value: GallerySort) => {
-    setSortState(value);
-    writeLocalStorage(SORT_KEY, value);
-  };
-  const setDensity = (value: Density) => {
-    setDensityState(value);
-    writeLocalStorage(DENSITY_KEY, value);
-  };
+  const openCard = useCallback(
+    (id: string) => navigate({ pathname: `/gallery/${id}`, search: searchParams.toString() }),
+    [navigate, searchParams],
+  );
+  const closeModal = useCallback(
+    (replace?: boolean) => navigate({ pathname: '/gallery', search: searchParams.toString() }, { replace }),
+    [navigate, searchParams],
+  );
+
+  const [sort, setSort] = useLocalStorageState<GallerySort>(
+    SORT_KEY, (v) => (v === 'name' ? 'name' : 'newest'), (v) => v,
+  );
+  const [density, setDensity] = useLocalStorageState<Density>(
+    DENSITY_KEY, (v) => (v === 'large' || v === 'compact' ? v : 'comfortable'), (v) => v,
+  );
   const [counts, setCounts] = useState<GalleryCounts | null>(null);
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -386,10 +384,10 @@ export function GalleryPage() {
     fetchCard(cardId).then((card) => {
       if (stale) return;
       if (card) setSelectedCard(card);
-      else navigate({ pathname: '/gallery', search: searchParams.toString() }, { replace: true });
+      else closeModal(true);
     }).finally(() => { if (!stale) setLoadingCard(false); });
     return () => { stale = true; };
-  }, [cardId, cards, navigate, searchParams]);
+  }, [cardId, cards, closeModal]);
 
   const search = searchName.trim().toLowerCase();
   const filteredCards = useMemo(() => (search
@@ -463,24 +461,15 @@ export function GalleryPage() {
             <div className="hidden sm:block w-px h-4.5 bg-navy-600" />
             <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
               <span>Grid</span>
-              <button
-                onClick={() => setDensity('large')}
-                className={`${DENSITY_BUTTON_CLASS} ${density === 'large' ? 'text-gold-300' : 'text-gray-500 hover:text-white'}`}
-              >
-                L
-              </button>
-              <button
-                onClick={() => setDensity('comfortable')}
-                className={`${DENSITY_BUTTON_CLASS} ${density === 'comfortable' ? 'text-gold-300' : 'text-gray-500 hover:text-white'}`}
-              >
-                M
-              </button>
-              <button
-                onClick={() => setDensity('compact')}
-                className={`${DENSITY_BUTTON_CLASS} ${density === 'compact' ? 'text-gold-300' : 'text-gray-500 hover:text-white'}`}
-              >
-                S
-              </button>
+              {DENSITY_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setDensity(value)}
+                  className={`${DENSITY_BUTTON_CLASS} ${density === value ? 'text-gold-300' : 'text-gray-500 hover:text-white'}`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -510,11 +499,7 @@ export function GalleryPage() {
             ) : (
               <div className={gridClass}>
                 {filteredCards.map((card) => (
-                  <GalleryCard
-                    key={card.id}
-                    card={card}
-                    onClick={() => navigate({ pathname: `/gallery/${card.id}`, search: searchParams.toString() })}
-                  />
+                  <GalleryCard key={card.id} card={card} onOpen={openCard} />
                 ))}
               </div>
             )}
@@ -536,14 +521,11 @@ export function GalleryPage() {
 
       {/* Modal */}
       {selectedCard ? (
-        <CardDetailModal
-          card={selectedCard}
-          onClose={() => navigate({ pathname: '/gallery', search: searchParams.toString() })}
-        />
+        <CardDetailModal card={selectedCard} onClose={() => closeModal()} />
       ) : loadingCard && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-          onClick={() => navigate({ pathname: '/gallery', search: searchParams.toString() })}
+          onClick={() => closeModal()}
         >
           <div className={MODAL_CONTAINER_CLASS}>
             <div className={`shrink-0 rounded-[14px] bg-navy-800 animate-pulse ${MODAL_CARD_CLASS}`} style={{ aspectRatio: '238/333' }} />

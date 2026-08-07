@@ -5,6 +5,7 @@ import { fetchCards } from '@/lib/galleryService';
 import { displayCardName } from '@/lib/exportUtils';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { CardThumb, CardCaption } from '@/components/gallery/GalleryCard';
 import { Card3DHero } from './Card3DHero';
 
 const WALLPAPER_TILES = 24;
@@ -14,24 +15,6 @@ function stripTierClass(slot: number): string {
   if (slot < 7) return 'md:max-lg:hidden';
   if (slot < 8) return 'md:max-xl:hidden';
   return 'md:max-2xl:hidden';
-}
-
-function StripThumb({ url, alt }: { url: string; alt: string }) {
-  const [loaded, setLoaded] = useState(false);
-  return (
-    <span className="relative block w-full aspect-238/333">
-      {!loaded && (
-        <span className="absolute inset-0 block rounded-[7px] border border-navy-600 bg-navy-800 animate-pulse" />
-      )}
-      <img
-        src={url}
-        alt={alt}
-        loading="lazy"
-        onLoad={() => setLoaded(true)}
-        className={`w-full h-full object-cover rounded-[7px] border border-navy-600 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-      />
-    </span>
-  );
 }
 
 function useRecentCards(): { cards: SavedCard[]; heroCard: SavedCard | null; loading: boolean } {
@@ -149,16 +132,11 @@ export function LandingPage() {
                     className={`relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform ${stripTierClass(i + 1)}`}
                   >
                     {card.thumbnailUrl ? (
-                      <StripThumb url={card.thumbnailUrl} alt={displayCardName(card.cardName)} />
+                      <CardThumb url={card.thumbnailUrl} alt={displayCardName(card.cardName)} roundedClass="rounded-[7px]" />
                     ) : (
                       <div className="w-full aspect-238/333 rounded-[7px] border border-navy-600 bg-navy-800" />
                     )}
-                    <span className="flex items-baseline gap-1.5 min-w-0">
-                      <span className="text-xs text-gray-300 truncate">{displayCardName(card.cardName)}</span>
-                      {card.creatorName && (
-                        <span className="text-[11px] text-gray-500 truncate shrink-0 max-w-[45%]">@{card.creatorName}</span>
-                      )}
-                    </span>
+                    <CardCaption card={card} className="gap-1.5" />
                   </Link>
                 ))}
                 {/* Final slot */}

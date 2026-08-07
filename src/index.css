@@ -142,7 +142,7 @@ select.input-plain:focus {
 }
 
 .card-thumb-round {
-  border-radius: 3.05% / 2.18%;
+  border-radius: calc(4.31% + 1px) / calc(3.08% + 1px);
 }
 
 #root {
