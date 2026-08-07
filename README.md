@@ -12,7 +12,10 @@ Web-based card creator for the OpenZoo trading card game. Design custom cards in
 - **Effect Block System:** compose abilities and attacks with auto layout
 - **PNG Export:** standard and print-ready (with 3.5mm bleed) at 4x resolution
 - **JSON Support:** ability to export/import cards as JSON
-- **Gallery:** publish, browse, and remix cards
+- **Gallery:** publish, browse, and remix. Filter by tags, type, aura, terra, traits. Search, sort, and tile-density options
+- **Rulebook:** full rulebook with table of contents and keyword tooltips
+- **Resources:** individual card assets available for download
+- **Home Page:** shows recently published cards and 3d model
 - **Discord Notifications:** automatic webhook embed when a card is published
 
 ## Tech Stack
@@ -34,7 +37,7 @@ Web-based card creator for the OpenZoo trading card game. Design custom cards in
 ### Setup
 
 ```bash
-# Install dependencies
+# Install dependencies (postinstall applies the html-to-image patch from patches/)
 npm install
 
 # Configure Firebase
@@ -91,10 +94,11 @@ npm run deploy
 
 This will:
 1. Run `npm run build`
-2. Generate `sitemap.xml`
-3. Rsync `dist/` to the remote server
-4. Deploy PHP files (`gallery/`, `api/`, `lib/`)
-5. Deploy the nginx config
+2. Deploy Firestore composite indexes (`firestore.indexes.json`)
+3. Generate `sitemap.xml`
+4. Rsync `dist/` to the remote server
+5. Deploy PHP files (`gallery/`, `api/`, `lib/`)
+6. Deploy the nginx config
 
 ### Server-Side Config
 
@@ -112,9 +116,11 @@ src/
 ├── components/
 │   ├── card-renderer/   # Core rendering engine (CardRenderer, ZoneRenderer, TextParser)
 │   ├── card-editor/     # Editor UI (sidebar, controls, export)
-│   ├── gallery/         # Community gallery (grid, detail modal, card viewer)
+│   ├── gallery/         # Community gallery (grid, filters, detail modal)
+│   ├── rulebook/        # In-app rulebook (TOC, keyword tooltips)
+│   ├── resources/       # Downloads & resources page
 │   ├── about/           # Project info
-│   └── landing/         # Home page
+│   └── landing/         # Home page (recent cards, 3d model)
 ├── data/
 │   ├── layouts/         # Layout definitions
 │   ├── constants.ts     # Element, Trait, Terra lists
