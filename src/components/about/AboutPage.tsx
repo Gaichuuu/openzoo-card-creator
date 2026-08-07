@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -82,7 +82,7 @@ const TRAITS: Attribution[] = [
   { symbol: 'Invisible', originalIcon: 'Sight Disabled', originalAuthor: 'Skoll', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/skoll/sight-disabled.html' },
   { symbol: 'Magiproof', originalIcon: 'Rosa Shield', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/rosa-shield.html' },
   { symbol: 'Regen', originalIcon: 'Heart Plus', originalAuthor: 'Zeromancer', originalLicense: 'CC0 PDD', sourceUrl: 'https://game-icons.net/1x1/zeromancer/heart-plus.html' },
-  { symbol: 'Self-Destruct', originalIcon: 'Internal Injury', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/internal-injury.html' },
+  { symbol: 'Self Destruct', originalIcon: 'Internal Injury', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/internal-injury.html' },
   { symbol: 'Stone Skin', originalIcon: 'Rock Golem', originalAuthor: 'Delapouite', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/delapouite/rock-golem.html' },
   { symbol: 'Trap', originalIcon: 'Wolf Trap', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/wolf-trap.html' },
   { symbol: 'Unblockable', originalIcon: 'Broken Shield', originalAuthor: 'Lorc', originalLicense: 'CC BY 3.0', sourceUrl: 'https://game-icons.net/1x1/lorc/broken-shield.html' },
@@ -146,6 +146,15 @@ const TABS: TabConfig[] = [
   { key: 'sets', label: 'Sets', data: SET_SYMBOLS },
   { key: 'scp', label: 'SCP', data: SCP_CARDS },
 ];
+
+const ANCHOR_TO_TAB: Record<string, TabKey> = {
+  auras: 'aura',
+  'status-effects': 'status',
+  terra: 'terra',
+  traits: 'traits',
+  'set-symbols': 'sets',
+  'scp-cards': 'scp',
+};
 
 const TH_CLASS = 'py-2.75 px-3 border-b border-navy-600 text-gray-500 text-[11px] uppercase tracking-[.1em]';
 const TD_CLASS = 'py-2.5 px-3 border-b border-navy-800';
@@ -241,8 +250,16 @@ function ScpTable({ data }: { data: ScpAttribution[] }) {
 const PROSE_LINK_CLASS = 'text-gold-400 hover:text-gold-300 transition-colors';
 
 export function AboutPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('aura');
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    () => ANCHOR_TO_TAB[window.location.hash.slice(1)] ?? 'aura',
+  );
   const tab = TABS.find(t => t.key === activeTab)!;
+
+  useEffect(() => {
+    if (ANCHOR_TO_TAB[window.location.hash.slice(1)]) {
+      document.getElementById('attribution')?.scrollIntoView();
+    }
+  }, []);
 
   return (
     <div className="min-h-dvh bg-navy-950 text-white">

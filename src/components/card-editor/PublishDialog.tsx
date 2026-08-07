@@ -97,7 +97,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== 'Escape') return;
+      if (e.key !== 'Escape' || publishingRef.current) return;
       if (success) closeAfterSuccess();
       else onClose();
     }
@@ -150,11 +150,11 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget && !publishing) onClose(); }}
     >
       <div className="relative bg-navy-900 max-w-140 w-full mx-4 border-gold">
         <button
-          onClick={onClose}
+          onClick={() => { if (!publishing) onClose(); }}
           className="absolute top-2 right-2.5 w-7.5 h-7.5 flex items-center justify-center text-gold-400 hover:text-white transition-colors text-[22px] leading-none"
           aria-label="Close"
         >

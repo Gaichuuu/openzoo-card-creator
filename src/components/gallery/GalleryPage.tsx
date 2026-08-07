@@ -123,8 +123,8 @@ const FacetSections = memo(function FacetSections({
   filterTerra, setFilterTerra, filterTrait, setFilterTrait,
 }: FacetSectionsProps) {
   const countOf = (n: number | undefined) => (n === undefined ? '' : String(n));
-  const usedTerras = TERRAS.filter((terra) => (counts?.byTerra[terra] ?? 0) > 0);
-  const usedTraits = TRAITS.filter((trait) => (counts?.byTrait[trait] ?? 0) > 0);
+  const usedTerras = TERRAS.filter((terra) => counts !== null && (counts.byTerra[terra] ?? 1) > 0);
+  const usedTraits = TRAITS.filter((trait) => counts !== null && (counts.byTrait[trait] ?? 1) > 0);
   return (
     <>
       <FacetList
@@ -319,12 +319,16 @@ export function GalleryPage() {
 
   useEffect(() => {
     if (!hasFilters) { setFilteredCount(null); return; }
-    const facetCount = [filterType, filterElement, filterTag].filter(Boolean).length;
+    const facetCount = [filterType, filterElement, filterTag, filterTerra, filterTrait].filter(Boolean).length;
     if (facetCount === 1 && counts) {
-      if (filterTag) { setFilteredCount(counts.byTag[filterTag] ?? null); return; }
-      if (filterType) { setFilteredCount(counts.byType[filterType] ?? null); return; }
-      if (filterElement && counts.byElement[filterElement] !== undefined) {
-        setFilteredCount(counts.byElement[filterElement]);
+      const cached =
+        filterTag ? counts.byTag[filterTag]
+        : filterType ? counts.byType[filterType]
+        : filterElement ? counts.byElement[filterElement]
+        : filterTerra ? counts.byTerra[filterTerra]
+        : counts.byTrait[filterTrait];
+      if (cached !== undefined) {
+        setFilteredCount(cached);
         return;
       }
     }
@@ -333,7 +337,7 @@ export function GalleryPage() {
       .then((n) => { if (!stale) setFilteredCount(n); })
       .catch(() => { if (!stale) setFilteredCount(null); });
     return () => { stale = true; };
-  }, [buildFilters, hasFilters, filterTag, filterType, filterElement, counts]);
+  }, [buildFilters, hasFilters, filterTag, filterType, filterElement, filterTerra, filterTrait, counts]);
 
   const loadMore = useCallback(async () => {
     if (loadingMoreRef.current || !hasMore || !cursor) return;
@@ -395,10 +399,9 @@ export function GalleryPage() {
         || c.creatorName.toLowerCase().includes(search))
     : cards), [cards, search]);
 
-  const shownCount =
-    (search ? filteredCards.length : hasFilters ? filteredCount : counts?.total)
-    ?? filteredCards.length;
-  const countInexact = Boolean(search && hasMore);
+  const exactCount = search ? null : (hasFilters ? filteredCount : counts?.total) ?? null;
+  const shownCount = exactCount ?? filteredCards.length;
+  const countInexact = exactCount === null && hasMore;
 
   const gridClass = density === 'compact' ? GRID_COMPACT : density === 'large' ? GRID_LARGE : GRID_COMFORTABLE;
 
@@ -515,7 +518,7 @@ export function GalleryPage() {
                 ))}
               </div>
             )}
-            {!loading && !error && hasMore && !search && (
+            {!loading && !error && hasMore && (
               <div ref={sentinelRef} className="h-1" />
             )}
             {loadingMore && (

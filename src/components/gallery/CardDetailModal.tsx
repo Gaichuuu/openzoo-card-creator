@@ -193,23 +193,9 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
 
           {/* Spec block */}
           <div className="px-5 py-4 flex flex-col gap-3">
-            {card.primaryElement && (
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-gray-500">Aura</span>
-                <span className="flex items-center gap-1.5 text-[13px] text-gray-300">
-                  <img src={`/assets/AuraSymbols/${card.primaryElement}.png`} alt="" className="w-4.5 h-4.5" />
-                  {card.primaryElement}
-                  {card.secondaryElement && (
-                    <>
-                      <img src={`/assets/AuraSymbols/${card.secondaryElement}.png`} alt="" className="w-4.5 h-4.5 ml-1" />
-                      {card.secondaryElement}
-                    </>
-                  )}
-                </span>
-              </div>
-            )}
             {card.tags.length > 0 && (
               <div className="flex items-center justify-between gap-3">
+                {/* <span className="text-xs text-gray-500">Tags</span> */}
                 <span className="flex flex-wrap justify-end gap-1.25">
                   {card.tags.map((tag) => {
                     const colors = TAG_COLORS[tag as CardTag];
