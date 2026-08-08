@@ -171,6 +171,7 @@ async function exportPrintBorderless(
       if (node instanceof HTMLElement) {
         const key = node.getAttribute('data-zone-key');
         if (key && BACKGROUND_ZONE_KEYS.has(key)) return false;
+        if (node.classList.contains('art-needed-overlay')) return false;
       }
       return true;
     },
@@ -197,6 +198,8 @@ async function exportPrintBordered(el: HTMLElement): Promise<string> {
     height: CARD_H,
     fontEmbedCSS,
     style: { transform: 'none', borderRadius: '0' },
+    filter: (node: Node) =>
+      !(node instanceof HTMLElement && node.classList.contains('art-needed-overlay')),
   };
   await toPng(el, borderedOpts);
   const cardDataUrl = await toPng(el, borderedOpts);

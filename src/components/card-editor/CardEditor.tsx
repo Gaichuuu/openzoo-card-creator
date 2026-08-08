@@ -13,19 +13,23 @@ type MobileTab = 'editor' | 'preview' | 'help';
 const TAB_ORDER: MobileTab[] = ['editor', 'preview', 'help'];
 const SWIPE_MIN_X = 60;
 const DRAG_LOCK_PX = 10;
+const TRACK_TRANSITION = 'transform 250ms ease-out';
+
+const baseTransform = (index: number) => `translateX(${-index * 100}%)`;
 
 export function CardEditor() {
   const cardRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const layoutType = useCardStore((s) => s.layoutType);
   const cardData = useCardStore((s) => s.cardData);
   const cardName = useCardStore((s) => s.cardName);
   const cardType = useCardStore((s) => s.cardType);
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
-  const [dragDx, setDragDx] = useState(0);
   const sidebarRef = useRef<EditorSidebarHandle>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const dragAxisRef = useRef<'h' | 'v' | null>(null);
+  const dragDxRef = useRef(0);
   const isMobile = useIsMobile();
 
   const tabIndex = TAB_ORDER.indexOf(mobileTab);
@@ -40,10 +44,26 @@ export function CardEditor() {
     }
   };
 
+  const setTrackDrag = (dx: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    track.style.transition = 'none';
+    track.style.transform = `translateX(calc(${-tabIndex * 100}% + ${dx}px))`;
+  };
+
+  const settleTrack = (index: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    track.style.transition = TRACK_TRANSITION;
+    track.style.transform = baseTransform(index);
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 1) return;
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
     dragAxisRef.current = null;
+    dragDxRef.current = 0;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -61,22 +81,32 @@ export function CardEditor() {
     }
     if (dragAxisRef.current !== 'h') return;
     const atEdge = (tabIndex === 0 && dx > 0) || (tabIndex === TAB_ORDER.length - 1 && dx < 0);
-    setDragDx(atEdge ? dx / 3 : dx);
+    const d = atEdge ? dx / 3 : dx;
+    dragDxRef.current = d;
+    setTrackDrag(d);
   };
 
-  const handleTouchEnd = () => {
+  const finishDrag = (commit: boolean) => {
     touchStartRef.current = null;
     const wasHorizontal = dragAxisRef.current === 'h';
     dragAxisRef.current = null;
-    if (!wasHorizontal) return;
-    if (Math.abs(dragDx) >= SWIPE_MIN_X) {
-      const next = tabIndex + (dragDx < 0 ? 1 : -1);
-      if (next >= 0 && next < TAB_ORDER.length) {
-        setMobileTab(TAB_ORDER[next]);
-      }
+    const dx = dragDxRef.current;
+    dragDxRef.current = 0;
+    let nextIndex = tabIndex;
+    if (wasHorizontal && commit && Math.abs(dx) >= SWIPE_MIN_X) {
+      const next = tabIndex + (dx < 0 ? 1 : -1);
+      if (next >= 0 && next < TAB_ORDER.length) nextIndex = next;
     }
-    setDragDx(0);
+    settleTrack(nextIndex);
+    if (nextIndex !== tabIndex) setMobileTab(TAB_ORDER[nextIndex]);
   };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) return;
+    finishDrag(true);
+  };
+
+  const handleTouchCancel = () => finishDrag(false);
 
   const tabs: { key: MobileTab; label: string }[] = [
     { key: 'editor', label: 'Editor' },
@@ -131,73 +161,65 @@ export function CardEditor() {
         ))}
       </div>
 
-      {isMobile ? (
-        /* Sliding tab */
+      <div
+        className="flex-1 min-h-0 overflow-hidden"
+        style={isMobile ? { touchAction: 'pan-y' } : undefined}
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchMove={isMobile ? handleTouchMove : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
+        onTouchCancel={isMobile ? handleTouchCancel : undefined}
+      >
         <div
-          className="flex-1 min-h-0 overflow-hidden"
-          style={{ touchAction: 'pan-y' }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          ref={trackRef}
+          className="flex h-full"
+          style={isMobile ? { transform: baseTransform(tabIndex), transition: TRACK_TRANSITION } : undefined}
         >
-          <div
-            className="flex h-full"
-            style={{
-              transform: `translateX(calc(${-tabIndex * 100}% + ${dragDx}px))`,
-              transition: dragDx === 0 ? 'transform 250ms ease-out' : 'none',
-            }}
-          >
-            <div className="w-full shrink-0 h-full flex flex-col min-h-0">
-              <EditorSidebar cardRef={cardRef} ref={sidebarRef} />
-            </div>
-            <div className="w-full shrink-0 h-full flex items-center justify-center bg-navy-990 overflow-auto p-4">
-              <CardRenderer
-                ref={cardRef}
-                layoutType={layoutType}
-                cardData={cardData}
-                scale={1.5}
-              />
-            </div>
-            <div className="w-full shrink-0 h-full flex min-h-0 overflow-hidden">
-              <InfoPanel searchable />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-1 min-h-0">
           {/* Editor rail */}
-          <div className="flex flex-col flex-none min-h-0">
+          <div className={isMobile ? 'w-full shrink-0 h-full flex flex-col min-h-0' : 'flex flex-col flex-none min-h-0'}>
             <EditorSidebar cardRef={cardRef} ref={sidebarRef} />
           </div>
 
           {/* Reference panel */}
-          <div className="flex overflow-hidden">
-            <InfoPanel collapsible />
-          </div>
+          {!isMobile && (
+            <div className="flex overflow-hidden">
+              <InfoPanel collapsible />
+            </div>
+          )}
 
           {/* Card stage */}
           <div
             ref={stageRef}
-            className="relative flex flex-1 items-center justify-center bg-navy-990 overflow-auto p-7"
+            className={isMobile
+              ? 'w-full shrink-0 h-full flex items-center justify-center bg-navy-990 overflow-auto px-2 py-4'
+              : 'relative flex flex-1 items-center justify-center bg-navy-990 overflow-auto p-7'}
           >
             <CardRenderer
               ref={cardRef}
               layoutType={layoutType}
               cardData={cardData}
-              scale={2}
+              scale={isMobile ? 1.5 : 2}
             />
-            <div className="flex absolute right-3.5 top-3.5 gap-2">
-              <button
-                onClick={toggleFullscreen}
-                title="Full screen"
-                className="w-8 h-8 flex items-center justify-center bg-navy-900/90 border border-navy-600 text-gray-400 hover:text-white transition-colors cursor-pointer"
-              >
-                {fullscreenIcon}
-              </button>
-            </div>
+            {!isMobile && (
+              <div className="flex absolute right-3.5 top-3.5 gap-2">
+                <button
+                  onClick={toggleFullscreen}
+                  title="Full screen"
+                  className="w-8 h-8 flex items-center justify-center bg-navy-900/90 border border-navy-600 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  {fullscreenIcon}
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Help tab*/}
+          {isMobile && (
+            <div className="w-full shrink-0 h-full flex min-h-0 overflow-hidden">
+              <InfoPanel searchable />
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
