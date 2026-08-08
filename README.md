@@ -110,6 +110,20 @@ cp api/config.example.php api/config.php
 # Fill in firebase_project_id and discord_webhook_url
 ```
 
+## User Data
+
+There are no user accounts. Published cards live on the server; everything a user "owns" is tied to their browser profile:
+
+| Data | Where | Lifetime |
+|---|---|---|
+| Published cards (including baked-in custom icons) | Firestore + Storage (server) | Permanent, unaffected by anything local |
+| Edit/delete access to own published cards (anonymous auth uid) | IndexedDB | Until site data is cleared |
+| Custom icon library | localStorage | Until site data is cleared (60-item cap, oldest evicted) |
+| Work-in-progress card (editor autosave) | sessionStorage | Until the tab closes |
+| Preferences (creator name, print-ready, gallery sort/density) | localStorage | Until site data is cleared |
+
+Clearing site data never affects published cards. It removes the local icon library and the anonymous identity that grants edit/delete access, so previously published cards become remix-only for that user.
+
 ## Project Structure
 
 ```

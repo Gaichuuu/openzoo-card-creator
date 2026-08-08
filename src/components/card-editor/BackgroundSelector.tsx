@@ -21,24 +21,27 @@ export function BackgroundSelector() {
       <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
         Background Pattern
       </label>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setPickerOpen(true)}
-          className="flex-1 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm text-left hover:border-gold-400 focus:outline-none focus:border-gold-400"
-        >
-          {hasCustom ? 'Custom pattern' : 'Default'}
-        </button>
-        {hasCustom && (
-          <button
-            onClick={() => setImageField('CardBackground', '')}
-            className="text-xs text-red-400 hover:text-red-300"
-          >
-            Reset
-          </button>
-        )}
-      </div>
+      <select
+        value={hasCustom ? '__custom__' : 'default'}
+        onChange={(e) => {
+          if (e.target.value === '__custom__') { setPickerOpen(true); return; }
+          setImageField('CardBackground', '');
+        }}
+        className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
+      >
+        <option value="default">Default</option>
+        <option value="__custom__">{hasCustom ? 'Custom' : 'Custom…'}</option>
+      </select>
       {hasCustom && (
-        <img src={current} alt="Background pattern" className="h-12 rounded border border-navy-600 object-cover" />
+        <>
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+          >
+            Change custom pattern…
+          </button>
+          <img src={current} alt="Background pattern" className="h-12 rounded border border-navy-600 object-cover" />
+        </>
       )}
       <CustomIconPicker
         type="background"
