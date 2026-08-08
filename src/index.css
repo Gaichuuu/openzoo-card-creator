@@ -208,6 +208,3 @@ select.input-plain:focus {
 .card-exporting [data-zone-key="FlavorText"] > * {
   transform: translateY(0.5px) !important;
 }
-.card-exporting .art-needed-overlay {
-  display: none !important;
-}
