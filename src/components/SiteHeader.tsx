@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NAV_LINKS } from '@/data/navLinks';
+import { useIsMobile } from '@/lib/useIsMobile';
 
 interface SiteHeaderProps {
   sticky?: boolean;
@@ -9,15 +10,44 @@ interface SiteHeaderProps {
 export function SiteHeader({ sticky = false }: SiteHeaderProps) {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => setMenuOpen(false), [pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: PointerEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!sticky || !isMobile) return;
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastY;
+      if (Math.abs(delta) < 4) return;
+      lastY = y;
+      setHidden(delta > 0 && y > 64);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [sticky, isMobile]);
 
   const linkClass = (to: string) =>
     (pathname.startsWith(to) ? 'text-gold-300' : 'text-gray-400 hover:text-white transition-colors');
 
   return (
     <header
-      className={`${sticky ? 'sticky top-0 z-10' : 'relative'} bg-navy-950 flex items-center gap-3 md:gap-5 h-[var(--site-header-h)] px-4 md:px-6 border-b border-gold-500 shrink-0`}
+      ref={headerRef}
+      className={`${sticky ? 'sticky top-0 z-10 transition-transform duration-200' : 'relative'} ${hidden && isMobile && !menuOpen ? '-translate-y-full' : ''} bg-navy-950 flex items-center gap-3 md:gap-5 h-[var(--site-header-h)] px-4 md:px-6 border-b border-gold-500 shrink-0`}
     >
       <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
         <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-6.5" />

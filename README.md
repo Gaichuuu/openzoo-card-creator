@@ -9,10 +9,11 @@ Web-based card creator for the OpenZoo trading card game. Design custom cards in
 - **Editor:** upload card art, live preview, inline text formatting
 - **Card Types:** Beastie, Artifact, Spell, Potion, Aura, Terra, Token (+ Special Aura, Special Terra)
 - **Elements:** dual-type support with auto-resolved colors, banners, and strengths
+- **Custom Icons:** upload your own set symbols, traits, terras, aura elements, and background patterns
 - **Effect Block System:** compose abilities and attacks with auto layout
 - **PNG Export:** standard and print-ready (with 3.5mm bleed) at 4x resolution
 - **JSON Support:** ability to export/import cards as JSON
-- **Gallery:** publish, browse, and remix. Filter by tags, type, aura, terra, traits. Search, sort, and tile-density options
+- **Gallery:** publish, browse, remix, and edit or delete your own published cards. Filter by tags, type, aura, terra, traits. Search, sort, and tile-density options
 - **Rulebook:** full rulebook with table of contents and keyword tooltips
 - **Resources:** individual card assets available for download
 - **Home Page:** shows recently published cards and 3d model
@@ -108,6 +109,20 @@ The server uses PHP for SEO (OG meta tags) and Discord webhook notifications. Af
 cp api/config.example.php api/config.php
 # Fill in firebase_project_id and discord_webhook_url
 ```
+
+## User Data
+
+There are no user accounts. Published cards live on the server; everything a user "owns" is tied to their browser profile:
+
+| Data | Where | Lifetime |
+|---|---|---|
+| Published cards (including baked-in custom icons) | Firestore + Storage (server) | Permanent, unaffected by anything local |
+| Edit/delete access to own published cards (anonymous auth uid) | IndexedDB | Until site data is cleared |
+| Custom icon library | localStorage | Until site data is cleared (60-item cap, oldest evicted) |
+| Work-in-progress card (editor autosave) | sessionStorage | Until the tab closes |
+| Preferences (creator name, print-ready, gallery sort/density) | localStorage | Until site data is cleared |
+
+Clearing site data never affects published cards. It removes the local icon library and the anonymous identity that grants edit/delete access, so previously published cards become remix-only for that user.
 
 ## Project Structure
 

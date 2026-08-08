@@ -194,57 +194,53 @@ function SourceLink({ url }: { url: string }) {
 
 function AttributionTable({ data, iconFolder }: { data: Attribution[]; iconFolder?: string }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead>
-          <tr>
-            <th className={`${TH_CLASS} pl-0 w-[24%]`}>Symbol</th>
-            <th className={`${TH_CLASS} w-[28%]`}>Original icon</th>
-            <th className={`${TH_CLASS} w-[24%]`}>Author</th>
-            <th className={`${TH_CLASS} w-[16%]`}>License</th>
-            <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+    <table className="w-full table-fixed md:table-auto text-sm text-left border-collapse">
+      <thead>
+        <tr>
+          <th className={`${TH_CLASS} pl-0 w-[26%]`}>Symbol</th>
+          <th className={`${TH_CLASS} w-[28%]`}>Original icon</th>
+          <th className={`${TH_CLASS} w-[22%]`}>Author</th>
+          <th className={`${TH_CLASS} w-[16%]`}>License</th>
+          <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((row) => (
+          <tr key={row.symbol}>
+            <td className={`${TD_CLASS} pl-0 text-white wrap-break-word`}><SymbolCell symbol={row.symbol} folder={iconFolder} /></td>
+            <td className={`${TD_CLASS} text-gray-300 wrap-break-word`}>{row.originalIcon}</td>
+            <td className={`${TD_CLASS} text-gray-300 wrap-break-word`}>{row.originalAuthor}</td>
+            <td className={`${TD_CLASS} text-gray-400 md:whitespace-nowrap`}>{row.originalLicense}</td>
+            <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
           </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr key={row.symbol}>
-              <td className={`${TD_CLASS} pl-0 text-white`}><SymbolCell symbol={row.symbol} folder={iconFolder} /></td>
-              <td className={`${TD_CLASS} text-gray-300`}>{row.originalIcon}</td>
-              <td className={`${TD_CLASS} text-gray-300`}>{row.originalAuthor}</td>
-              <td className={`${TD_CLASS} text-gray-400 whitespace-nowrap`}>{row.originalLicense}</td>
-              <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
 function ScpTable({ data }: { data: ScpAttribution[] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead>
-          <tr>
-            <th className={`${TH_CLASS} pl-0 w-[24%]`}>Card</th>
-            <th className={`${TH_CLASS} w-[28%]`}>SCP Article</th>
-            <th className={`${TH_CLASS} w-[40%]`}>Author(s)</th>
-            <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+    <table className="w-full table-fixed md:table-auto text-sm text-left border-collapse">
+      <thead>
+        <tr>
+          <th className={`${TH_CLASS} pl-0 w-[26%]`}>Card</th>
+          <th className={`${TH_CLASS} w-[28%]`}>SCP Article</th>
+          <th className={`${TH_CLASS} w-[38%]`}>Author(s)</th>
+          <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((row) => (
+          <tr key={row.card}>
+            <td className={`${TD_CLASS} pl-0 text-white wrap-break-word md:whitespace-nowrap`}>{row.card}</td>
+            <td className={`${TD_CLASS} text-gray-300 wrap-break-word`}>{row.article}</td>
+            <td className={`${TD_CLASS} text-gray-300 wrap-break-word`}>{row.authors}</td>
+            <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
           </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr key={row.card}>
-              <td className={`${TD_CLASS} pl-0 text-white whitespace-nowrap`}>{row.card}</td>
-              <td className={`${TD_CLASS} text-gray-300`}>{row.article}</td>
-              <td className={`${TD_CLASS} text-gray-300`}>{row.authors}</td>
-              <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -287,7 +283,7 @@ export function AboutPage() {
             There&rsquo;s no application and no account. Make a card and publish it.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-x-10 gap-y-6 max-w-3xl mb-6">
+          <div className="grid md:grid-cols-2 gap-x-10 gap-y-6 max-w-4xl mb-6">
             <div>
               <h3 className="text-xs font-semibold text-white uppercase tracking-wider m-0 mb-2.5">OpenZoo TCG</h3>
               <ul className="list-disc pl-5 text-[15px] leading-[1.7] text-gray-400 m-0 space-y-1.5">
@@ -340,6 +336,57 @@ export function AboutPage() {
               Art Needed
             </Link>
           </div>
+        </section>
+
+        <section id="your-data" className="mb-11 scroll-mt-18">
+          <h2 className="font-title font-normal text-[22px] text-gold-400 m-0 mb-2.5">Your Data</h2>
+          <p className="text-[15px] leading-[1.7] text-gray-400 m-0 mb-5">
+            There are no accounts. Published cards live on the OpenZoo servers permanently;
+            everything else lives in your browser.
+          </p>
+
+          <table className="w-full table-fixed md:table-auto text-sm text-left border-collapse">
+            <thead>
+              <tr>
+                <th className={`${TH_CLASS} pl-0 w-[42%]`}>What</th>
+                <th className={`${TH_CLASS} w-[22%]`}>Where</th>
+                <th className={`${TH_CLASS} pr-0 w-[36%]`}>How long</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className={`${TD_CLASS} pl-0 text-white wrap-break-word`}>Published cards, including any custom icons on them</td>
+                <td className={`${TD_CLASS} text-gray-300`}>OpenZoo servers</td>
+                <td className={`${TD_CLASS} pr-0 text-gray-400 wrap-break-word`}>Permanent, unaffected by anything on your device</td>
+              </tr>
+              <tr>
+                <td className={`${TD_CLASS} pl-0 text-white wrap-break-word`}>Edit and delete access to your published cards</td>
+                <td className={`${TD_CLASS} text-gray-300`}>This browser</td>
+                <td className={`${TD_CLASS} pr-0 text-gray-400 wrap-break-word`}>Until you clear site data</td>
+              </tr>
+              <tr>
+                <td className={`${TD_CLASS} pl-0 text-white wrap-break-word`}>Custom icon library</td>
+                <td className={`${TD_CLASS} text-gray-300`}>This browser</td>
+                <td className={`${TD_CLASS} pr-0 text-gray-400 wrap-break-word`}>Until you clear site data (newest 60 icons kept)</td>
+              </tr>
+              <tr>
+                <td className={`${TD_CLASS} pl-0 text-white wrap-break-word`}>Card in progress in the editor</td>
+                <td className={`${TD_CLASS} text-gray-300`}>This tab</td>
+                <td className={`${TD_CLASS} pr-0 text-gray-400 wrap-break-word`}>Until the tab closes</td>
+              </tr>
+              <tr>
+                <td className={`${TD_CLASS} pl-0 text-white wrap-break-word`}>Preferences (creator name, print ready, gallery view)</td>
+                <td className={`${TD_CLASS} text-gray-300`}>This browser</td>
+                <td className={`${TD_CLASS} pr-0 text-gray-400 wrap-break-word`}>Until you clear site data</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p className="text-[13px] text-gray-500 mt-3.5 max-w-155">
+            Clearing site data never deletes your published cards. It removes your icon library and
+            the anonymous identity that lets you edit or delete your own cards, so those cards become
+            remix-only. A different browser or device counts as a different identity.
+          </p>
         </section>
 
         <section id="attribution" className="scroll-mt-18">

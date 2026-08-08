@@ -58,7 +58,7 @@ function render_og(string $path, string $title, string $desc, string $image): vo
   $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
   $safeDesc = htmlspecialchars(substr($desc, 0, 300), ENT_QUOTES, 'UTF-8');
   $safeImg = htmlspecialchars($image, ENT_QUOTES, 'UTF-8');
-  $fullTitle = "{$safeTitle} — OpenZoo TCG";
+  $fullTitle = "{$safeTitle} | OpenZoo TCG";
 
   header('Content-Type: text/html; charset=utf-8');
   header('Cache-Control: public, max-age=3600, s-maxage=3600');

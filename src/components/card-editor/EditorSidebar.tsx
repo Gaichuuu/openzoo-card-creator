@@ -15,6 +15,7 @@ import type { Locale } from '@/data/locales';
 import { TraitSelector } from './TraitSelector';
 import { TerraSelector } from './TerraSelector';
 import { ImageUploader } from './ImageUploader';
+import { BackgroundSelector } from './BackgroundSelector';
 import { CostEditor } from './CostEditor';
 import { CryptidInfoEditor } from './CryptidInfoEditor';
 import { AuraElementSelector } from './AuraElementSelector';
@@ -23,12 +24,9 @@ import { SetSymbolSelector } from './SetSymbolSelector';
 import { TextBoxBuilder } from './TextBoxBuilder';
 import { FormattedTextarea } from './FormattedTextarea';
 import { ExportButton } from './ExportButton';
-import { exportCardPng } from '@/lib/useCardExport';
 import { JsonExportButton } from './JsonExportButton';
 import { JsonImportButton } from './JsonImportButton';
 import { PublishDialog } from './PublishDialog';
-import { fetchCard } from '@/lib/galleryService';
-import type { CardTag } from '@/types/card';
 
 export interface EditorSidebarHandle {
   confirmClear: () => void;
@@ -118,21 +116,17 @@ function TextField({ label, value, onChange, placeholder, multiline, maxLength }
 export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
+  const editId = searchParams.get('edit');
 
   const clearRemix = () => {
-    if (remixId) {
+    if (remixId || editId) {
       setSearchParams({}, { replace: true });
-      setRemixSource(null);
+      useCardStore.getState().setSourceCard(null);
     }
   };
-  const [remixSource, setRemixSource] = useState<{ name: string; tags: CardTag[] } | null>(null);
-
-  useEffect(() => {
-    if (!remixId) return;
-    fetchCard(remixId).then((card) => {
-      if (card) setRemixSource({ name: card.cardName, tags: card.tags });
-    });
-  }, [remixId]);
+  const sourceCard = useCardStore((s) => s.sourceCard);
+  const editCard = editId ? sourceCard : null;
+  const remixSource = sourceCard ? { name: sourceCard.cardName, tags: sourceCard.tags } : null;
   const cardType = useCardStore((s) => s.cardType);
   const cardName = useCardStore((s) => s.cardName);
   const setCardName = useCardStore((s) => s.setCardName);
@@ -582,6 +576,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         <EditorSection id="art" title="Card art" summary={artSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-5">
           <SectionDivider />
           <ImageUploader />
+          <BackgroundSelector />
         </EditorSection>
 
         {/* Effect Text */}
@@ -677,7 +672,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
             onClick={() => setShowPublish(true)}
             className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 transition-colors border-gold"
           >
-            Publish to Gallery
+            {editCard ? 'Update in Gallery' : 'Publish to Gallery'}
           </button>
 
           <ExportButton cardRef={cardRef} />
@@ -691,22 +686,6 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         </div>
       </div>
 
-      {/* Mobile action bar */}
-      <div className="flex md:hidden gap-3 px-4 pt-3 pb-5.5 border-t border-navy-600 bg-navy-900 shrink-0">
-        <button
-          onClick={() => exportCardPng(cardRef.current)}
-          className="flex-1 h-12 bg-navy-800 text-gold-300 font-semibold border-gold"
-        >
-          Export PNG
-        </button>
-        <button
-          onClick={() => setShowPublish(true)}
-          className="flex-1 h-12 bg-green-600 text-white font-semibold border-gold"
-        >
-          Publish
-        </button>
-      </div>
-
       {showPublish && (
         <PublishDialog
           cardRef={cardRef}
@@ -714,6 +693,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
           remixedFrom={remixId}
           remixedFromName={remixSource?.name}
           initialTags={remixSource?.tags}
+          editCard={editCard}
         />
       )}
     </div>

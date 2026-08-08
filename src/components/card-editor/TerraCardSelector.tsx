@@ -4,6 +4,8 @@ import { TERRAS } from '@/data/constants';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import type { Terra } from '@/types/card';
 import { t as translate } from '@/data/locales';
+import { isCustomIconValue } from '@/lib/customIconUtils';
+import { CustomIconPicker } from './CustomIconPicker';
 
 export function TerraCardSelector() {
   const setImageField = useCardStore((s) => s.setImageField);
@@ -12,8 +14,17 @@ export function TerraCardSelector() {
   const cardType = useCardStore((s) => s.cardType);
   const locale = useCardStore((s) => s.locale);
   const snapshotGuard = useRef(false);
-  const [terra, setTerra] = useState<Terra>('Cave');
-  const applyTerra = (t: Terra) => {
+  const customRef = useRef<{ url: string; name: string } | null>(null);
+  const [terra, setTerra] = useState<Terra | '__custom__'>('Cave');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const applyTerra = (t: Terra | '__custom__') => {
+    if (t === '__custom__') {
+      if (!customRef.current) return;
+      setImageField('TerraSymbol', customRef.current.url);
+      setStyleField('TerraSymbol', '{outlineWidth:0px;left:-2px}');
+      if (cardType === 'Terra') setCardName(customRef.current.name || 'Custom Terra');
+      return;
+    }
     setImageField('TerraSymbol', `OpenZoo Terra/${t}.png`);
     setStyleField('TerraSymbol', '{outlineWidth:0px;left:-2px}');
     if (cardType === 'Terra') {
@@ -28,6 +39,12 @@ export function TerraCardSelector() {
       const map = ZONE_ID_MAPS[s.layoutType];
       const zoneId = map?.['TerraSymbol'];
       const img = zoneId != null ? s.cardData[`i${zoneId}`] || '' : '';
+      if (isCustomIconValue(img)) {
+        customRef.current = { url: img, name: '' };
+        setTerra('__custom__');
+        setStyleField('TerraSymbol', '{outlineWidth:0px;left:-2px}');
+        return;
+      }
       const m = img.match(/OpenZoo Terra\/(.+)\.png/);
       if (m && TERRAS.includes(m[1] as Terra)) setTerra(m[1] as Terra);
       setStyleField('TerraSymbol', '{outlineWidth:0px;left:-2px}');
@@ -47,12 +64,14 @@ export function TerraCardSelector() {
 
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) return;
+    if (terra === '__custom__') return;
     if (cardType === 'Terra' || cardType === 'Special Terra') {
       setCardName(translate(terra, locale));
     }
   }, [locale]);
 
-  const handleTerraChange = (t: Terra) => {
+  const handleTerraChange = (t: Terra | '__custom__') => {
+    if (t === '__custom__') { setPickerOpen(true); return; }
     setTerra(t);
     applyTerra(t);
   };
@@ -64,13 +83,33 @@ export function TerraCardSelector() {
       </label>
       <select
         value={terra}
-        onChange={(e) => handleTerraChange(e.target.value as Terra)}
+        onChange={(e) => handleTerraChange(e.target.value as Terra | '__custom__')}
         className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
       >
         {TERRAS.map((t) => (
           <option key={t} value={t}>{t}</option>
         ))}
+        <option value="__custom__">Custom…</option>
       </select>
+      {terra === '__custom__' && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+        >
+          Change custom terra…
+        </button>
+      )}
+      <CustomIconPicker
+        type="terra"
+        title="Custom terra"
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(icon) => {
+          customRef.current = { url: icon.image, name: icon.name };
+          setTerra('__custom__');
+          applyTerra('__custom__');
+        }}
+      />
     </div>
   );
 }

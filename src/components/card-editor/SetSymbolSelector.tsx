@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import { SETS } from '@/data/constants';
+import { isCustomIconValue } from '@/lib/customIconUtils';
+import { CustomIconPicker } from './CustomIconPicker';
+import type { CustomIcon } from '@/types/customIcons';
 
 function getFilename(set: string, rarity: string): string {
   const def = SETS.find((s) => s.value === set);
@@ -13,13 +16,19 @@ export function SetSymbolSelector() {
   const setImageField = useCardStore((s) => s.setImageField);
   const cardType = useCardStore((s) => s.cardType);
   const snapshotGuard = useRef(false);
+  const customUrlRef = useRef('');
   const [set, setSet] = useState('OZLegacy');
   const [rarity, setRarity] = useState('Bronze');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const currentSet = SETS.find((s) => s.value === set);
   const rarities = currentSet?.rarities ?? [];
 
   const updateSymbol = (newSet: string, newRarity: string) => {
+    if (newSet === '__custom__') {
+      if (customUrlRef.current) setImageField('SetSymbol', customUrlRef.current);
+      return;
+    }
     setImageField('SetSymbol', getFilename(newSet, newRarity));
   };
 
@@ -30,6 +39,13 @@ export function SetSymbolSelector() {
       const map = ZONE_ID_MAPS[s.layoutType];
       const zoneId = map?.['SetSymbol'];
       const img = zoneId != null ? s.cardData[`i${zoneId}`] || '' : '';
+
+      if (isCustomIconValue(img)) {
+        customUrlRef.current = img;
+        setSet('__custom__');
+        setRarity('');
+        return;
+      }
       const base = img.replace('.png', '');
 
       for (const def of [...SETS].sort((a, b) => b.value.length - a.value.length)) {
@@ -56,6 +72,7 @@ export function SetSymbolSelector() {
           value={set}
           onChange={(e) => {
             const newSet = e.target.value;
+            if (newSet === '__custom__') { setPickerOpen(true); return; }
             const def = SETS.find((s) => s.value === newSet);
             const newRarity = def && def.rarities.length > 0 ? def.rarities[0] : '';
             setSet(newSet);
@@ -67,8 +84,9 @@ export function SetSymbolSelector() {
           {SETS.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
           ))}
+          <option value="__custom__">Custom…</option>
         </select>
-        {rarities.length > 1 ? (
+        {set !== '__custom__' && rarities.length > 1 ? (
           <select
             value={rarity}
             onChange={(e) => {
@@ -83,10 +101,30 @@ export function SetSymbolSelector() {
           </select>
         ) : (
           <span className="flex-1 bg-navy-800 border border-navy-600 text-gold-400 rounded px-2 py-1 text-sm">
-            {rarities.length === 1 ? rarities[0] : 'None'}
+            {set === '__custom__' ? 'Custom' : rarities.length === 1 ? rarities[0] : 'None'}
           </span>
         )}
       </div>
+      {set === '__custom__' && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+        >
+          Change custom symbol…
+        </button>
+      )}
+      <CustomIconPicker
+        type="set"
+        title="Custom set symbol"
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(icon: CustomIcon) => {
+          customUrlRef.current = icon.image;
+          setSet('__custom__');
+          setRarity('');
+          setImageField('SetSymbol', icon.image);
+        }}
+      />
     </div>
   );
 }

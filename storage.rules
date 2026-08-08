@@ -18,6 +18,16 @@ service firebase.storage {
       allow update, delete: if false;
     }
 
+    // Community custom icons
+    match /customIcons/{fileName} {
+      allow read: if true;
+      allow create: if
+        request.resource.size < 1 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*')
+        && !request.resource.contentType.matches('image/svg.*');
+      allow update, delete: if false;
+    }
+
     // Reject all other paths
     match /{allPaths=**} {
       allow read, write: if false;

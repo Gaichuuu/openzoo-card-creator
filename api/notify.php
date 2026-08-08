@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
-// Origin check — only accept requests from the production site
+// Origin check: only accept requests from the production site
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $referer = $_SERVER['HTTP_REFERER'] ?? '';
 $allowedOrigin = 'https://openzootcg.com';

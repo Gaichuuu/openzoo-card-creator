@@ -297,9 +297,9 @@ function DesignBible() {
       <div>
         <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Other Ordering Rules</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
-          <li><span className="text-gray-300">Terra Bonuses</span> — always alphabetical</li>
-          <li><span className="text-gray-300">Page Types</span> — alphabetical when listing multiple</li>
-          <li><span className="text-gray-300">Status Effects</span> — alphabetical (Burn, Confusion, Frozen, Paralyze, Poison, Scared, Sleep)</li>
+          <li><span className="text-gray-300">Terra Bonuses</span>: always alphabetical</li>
+          <li><span className="text-gray-300">Page Types</span>: alphabetical when listing multiple</li>
+          <li><span className="text-gray-300">Status Effects</span>: alphabetical (Burn, Confusion, Frozen, Paralyze, Poison, Scared, Sleep)</li>
         </ul>
       </div>
 
@@ -317,7 +317,7 @@ function DesignBible() {
       <div>
         <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Traits & Terras in Effects</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
-          <li>Always use <span className="text-gray-300">symbol icons</span> — never write the name</li>
+          <li>Always use <span className="text-gray-300">symbol icons</span>, never write the name</li>
           <li>Terra Bonus format: <span className="text-gray-300">[Terra] 20/20 LP</span> (no "+" prefix)</li>
         </ul>
       </div>

@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { ELEMENTS } from '@/data/constants';
-import type { Element } from '@/types/card';
+import type { ElementOrCustom } from '@/types/card';
+import type { CustomElementDef, CustomIcon } from '@/types/customIcons';
+import { customIconToElementDef } from '@/lib/customIconUtils';
 import { t } from '@/data/locales';
+import { CustomIconPicker } from './CustomIconPicker';
 
 export function AuraElementSelector() {
   const setPrimaryElement = useCardStore((s) => s.setPrimaryElement);
@@ -14,14 +17,16 @@ export function AuraElementSelector() {
 
   const isToken = cardType === 'Token';
   const snapshotGuard = useRef(false);
-  const [element, setElement] = useState<Element>(isToken ? 'Cosmic' : 'Spirit');
+  const [element, setElement] = useState<ElementOrCustom>(isToken ? 'Cosmic' : 'Spirit');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
-  const applyElement = (el: Element) => {
+  const applyElement = (el: ElementOrCustom, customDef?: CustomElementDef) => {
     const colorEl = el === 'Neutral' ? null : el;
-    setPrimaryElement(colorEl);
+    setPrimaryElement(colorEl, customDef);
     setSecondaryElement(null);
     if (cardType === 'Aura') {
-      setCardName(`${t(el, locale)} ${t('Aura', locale)}`);
+      const name = el === 'Custom' ? customDef?.name : t(el, locale);
+      if (name) setCardName(`${name} ${t('Aura', locale)}`);
     }
     if (cardType === 'Token') {
       setStyleField('Aura1', '{display:none}');
@@ -59,14 +64,20 @@ export function AuraElementSelector() {
 
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) return;
-    if (cardType === 'Aura') {
+    if (cardType === 'Aura' && element !== 'Custom') {
       setCardName(`${t(element, locale)} ${t('Aura', locale)}`);
     }
   }, [locale]);
 
-  const handleElementChange = (el: Element) => {
+  const handleElementChange = (el: ElementOrCustom) => {
+    if (el === 'Custom') { setPickerOpen(true); return; }
     setElement(el);
     applyElement(el);
+  };
+
+  const handleCustomPick = (icon: CustomIcon) => {
+    setElement('Custom');
+    applyElement('Custom', customIconToElementDef(icon));
   };
 
   return (
@@ -76,13 +87,29 @@ export function AuraElementSelector() {
       </label>
       <select
         value={element}
-        onChange={(e) => handleElementChange(e.target.value as Element)}
+        onChange={(e) => handleElementChange(e.target.value as ElementOrCustom)}
         className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
       >
         {ELEMENTS.filter((el) => isToken ? el !== 'Special' : el !== 'Neutral').map((el) => (
           <option key={el} value={el}>{el}</option>
         ))}
+        <option value="Custom">Custom…</option>
       </select>
+      {element === 'Custom' && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+        >
+          Change custom element…
+        </button>
+      )}
+      <CustomIconPicker
+        type="aura"
+        title="Custom aura element"
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={handleCustomPick}
+      />
     </div>
   );
 }

@@ -859,10 +859,21 @@ export function RulebookPage() {
         <details className="lg:hidden mb-8 bg-navy-800 border border-navy-600">
           <summary className="px-4 py-3 text-sm font-bold text-gold-300 cursor-pointer">Table of Contents</summary>
           <ul className="px-4 pb-3 space-y-1">
-            {tocTree.map(({ section, number }) => (
-              <li key={section.id} className="flex gap-2">
-                <span className="font-mono text-xs text-gray-600 pt-0.5">{number}</span>
-                <a href={`#${section.id}`} className="text-sm text-gray-400 hover:text-white">{section.title}</a>
+            {tocTree.map(({ section, number, children }) => (
+              <li key={section.id}>
+                <div className="flex gap-2">
+                  <span className="font-mono text-xs text-gray-600 pt-0.5">{number}</span>
+                  <a href={`#${section.id}`} className="text-sm text-gray-400 hover:text-white">{section.title}</a>
+                </div>
+                {children.length > 0 && (
+                  <ul className="ml-1.5 mt-1 mb-1.5 pl-5.5 space-y-1 border-l border-navy-600">
+                    {children.map((c) => (
+                      <li key={c.id}>
+                        <a href={`#${c.id}`} className="text-xs text-gray-500 hover:text-gray-300">{c.title}</a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>

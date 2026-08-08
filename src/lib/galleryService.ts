@@ -1,6 +1,7 @@
 import {
   and,
   collection,
+  deleteDoc,
   doc,
   getCountFromServer,
   getDoc,
@@ -22,21 +23,21 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { readSessionStorage, writeSessionStorage, removeSessionStorage } from './safeStorage';
 import { dataUrlToBlob, MAX_UPLOAD_BYTES } from './exportUtils';
+import { ensureAnonymousUser } from './auth';
+import { generateId, versionedName } from './publishUtils';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
-import type { CardType, Element } from '@/types/card';
+import type { CardType, Element, ElementOrCustom } from '@/types/card';
+import type { CustomElementDef } from '@/types/customIcons';
 import type { LayoutType } from '@/types/layout';
 import type { EffectBlock } from '@/types/effects';
 import type { Locale } from '@/data/locales';
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
 
 interface PublishOptions {
   creatorName: string;
   tags: CardTag[];
   remixedFrom: string | null;
   remixedFromName: string;
+  existingCard?: SavedCard;
 }
 
 async function uploadBlob(blob: Blob, storageRef: ReturnType<typeof ref>): Promise<void> {
@@ -53,46 +54,58 @@ export async function publishCard(
   thumbnailDataUrl: string,
   options: PublishOptions,
 ): Promise<string> {
-  const cardId = generateId();
+  const existing = options.existingCard;
+  const cardId = existing?.id ?? generateId();
+  const ts = Date.now();
 
   const cardData = { ...snapshot.cardData };
+  const ownerUidPromise = existing ? null : ensureAnonymousUser();
+
+  const uploadedUrls = new Map<string, Promise<string>>();
+  const uploadDataUrl = (dataUrl: string, name: string, ext = 'png'): Promise<string> => {
+    let pending = uploadedUrls.get(dataUrl);
+    if (!pending) {
+      pending = (async () => {
+        const storageRef = ref(storage, `cards/${cardId}/${versionedName(name, ext, ts)}`);
+        await uploadBlob(dataUrlToBlob(dataUrl), storageRef);
+        return getDownloadURL(storageRef);
+      })();
+      uploadedUrls.set(dataUrl, pending);
+    }
+    return pending;
+  };
 
   const uploads: Promise<void>[] = [];
 
   for (const key of Object.keys(cardData)) {
     const value = cardData[key];
     if (value && value.startsWith('data:image/')) {
-      uploads.push((async () => {
-        const blob = dataUrlToBlob(value);
-        const storageRef = ref(storage, `cards/${cardId}/zone-${key}.png`);
-        await uploadBlob(blob, storageRef);
-        cardData[key] = await getDownloadURL(storageRef);
-      })());
+      uploads.push(uploadDataUrl(value, `zone-${key}`).then((url) => { cardData[key] = url; }));
+    }
+  }
+
+  const customPrimary = snapshot.customPrimary ? { ...snapshot.customPrimary } : null;
+  const customSecondary = snapshot.customSecondary ? { ...snapshot.customSecondary } : null;
+  for (const [def, name] of [[customPrimary, 'custom-primary'], [customSecondary, 'custom-secondary']] as const) {
+    if (def && def.icon.startsWith('data:image/')) {
+      uploads.push(uploadDataUrl(def.icon, name).then((url) => { def.icon = url; }));
     }
   }
 
   let cardArtUrl = snapshot.cardArtUrl || '';
   if (cardArtUrl.startsWith('data:image/')) {
-    uploads.push((async () => {
-      const blob = dataUrlToBlob(cardArtUrl);
-      const storageRef = ref(storage, `cards/${cardId}/art.png`);
-      await uploadBlob(blob, storageRef);
-      cardArtUrl = await getDownloadURL(storageRef);
-    })());
+    uploads.push(uploadDataUrl(cardArtUrl, 'art').then((url) => { cardArtUrl = url; }));
   }
 
   let thumbnailUrl = '';
   if (thumbnailDataUrl) {
-    uploads.push((async () => {
-      const blob = dataUrlToBlob(thumbnailDataUrl);
-      const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
-      const storageRef = ref(storage, `cards/${cardId}/thumb.${ext}`);
-      await uploadBlob(blob, storageRef);
-      thumbnailUrl = await getDownloadURL(storageRef);
-    })());
+    const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+    uploads.push(uploadDataUrl(thumbnailDataUrl, 'thumb', ext).then((url) => { thumbnailUrl = url; }));
   }
 
   await Promise.all(uploads);
+
+  const ownerUid = existing ? existing.ownerUid : await ownerUidPromise;
 
   const now = Timestamp.now();
   const savedCard = {
@@ -100,21 +113,29 @@ export async function publishCard(
     id: cardId,
     cardData,
     cardArtUrl,
+    customPrimary,
+    customSecondary,
     effectBlocks: snapshot.effectBlocks.map(blockToPlain),
     locale: snapshot.locale || 'en',
     borderless: snapshot.borderless || false,
     thumbnailUrl,
     creatorName: options.creatorName,
     tags: options.tags,
-    remixedFrom: options.remixedFrom,
-    remixedFromName: options.remixedFromName,
-    createdAt: now,
+    remixedFrom: existing ? existing.remixedFrom : options.remixedFrom,
+    remixedFromName: existing ? existing.remixedFromName : options.remixedFromName,
+    ...(ownerUid ? { ownerUid } : {}),
+    createdAt: existing ? Timestamp.fromDate(existing.createdAt) : now,
     updatedAt: now,
   };
 
   await setDoc(doc(db, 'cards', cardId), savedCard);
   invalidateCountsCache();
   return cardId;
+}
+
+export async function deleteCard(cardId: string): Promise<void> {
+  await deleteDoc(doc(db, 'cards', cardId));
+  invalidateCountsCache();
 }
 
 function blockToPlain(block: EffectBlock): Record<string, unknown> {
@@ -124,6 +145,7 @@ function blockToPlain(block: EffectBlock): Record<string, unknown> {
 function docToSavedCard(data: Record<string, unknown>): SavedCard {
   const tags: CardTag[] = Array.isArray(data.tags) ? data.tags as CardTag[]
     : data.status === 'testing' ? ['Playtesting' as CardTag] : [];
+  const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date();
   return {
     id: data.id as string,
     cardType: data.cardType as CardType,
@@ -132,8 +154,10 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     cardName: (data.cardName || '') as string,
     tribe: (data.tribe || '') as string,
     spellbookLimit: (data.spellbookLimit || '1') as string,
-    primaryElement: (data.primaryElement || null) as Element | null,
-    secondaryElement: (data.secondaryElement || null) as Element | null,
+    primaryElement: (data.primaryElement || null) as ElementOrCustom | null,
+    secondaryElement: (data.secondaryElement || null) as ElementOrCustom | null,
+    customPrimary: (data.customPrimary || null) as CustomElementDef | null,
+    customSecondary: (data.customSecondary || null) as CustomElementDef | null,
     traits: (data.traits || [null, null, null]) as (string | null)[],
     terras: (data.terras || [null, null]) as (string | null)[],
     strongAgainst: (data.strongAgainst || [null, null, null, null]) as (Element | null)[],
@@ -148,11 +172,12 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     thumbnailUrl: (data.thumbnailUrl || '') as string,
     cardArtUrl: (data.cardArtUrl || '') as string,
     creatorName: (data.creatorName || '') as string,
+    ownerUid: (data.ownerUid || null) as string | null,
     tags,
     remixedFrom: (data.remixedFrom || null) as string | null,
     remixedFromName: (data.remixedFromName || '') as string,
-    createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
-    updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
+    createdAt,
+    updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : createdAt,
   };
 }
 
@@ -162,6 +187,7 @@ interface FetchFilters {
   tag?: string;
   terra?: string;
   trait?: string;
+  ownerUid?: string;
 }
 
 export type GallerySort = 'newest' | 'name';
@@ -190,6 +216,9 @@ function filterClauses(filters?: FetchFilters): QueryFilterConstraint[] {
   }
   if (filters?.element) {
     clauses.push(elementFilter(filters.element));
+  }
+  if (filters?.ownerUid) {
+    clauses.push(where('ownerUid', '==', filters.ownerUid));
   }
   if (filters?.tag) {
     clauses.push(where('tags', 'array-contains', filters.tag));

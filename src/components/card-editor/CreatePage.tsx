@@ -3,27 +3,34 @@ import { useSearchParams } from 'react-router-dom';
 import { CardEditor } from './CardEditor';
 import { useCardStore } from '@/lib/store';
 import { fetchCard } from '@/lib/galleryService';
+import { fetchAsDataUrl } from '@/lib/exportUtils';
+import { getCurrentUid } from '@/lib/auth';
 
 export function CreatePage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
-  const [loading, setLoading] = useState(!!remixId);
+  const editId = searchParams.get('edit');
+  const loadId = editId || remixId;
+  const [loading, setLoading] = useState(!!loadId);
   const [error, setError] = useState<string | null>(null);
   const loadSnapshot = useCardStore((s) => s.loadSnapshot);
   const snapshotVersion = useCardStore((s) => s._snapshotVersion);
 
   const resetCard = useCardStore((s) => s.resetCard);
   useEffect(() => {
-    if (!remixId) {
+    if (!loadId) {
       resetCard();
     }
-  }, [remixId, resetCard]);
+  }, [loadId, resetCard]);
 
   useEffect(() => {
-    if (!remixId) return;
+    if (!loadId) return;
     let cancelled = false;
 
-    fetchCard(remixId)
+    const uidPromise = editId ? getCurrentUid() : null;
+    const cached = useCardStore.getState().sourceCard;
+    const cardPromise = cached?.id === loadId ? Promise.resolve(cached) : fetchCard(loadId);
+    cardPromise
       .then(async (card) => {
         if (cancelled) return;
         if (!card) {
@@ -31,20 +38,19 @@ export function CreatePage() {
           setLoading(false);
           return;
         }
+        useCardStore.getState().setSourceCard(card);
+        if (editId) {
+          const uid = await uidPromise;
+          if (cancelled) return;
+          if (!card.ownerUid || card.ownerUid !== uid) {
+            setSearchParams({ remix: editId }, { replace: true });
+            return;
+          }
+        }
         let cardArtUrl = card.cardArtUrl;
         if (cardArtUrl && cardArtUrl.startsWith('http')) {
           try {
-            const r = await fetch(cardArtUrl);
-            const blob = await r.blob();
-            if (cancelled) return;
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            });
-            if (cancelled) return;
-            cardArtUrl = dataUrl;
+            cardArtUrl = await fetchAsDataUrl(cardArtUrl);
           } catch {
             console.warn(
               'Could not fetch card art for remix (CORS). ' +
@@ -64,7 +70,7 @@ export function CreatePage() {
       });
 
     return () => { cancelled = true; };
-  }, [remixId, loadSnapshot]);
+  }, [loadId, editId, loadSnapshot, setSearchParams]);
 
   if (loading) {
     return (

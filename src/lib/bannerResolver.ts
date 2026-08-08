@@ -1,10 +1,11 @@
-import type { Element, CardType } from '@/types/card';
+import type { ElementOrCustom, CardType } from '@/types/card';
 
 export function resolveBanner(
-  primary: Element | null,
-  secondary: Element | null,
+  primary: ElementOrCustom | null,
+  secondary: ElementOrCustom | null,
   cardType?: CardType,
 ): string {
+  if (primary === 'Custom' || secondary === 'Custom') return 'NeutralAltBanner.png';
   const neutralBanner = cardType === 'Beastie' || cardType === 'Token' || !cardType
     ? 'NeutralBanner.png'
     : 'NeutralAltBanner.png';

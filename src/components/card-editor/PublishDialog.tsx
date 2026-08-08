@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { publishCard } from '@/lib/galleryService';
 import { exportStandardPng, displayCardName } from '@/lib/exportUtils';
 import { CARD_TAGS, TAG_COLORS } from '@/types/card';
-import type { CardTag } from '@/types/card';
+import type { CardTag, SavedCard } from '@/types/card';
 import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
 
 interface PublishDialogProps {
@@ -13,16 +13,20 @@ interface PublishDialogProps {
   remixedFrom?: string | null;
   remixedFromName?: string;
   initialTags?: CardTag[];
+  editCard?: SavedCard | null;
 }
 
-export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, initialTags }: PublishDialogProps) {
+export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, initialTags, editCard }: PublishDialogProps) {
   const navigate = useNavigate();
+  const [, setSearchParams] = useSearchParams();
+  const isUpdate = !!editCard;
   const getSnapshot = useCardStore((s) => s.getSnapshot);
   const artNeeded = useCardStore((s) => s.artNeeded);
   const cardName = useCardStore((s) => s.cardName);
-  const [creatorName, setCreatorName] = useState(() => readLocalStorage('openzoo-creator-name') || '');
+  const [creatorName, setCreatorName] = useState(() =>
+    editCard?.creatorName || readLocalStorage('openzoo-creator-name') || '');
   const [selectedTags, setSelectedTags] = useState<CardTag[]>(() => {
-    const tags = [...(initialTags || [])];
+    const tags = [...(editCard ? editCard.tags : (initialTags || []))];
     if (artNeeded && !tags.includes('Art Needed')) tags.push('Art Needed');
     if (!artNeeded) return tags.filter(t => t !== 'Art Needed');
     return tags;
@@ -64,9 +68,10 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         tags: selectedTags,
         remixedFrom: remixedFrom || null,
         remixedFromName: remixedFromName || '',
+        existingCard: editCard ?? undefined,
       });
 
-      if (!import.meta.env.DEV) {
+      if (!import.meta.env.DEV && !isUpdate) {
         fetch('/api/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -82,7 +87,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
     } catch (err) {
       console.error('Publish failed:', err);
       const msg = err instanceof Error ? err.message : String(err);
-      setError(`Failed to publish: ${msg}`);
+      setError(`Failed to ${isUpdate ? 'update' : 'publish'}: ${msg}`);
     } finally {
       cardRef.current?.classList.remove('card-exporting');
       publishingRef.current = false;
@@ -91,6 +96,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
   }
 
   function closeAfterSuccess() {
+    setSearchParams({}, { replace: true });
     useCardStore.getState().resetCard();
     onClose();
   }
@@ -122,10 +128,10 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
             </button>
           </div>
           <div className="px-8.5 pt-1.5 pb-8.5 text-center">
-            <div className="text-[11px] uppercase tracking-[.18em] text-gold-500 mb-2.5">Published</div>
+            <div className="text-[11px] uppercase tracking-[.18em] text-gold-500 mb-2.5">{isUpdate ? 'Updated' : 'Published'}</div>
             <h3 className="text-gold-gradient font-title font-normal text-[28px] m-0 mb-3">It&rsquo;s in the book</h3>
             <p className="text-sm text-gray-400 m-0 mb-6">
-              {displayCardName(cardName) || 'Your card'} is now in the gallery for anyone to remix.
+              {displayCardName(cardName) || 'Your card'} {isUpdate ? 'has been updated in the gallery.' : 'is now in the gallery for anyone to remix.'}
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <button
@@ -162,7 +168,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         </button>
 
         <div className="pt-5 px-6.5 pb-4 border-b border-navy-600">
-          <h2 className="text-gold-gradient font-title font-normal text-2xl m-0 mr-8.5">Add to the Gallery</h2>
+          <h2 className="text-gold-gradient font-title font-normal text-2xl m-0 mr-8.5">{isUpdate ? 'Update your Card' : 'Add to the Gallery'}</h2>
         </div>
 
         <div className="pt-5.5 px-6.5 pb-6 flex flex-col gap-5.5">
@@ -223,9 +229,9 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
             {publishing ? (
               <>
                 <svg className="inline-block w-4 h-4 mr-1.5 -mt-0.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                Publishing...
+                {isUpdate ? 'Updating...' : 'Publishing...'}
               </>
-            ) : 'Publish'}
+            ) : isUpdate ? 'Update' : 'Publish'}
           </button>
         </div>
       </div>

@@ -29,13 +29,14 @@ const FONT_FACES = [
 let fontEmbedCSSCache: string | null = null;
 let fontEmbedCSSPending: Promise<string> | null = null;
 
-async function fetchAsDataUrl(url: string): Promise<string> {
+export async function fetchAsDataUrl(url: string): Promise<string> {
   const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
   const blob = await res.blob();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('Failed to read image'));
     reader.readAsDataURL(blob);
   });
 }
@@ -51,8 +52,9 @@ function getFontEmbedCSS(): Promise<string> {
       "@font-face { font-family: 'Cambria'; src: local('Cambria'); }",
     );
     fontEmbedCSSCache = rules.join('\n');
-    fontEmbedCSSPending = null;
     return fontEmbedCSSCache;
+  }).finally(() => {
+    fontEmbedCSSPending = null;
   });
   return fontEmbedCSSPending;
 }

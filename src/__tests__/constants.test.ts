@@ -4,8 +4,18 @@ import {
   resolveArtBorderStyle,
   resolveBgOverlayStyle,
   computeStrongAgainst,
+  getAuraColor,
   AURA_COLORS,
 } from '@/data/constants';
+import type { CustomElementDef } from '@/types/customIcons';
+
+const WIND: CustomElementDef = {
+  name: 'Wind',
+  icon: 'data:image/png;base64,AAA',
+  cardBackground: '#66CCEE',
+  artBorder: '#EEF6FF',
+  strongAgainst: ['Earth', 'Flame'],
+};
 
 describe('hexToRgba', () => {
   it('converts white', () => {
@@ -133,5 +143,63 @@ describe('computeStrongAgainst', () => {
 
   it('ignores Neutral secondary', () => {
     expect(computeStrongAgainst('Water', 'Neutral')).toEqual(['Flame', 'Earth']);
+  });
+});
+
+describe('getAuraColor with custom elements', () => {
+  it('builds AuraColor from a custom def', () => {
+    const c = getAuraColor('Custom', WIND);
+    expect(c.cardBackground).toBe('#66CCEE');
+    expect(c.artBorder).toBe('#EEF6FF');
+    expect(c.artBorderRgba).toBe('rgba(238, 246, 255, 1)');
+    expect(c.bgOverlayRgba).toBe('rgba(102, 204, 238, 0.65)');
+  });
+
+  it('falls back to Neutral when Custom has no def', () => {
+    expect(getAuraColor('Custom')).toEqual(getAuraColor('Neutral'));
+  });
+
+  it('returns built-in colors unchanged', () => {
+    expect(getAuraColor('Water').cardBackground).toBe('#2780DD');
+  });
+});
+
+describe('resolveArtBorderStyle with custom elements', () => {
+  it('uses the custom border color for a solo custom element', () => {
+    expect(resolveArtBorderStyle('Custom', null, WIND)).toBe('rgba(238, 246, 255, 1)');
+  });
+
+  it('builds a gradient for built-in + custom secondary', () => {
+    const style = resolveArtBorderStyle('Water', 'Custom', null, WIND);
+    expect(style).toContain('linear-gradient(90deg,');
+    expect(style).toContain('rgba(238, 246, 255, 1)');
+  });
+
+  it('builds a gradient for two custom elements (does not collapse Custom===Custom)', () => {
+    const gale: CustomElementDef = { ...WIND, name: 'Gale', artBorder: '#112233' };
+    const style = resolveArtBorderStyle('Custom', 'Custom', WIND, gale);
+    expect(style).toContain('linear-gradient(90deg,');
+    expect(style).toContain('rgba(17, 34, 51, 1)');
+  });
+});
+
+describe('resolveBgOverlayStyle with custom elements', () => {
+  it('uses the custom overlay for a solo custom element', () => {
+    expect(resolveBgOverlayStyle('Custom', null, WIND)).toBe('rgba(102, 204, 238, 0.65)');
+  });
+});
+
+describe('computeStrongAgainst with custom elements', () => {
+  it('uses the custom strongAgainst list', () => {
+    expect(computeStrongAgainst('Custom', null, WIND)).toEqual(['Earth', 'Flame']);
+  });
+
+  it('merges custom primary with built-in secondary, deduped, capped at 4', () => {
+    expect(computeStrongAgainst('Custom', 'Water', WIND)).toEqual(['Earth', 'Flame']);
+  });
+
+  it('merges two distinct custom elements', () => {
+    const gale: CustomElementDef = { ...WIND, strongAgainst: ['Frost'] };
+    expect(computeStrongAgainst('Custom', 'Custom', WIND, gale)).toEqual(['Earth', 'Flame', 'Frost']);
   });
 });

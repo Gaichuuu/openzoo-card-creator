@@ -2,6 +2,7 @@ import { useRef, useState, useMemo } from 'react';
 import { useCardStore } from '@/lib/store';
 import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
 import { MAX_UPLOAD_BYTES } from '@/lib/exportUtils';
+import { processImageFile } from '@/lib/imageUtils';
 import { Stepper } from './TextBoxBuilder';
 
 const MAX_IMAGE_DIM = 1600;
@@ -10,35 +11,6 @@ const MAX_UPLOAD_MB = MAX_UPLOAD_BYTES / (1024 * 1024);
 function dataUrlByteSize(dataUrl: string): number {
   const base64Len = dataUrl.length - dataUrl.indexOf(',') - 1;
   return Math.ceil(base64Len * 3 / 4);
-}
-
-function processImage(file: File): Promise<{ url: string; width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    img.onload = () => {
-      const { naturalWidth: w, naturalHeight: h } = img;
-      const needsResize = w > MAX_IMAGE_DIM || h > MAX_IMAGE_DIM;
-      const scale = needsResize ? Math.min(MAX_IMAGE_DIM / w, MAX_IMAGE_DIM / h) : 1;
-      const newW = Math.round(w * scale);
-      const newH = Math.round(h * scale);
-      const canvas = document.createElement('canvas');
-      canvas.width = newW;
-      canvas.height = newH;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) { reject(new Error('Canvas 2D not supported')); return; }
-      ctx.drawImage(img, 0, 0, newW, newH);
-
-      URL.revokeObjectURL(objectUrl);
-      const dataUrl = canvas.toDataURL('image/png');
-      resolve({ url: dataUrl, width: newW, height: newH });
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Failed to load image'));
-    };
-    img.src = objectUrl;
-  });
 }
 
 export function ImageUploader() {
@@ -71,7 +43,7 @@ export function ImageUploader() {
   );
 
   async function handleFile(file: File) {
-    const { url, width, height } = await processImage(file);
+    const { url, width, height } = await processImageFile(file, MAX_IMAGE_DIM);
     setDims({ width, height });
     setCardArt(url);
   }
@@ -144,7 +116,7 @@ export function ImageUploader() {
       </label>
       {artSizeMB !== null && artSizeMB > MAX_UPLOAD_MB && (
         <div className="text-[11px] text-red-400">
-          Image is {artSizeMB.toFixed(1)}MB — exceeds {MAX_UPLOAD_MB}MB upload limit. Try a smaller image.
+          Image is {artSizeMB.toFixed(1)}MB, over the {MAX_UPLOAD_MB}MB upload limit. Try a smaller image.
         </div>
       )}
       {cardArtUrl && (
