@@ -62,3 +62,17 @@ describe('resolveBanner', () => {
     });
   });
 });
+
+describe('resolveBanner custom elements', () => {
+  it('returns NeutralAltBanner for a custom primary', () => {
+    expect(resolveBanner('Custom', null, 'Aura')).toBe('NeutralAltBanner.png');
+  });
+
+  it('returns NeutralAltBanner for a custom primary even on Beastie', () => {
+    expect(resolveBanner('Custom', null, 'Beastie')).toBe('NeutralAltBanner.png');
+  });
+
+  it('returns NeutralAltBanner when only the secondary is custom', () => {
+    expect(resolveBanner('Water', 'Custom', 'Beastie')).toBe('NeutralAltBanner.png');
+  });
+});

@@ -17,6 +17,7 @@ import { CardDetailModal, MODAL_CONTAINER_CLASS, MODAL_CARD_CLASS, MODAL_DETAILS
 import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS, TERRAS, TRAITS } from '@/data/constants';
 import { useLocalStorageState } from '@/lib/useLocalStorageState';
+import { useAuthUid } from '@/lib/auth';
 
 const FACET_ORDER: Element[] = [
   'Dark', 'Light', 'Water', 'Flame', 'Forest', 'Frost',
@@ -47,6 +48,10 @@ const DENSITY_OPTIONS: { value: Density; label: string }[] = [
 
 interface FacetSectionsProps {
   counts: GalleryCounts | null;
+  showMine: boolean;
+  myCount: number;
+  filterMine: boolean;
+  setFilterMine: (mine: boolean) => void;
   filterTag: CardTag | '';
   setFilterTag: (tag: CardTag | '') => void;
   filterElement: Element | '';
@@ -112,7 +117,8 @@ function FacetList<T extends string>({ title, items, active, onSelect, countFor 
 }
 
 const FacetSections = memo(function FacetSections({
-  counts, filterTag, setFilterTag, filterElement, setFilterElement, filterType, setFilterType,
+  counts, showMine, myCount, filterMine, setFilterMine,
+  filterTag, setFilterTag, filterElement, setFilterElement, filterType, setFilterType,
   filterTerra, setFilterTerra, filterTrait, setFilterTrait,
 }: FacetSectionsProps) {
   const countOf = (n: number | undefined) => (n === undefined ? '' : String(n));
@@ -120,6 +126,21 @@ const FacetSections = memo(function FacetSections({
   const usedTraits = TRAITS.filter((trait) => counts !== null && (counts.byTrait[trait] ?? 1) > 0);
   return (
     <>
+      {showMine && (
+        <div>
+          <div className={FACET_HEADING_CLASS}>Yours</div>
+          <div className="flex flex-col gap-1.75 text-[13px]">
+            <button
+              onClick={() => setFilterMine(!filterMine)}
+              className={`flex justify-between cursor-pointer transition-colors ${defaultFacetClass(filterMine)}`}
+            >
+              <span>My Cards</span>
+              <span className="text-gray-500">{myCount || ''}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       <FacetList
         title="Filter"
         items={CARD_TAGS}
@@ -201,12 +222,25 @@ export function GalleryPage() {
   const [loadingCard, setLoadingCard] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchName, setSearchName] = useState('');
+  const uid = useAuthUid();
+  const [myCount, setMyCount] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (!uid) { setMyCount(0); return; }
+    let stale = false;
+    fetchFilteredCount({ ownerUid: uid })
+      .then((n) => { if (!stale) setMyCount(n); })
+      .catch(() => {});
+    return () => { stale = true; };
+  }, [uid, refreshKey]);
 
   const filterType = (searchParams.get('type') || '') as CardType | '';
   const filterElement = (searchParams.get('aura') || '') as Element | '';
   const filterTag = (searchParams.get('tag') || '') as CardTag | '';
   const filterTerra = filterTag ? '' : searchParams.get('terra') || '';
   const filterTrait = filterTag || filterTerra ? '' : searchParams.get('trait') || '';
+  const filterMine = searchParams.get('mine') === '1';
 
   const updateParams = useCallback((updates: Record<string, string>) => {
     setSearchParams((prev) => {
@@ -219,22 +253,28 @@ export function GalleryPage() {
     }, { replace: true });
   }, [setSearchParams]);
 
-  const setFilterType = useCallback((type: CardType | '') => updateParams({ type }), [updateParams]);
-  const setFilterElement = useCallback((aura: Element | '') => updateParams({ aura }), [updateParams]);
+  const setFilterType = useCallback((type: CardType | '') => updateParams({ type, mine: '' }), [updateParams]);
+  const setFilterElement = useCallback((aura: Element | '') => updateParams({ aura, mine: '' }), [updateParams]);
   const setFilterTag = useCallback(
-    (tag: CardTag | '') => updateParams(tag ? { tag, terra: '', trait: '' } : { tag }),
+    (tag: CardTag | '') => updateParams(tag ? { tag, terra: '', trait: '', mine: '' } : { tag }),
     [updateParams],
   );
   const setFilterTerra = useCallback(
-    (terra: string) => updateParams(terra ? { terra, tag: '', trait: '' } : { terra }),
+    (terra: string) => updateParams(terra ? { terra, tag: '', trait: '', mine: '' } : { terra }),
     [updateParams],
   );
   const setFilterTrait = useCallback(
-    (trait: string) => updateParams(trait ? { trait, tag: '', terra: '' } : { trait }),
+    (trait: string) => updateParams(trait ? { trait, tag: '', terra: '', mine: '' } : { trait }),
+    [updateParams],
+  );
+  const setFilterMine = useCallback(
+    (mine: boolean) => updateParams(mine
+      ? { mine: '1', type: '', aura: '', tag: '', terra: '', trait: '' }
+      : { mine: '' }),
     [updateParams],
   );
   const clearFilters = useCallback(
-    () => updateParams({ type: '', aura: '', tag: '', terra: '', trait: '' }),
+    () => updateParams({ type: '', aura: '', tag: '', terra: '', trait: '', mine: '' }),
     [updateParams],
   );
 
@@ -264,11 +304,11 @@ export function GalleryPage() {
   const queryGenRef = useRef(0);
 
   useEffect(() => {
-    if (loadingCard && !selectedCard) {
+    if ((loadingCard && !selectedCard) || mobileFiltersOpen) {
       document.body.style.overflow = 'hidden';
       return () => { document.body.style.overflow = ''; };
     }
-  }, [loadingCard, selectedCard]);
+  }, [loadingCard, selectedCard, mobileFiltersOpen]);
 
   useEffect(() => {
     fetchGalleryCounts({
@@ -288,9 +328,11 @@ export function GalleryPage() {
     tag: filterTag || undefined,
     terra: filterTerra || undefined,
     trait: filterTrait || undefined,
-  }), [filterType, filterElement, filterTag, filterTerra, filterTrait]);
+    ownerUid: filterMine && uid ? uid : undefined,
+  }), [filterType, filterElement, filterTag, filterTerra, filterTrait, filterMine, uid]);
 
-  const hasFilters = Boolean(filterType || filterElement || filterTag || filterTerra || filterTrait);
+  const activeFilterCount = [filterType, filterElement, filterTag, filterTerra, filterTrait].filter(Boolean).length + (filterMine ? 1 : 0);
+  const hasFilters = activeFilterCount > 0;
 
   useEffect(() => {
     const gen = ++queryGenRef.current;
@@ -313,12 +355,12 @@ export function GalleryPage() {
         setError(true);
         setLoading(false);
       });
-  }, [buildFilters, sort]);
+  }, [buildFilters, sort, refreshKey]);
 
   useEffect(() => {
     if (!hasFilters) { setFilteredCount(null); return; }
     const facetCount = [filterType, filterElement, filterTag, filterTerra, filterTrait].filter(Boolean).length;
-    if (facetCount === 1 && counts) {
+    if (facetCount === 1 && !filterMine && counts) {
       const cached =
         filterTag ? counts.byTag[filterTag]
         : filterType ? counts.byType[filterType]
@@ -335,7 +377,7 @@ export function GalleryPage() {
       .then((n) => { if (!stale) setFilteredCount(n); })
       .catch(() => { if (!stale) setFilteredCount(null); });
     return () => { stale = true; };
-  }, [buildFilters, hasFilters, filterTag, filterType, filterElement, filterTerra, filterTrait, counts]);
+  }, [buildFilters, hasFilters, filterTag, filterType, filterElement, filterTerra, filterTrait, filterMine, counts]);
 
   const loadMore = useCallback(async () => {
     if (loadingMoreRef.current || !hasMore || !cursor) return;
@@ -407,8 +449,12 @@ export function GalleryPage() {
     () => ({
       counts, filterTag, setFilterTag, filterElement, setFilterElement, filterType, setFilterType,
       filterTerra, setFilterTerra, filterTrait, setFilterTrait,
+      showMine: !!uid && myCount > 0,
+      myCount,
+      filterMine,
+      setFilterMine,
     }),
-    [counts, filterTag, filterElement, filterType, filterTerra, filterTrait],
+    [counts, filterTag, filterElement, filterType, filterTerra, filterTrait, uid, myCount, filterMine],
   );
 
   return (
@@ -436,10 +482,10 @@ export function GalleryPage() {
             <div className="hidden sm:block text-[13px] text-gray-400 whitespace-nowrap">{shownCount}{countInexact ? '+' : ''} card{shownCount === 1 && !countInexact ? '' : 's'}</div>
             <div className="hidden sm:block md:hidden w-px h-4.5 bg-navy-600" />
             <button
-              onClick={() => setMobileFiltersOpen((open) => !open)}
-              className={`md:hidden px-2.25 py-1 text-xs border border-navy-600 cursor-pointer ${mobileFiltersOpen || hasFilters ? 'text-gold-300' : 'text-gray-500'}`}
+              onClick={() => setMobileFiltersOpen(true)}
+              className={`md:hidden px-2.5 py-1.5 text-xs whitespace-nowrap border rounded cursor-pointer ${hasFilters ? 'text-gold-300 border-gold-500' : 'text-gray-300 border-navy-500'}`}
             >
-              Filters
+              Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </button>
             <div className="flex-1" />
             {(hasFilters || search) && (
@@ -472,13 +518,6 @@ export function GalleryPage() {
               ))}
             </div>
           </div>
-
-          {/* Mobile facet panel */}
-          {mobileFiltersOpen && (
-            <div className="md:hidden flex flex-col gap-1.5 bg-navy-950 divide-y divide-navy-600 [&>*:not(:last-child)]:pb-3.5 px-4 py-5 border-b border-navy-600">
-              <FacetSections {...facetProps} />
-            </div>
-          )}
 
           {/* Grid */}
           <div className="p-4 md:px-6 md:py-5">
@@ -529,9 +568,50 @@ export function GalleryPage() {
 
       <SiteFooter />
 
+      {/* Mobile filter */}
+      {mobileFiltersOpen && (
+        <div className="md:hidden fixed inset-0 z-40 flex flex-col bg-navy-950">
+          <div className="flex items-center gap-4 pl-4 pr-1.5 h-13 border-b border-navy-600 shrink-0">
+            <span className="text-sm font-bold text-gold-300">Filters</span>
+            <div className="flex-1" />
+            {hasFilters && (
+              <button onClick={clearFilters} className="text-xs text-gold-400 cursor-pointer">
+                Clear all
+              </button>
+            )}
+            <button
+              onClick={() => setMobileFiltersOpen(false)}
+              aria-label="Close filters"
+              className="w-11 h-11 flex items-center justify-center text-gray-300 cursor-pointer"
+            >
+              <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M5 5l10 10M15 5L5 15" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 divide-y divide-navy-600 [&>*:not(:last-child)]:pb-3.5 px-4 py-5">
+            <FacetSections {...facetProps} />
+          </div>
+          <div className="px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.875rem)] border-t border-navy-600 shrink-0">
+            <button
+              onClick={() => setMobileFiltersOpen(false)}
+              className="w-full h-12 bg-green-600 text-white font-semibold border-gold cursor-pointer"
+            >
+              {exactCount !== null
+                ? `Show ${exactCount} card${exactCount === 1 ? '' : 's'}`
+                : 'Show results'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Modal */}
       {selectedCard ? (
-        <CardDetailModal card={selectedCard} onClose={() => closeModal()} />
+        <CardDetailModal
+          card={selectedCard}
+          onClose={() => closeModal()}
+          onDeleted={() => { closeModal(true); setRefreshKey((k) => k + 1); }}
+        />
       ) : loadingCard && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"

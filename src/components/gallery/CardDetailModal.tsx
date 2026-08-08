@@ -5,6 +5,9 @@ import { TAG_COLORS } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
 import { displayCardName, downloadBlob, sanitizeCardNameForFilename } from '@/lib/exportUtils';
 import { exportCardPng, usePrintReady } from '@/lib/useCardExport';
+import { useAuthUid } from '@/lib/auth';
+import { deleteCard } from '@/lib/galleryService';
+import { isMeaningfullyUpdated } from '@/lib/publishUtils';
 
 export const MODAL_CONTAINER_CLASS = 'flex flex-col md:flex-row gap-4 md:gap-7 items-center mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
 export const MODAL_CARD_CLASS = 'h-[60vh] md:h-[80vh]';
@@ -13,6 +16,7 @@ export const MODAL_DETAILS_CLASS = 'bg-navy-900 w-full md:w-80 pointer-events-au
 interface CardDetailModalProps {
   card: SavedCard;
   onClose: () => void;
+  onDeleted?: () => void;
 }
 
 function savedCardToSnapshot(card: SavedCard): CardSnapshot {
@@ -20,11 +24,16 @@ function savedCardToSnapshot(card: SavedCard): CardSnapshot {
   return snapshot;
 }
 
-export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
+export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hiddenCardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const uid = useAuthUid();
+  const isOwner = !!card.ownerUid && card.ownerUid === uid;
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
 
   const [printReady, setPrintReady] = usePrintReady();
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -45,6 +54,23 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
 
   function handleRemix() {
     navigate(`/create?remix=${card.id}`);
+  }
+
+  function handleEdit() {
+    navigate(`/create?edit=${card.id}`);
+  }
+
+  async function handleDelete() {
+    if (!confirmingDelete) { setConfirmingDelete(true); return; }
+    setDeleting(true);
+    setDeleteError(false);
+    try {
+      await deleteCard(card.id);
+      onDeleted?.();
+    } catch {
+      setDeleteError(true);
+      setDeleting(false);
+    }
   }
 
   function handleViewParent() {
@@ -210,6 +236,9 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
                 <>Created by <span className="text-white font-semibold">{card.creatorName}</span> on </>
               ) : 'Created on '}
               {card.createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+              {isMeaningfullyUpdated(card.createdAt, card.updatedAt) && (
+                <> · updated {card.updatedAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</>
+              )}
             </span>
             {card.remixedFrom && (
               <span className="text-[13px] text-gray-400 leading-normal">
@@ -222,10 +251,35 @@ export function CardDetailModal({ card, onClose }: CardDetailModalProps) {
                 </button>
               </span>
             )}
+            {isOwner && (
+              <span className="text-[13px] leading-normal">
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className={`transition-colors cursor-pointer ${confirmingDelete ? 'text-red-400 font-semibold hover:text-red-300' : 'text-gray-500 hover:text-red-400'}`}
+                >
+                  {deleting ? 'Deleting…' : confirmingDelete ? 'Confirm permanent delete' : 'Delete this card'}
+                </button>
+                {confirmingDelete && !deleting && (
+                  <button onClick={() => setConfirmingDelete(false)} className="ml-2 text-gray-500 hover:text-white cursor-pointer">
+                    Cancel
+                  </button>
+                )}
+                {deleteError && <span className="block text-red-400">Delete failed. Try again.</span>}
+              </span>
+            )}
           </div>
 
           {/* Primary action */}
           <div className="px-5 py-4.5">
+            {isOwner && (
+              <button
+                onClick={handleEdit}
+                className="w-full mb-2.5 py-3 bg-green-600 hover:bg-green-500 text-white text-[15px] font-bold transition-colors border-gold"
+              >
+                Edit this Card
+              </button>
+            )}
             <button
               onClick={handleRemix}
               className="w-full py-3 text-navy-990 text-[15px] font-bold transition-[filter] hover:brightness-110"

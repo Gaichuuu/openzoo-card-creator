@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { ELEMENTS } from '@/data/constants';
 import { ZONE_ID_MAPS } from '@/data/layouts';
-import type { Element } from '@/types/card';
+import type { Element, ElementOrCustom } from '@/types/card';
+import type { CustomElementDef, CustomIcon } from '@/types/customIcons';
 import { stripParagraphWrap } from '@/lib/textParserUtils';
+import { isCustomIconValue } from '@/lib/customIconUtils';
+import { CustomIconPicker } from './CustomIconPicker';
 
 export function CostEditor() {
   const setImageField = useCardStore((s) => s.setImageField);
@@ -19,19 +22,24 @@ export function CostEditor() {
     : ELEMENTS.filter((el) => el !== 'Special');
 
   const snapshotGuard = useRef(false);
-  const [slot1El, setSlot1El] = useState<Element>('Forest');
+  const [slot1El, setSlot1El] = useState<Element | 'Custom'>('Forest');
   const [slot1Cost, setSlot1Cost] = useState('2');
-  const [slot2El, setSlot2El] = useState<Element | ''>('Neutral');
+  const [slot2El, setSlot2El] = useState<Element | 'Custom' | ''>('Neutral');
   const [slot2Cost, setSlot2Cost] = useState('1');
+  const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
 
-  const colorElement = (el: Element | '' | null): Element | null => {
+  const colorElement = (el: Element | 'Custom' | '' | null): ElementOrCustom | null => {
     if (!el || el === 'Neutral') return null;
     return el;
   };
 
-  const applySlot = (slot: 1 | 2, el: Element | '', cost: string) => {
+  const applySlot = (slot: 1 | 2, el: Element | 'Custom' | '', cost: string) => {
     const showCost = el && cost;
-    setImageField(`Aura${slot}`, el ? `${el}.png` : '');
+    const s = useCardStore.getState();
+    const icon = el === 'Custom'
+      ? (slot === 1 ? s.customPrimary?.icon : s.customSecondary?.icon) ?? ''
+      : el ? `${el}.png` : '';
+    setImageField(`Aura${slot}`, icon);
     setStyleField(`Aura${slot}`, el ? '{border:1px solid rgba(0,0,0,1)}' : '');
     setImageField(`CostImage${slot}`, showCost ? 'CostBox.png' : '');
     setTextField(`Cost${slot}`, showCost ? cost : '');
@@ -46,13 +54,13 @@ export function CostEditor() {
       const s = useCardStore.getState();
       const map = ZONE_ID_MAPS[s.layoutType];
       const aura1Img = map?.['Aura1'] != null ? s.cardData[`i${map['Aura1']}`] : '';
-      const el1 = aura1Img?.replace('.png', '') as Element || '';
+      const el1 = isCustomIconValue(aura1Img) ? 'Custom' : (aura1Img?.replace('.png', '') as Element) || '';
       const cost1 = map?.['Cost1'] != null ? stripParagraphWrap(s.cardData[`t${map['Cost1']}`] || '') : '';
       const aura2Img = map?.['Aura2'] != null ? s.cardData[`i${map['Aura2']}`] : '';
-      const el2 = aura2Img?.replace('.png', '') as Element | '' || '';
+      const el2 = isCustomIconValue(aura2Img) ? 'Custom' : (aura2Img?.replace('.png', '') as Element | '') || '';
       const cost2 = map?.['Cost2'] != null ? stripParagraphWrap(s.cardData[`t${map['Cost2']}`] || '') : '';
-      if (el1) { setSlot1El(el1 as Element); setSlot1Cost(cost1); }
-      if (el2) { setSlot2El(el2 as Element); setSlot2Cost(cost2); } else { setSlot2El(''); setSlot2Cost(''); }
+      if (el1) { setSlot1El(el1 as Element | 'Custom'); setSlot1Cost(cost1); }
+      if (el2) { setSlot2El(el2 as Element | 'Custom'); setSlot2Cost(cost2); } else { setSlot2El(''); setSlot2Cost(''); }
       return;
     }
     if (snapshotGuard.current) return;
@@ -112,18 +120,43 @@ export function CostEditor() {
     }
   }, [cardType]);
 
-  const handleSlot1ElChange = (el: Element) => {
+  const handleSlot1ElChange = (el: Element | 'Custom') => {
+    if (el === 'Custom') { setPickerSlot(1); return; }
     setSlot1El(el);
     setPrimaryElement(colorElement(el));
     applySlot(1, el, slot1Cost);
     applySlot(2, slot2El, slot2Cost);
   };
 
-  const handleSlot2ElChange = (el: Element | '') => {
+  const handleSlot2ElChange = (el: Element | 'Custom' | '') => {
+    if (el === 'Custom') { setPickerSlot(2); return; }
     setSlot2El(el);
     setSecondaryElement(colorElement(el));
     applySlot(1, slot1El, slot1Cost);
     applySlot(2, el, slot2Cost);
+  };
+
+  const iconToElementDef = (icon: CustomIcon): CustomElementDef => ({
+    name: icon.name || 'Custom',
+    icon: icon.image,
+    cardBackground: icon.aura?.cardBackground ?? '#888888',
+    artBorder: icon.aura?.artBorder ?? '#CCCCCC',
+    strongAgainst: icon.aura?.strongAgainst ?? [],
+  });
+
+  const handleCustomPick = (icon: CustomIcon) => {
+    const def = iconToElementDef(icon);
+    if (pickerSlot === 1) {
+      setSlot1El('Custom');
+      setPrimaryElement('Custom', def);
+      applySlot(1, 'Custom', slot1Cost);
+      applySlot(2, slot2El, slot2Cost);
+    } else if (pickerSlot === 2) {
+      setSlot2El('Custom');
+      setSecondaryElement('Custom', def);
+      applySlot(1, slot1El, slot1Cost);
+      applySlot(2, 'Custom', slot2Cost);
+    }
   };
 
   const handleSlot1CostChange = (cost: string) => {
@@ -147,12 +180,13 @@ export function CostEditor() {
           <span className="text-xs text-gold-400 w-10">Slot 1</span>
           <select
             value={slot1El}
-            onChange={(e) => handleSlot1ElChange(e.target.value as Element)}
+            onChange={(e) => handleSlot1ElChange(e.target.value as Element | 'Custom')}
             className="flex-1 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
           >
             {availableElements.map((el) => (
               <option key={el} value={el}>{el}</option>
             ))}
+            <option value="Custom">Custom…</option>
           </select>
           <input
             type="text"
@@ -167,13 +201,14 @@ export function CostEditor() {
           <span className="text-xs text-gold-400 w-10">Slot 2</span>
           <select
             value={slot2El}
-            onChange={(e) => handleSlot2ElChange(e.target.value as Element | '')}
+            onChange={(e) => handleSlot2ElChange(e.target.value as Element | 'Custom' | '')}
             className="flex-1 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
           >
             <option value="">None</option>
             {availableElements.map((el) => (
               <option key={el} value={el}>{el}</option>
             ))}
+            <option value="Custom">Custom…</option>
           </select>
           <input
             type="text"
@@ -185,6 +220,13 @@ export function CostEditor() {
           />
         </div>
       </div>
+      <CustomIconPicker
+        type="aura"
+        title="Custom aura element"
+        open={pickerSlot !== null}
+        onClose={() => setPickerSlot(null)}
+        onSelect={handleCustomPick}
+      />
     </div>
   );
 }

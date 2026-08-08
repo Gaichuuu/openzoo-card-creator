@@ -3,6 +3,9 @@ import { useCardStore } from '@/lib/store';
 import { TERRAS } from '@/data/constants';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import { stripParagraphWrap } from '@/lib/textParserUtils';
+import type { Terra } from '@/types/card';
+import type { CustomIcon } from '@/types/customIcons';
+import { CustomIconPicker } from './CustomIconPicker';
 
 const DEFAULT_TERRAS: [string, string] = ['Lake', 'Nighttime'];
 const DEFAULT_BONUSES = [
@@ -24,6 +27,7 @@ export function TerraSelector() {
   const setStyleField = useCardStore((s) => s.setStyleField);
   const snapshotGuard = useRef(false);
   const [bonuses, setBonuses] = useState(DEFAULT_BONUSES);
+  const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
@@ -59,6 +63,7 @@ export function TerraSelector() {
   }, []);
 
   const handleTerraChange = (i: number, value: string) => {
+    if (value === '__custom__') { setPickerSlot(i); return; }
     setTerra(i, value || null);
     if (!value) {
       const newBonuses = [...bonuses];
@@ -97,6 +102,10 @@ export function TerraSelector() {
                 {TERRAS.map((terra) => (
                   <option key={terra} value={terra}>{terra}</option>
                 ))}
+                {terras[i] && !TERRAS.includes(terras[i] as Terra) && (
+                  <option value={terras[i]!}>{terras[i]} (custom)</option>
+                )}
+                <option value="__custom__">Custom…</option>
               </select>
             </div>
             <div className="flex gap-3 ml-12">
@@ -126,6 +135,16 @@ export function TerraSelector() {
           </div>
         ))}
       </div>
+      <CustomIconPicker
+        type="terra"
+        title="Custom terra"
+        open={pickerSlot !== null}
+        onClose={() => setPickerSlot(null)}
+        onSelect={(icon: CustomIcon) => {
+          if (pickerSlot === null) return;
+          setTerra(pickerSlot, icon.name || 'Custom', icon.image);
+        }}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { LayoutType } from '@/types/layout';
-import type { CardData, CardSnapshot, CardType, Element } from '@/types/card';
+import type { CardData, CardSnapshot, CardType, Element, ElementOrCustom } from '@/types/card';
+import type { CustomElementDef } from '@/types/customIcons';
 import {
   CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA, TYPES_WITHOUT_TRAITS,
   STYLE_TYPES_TRIBES, STYLE_SPELLBOOK_LIMIT, STYLE_CARD_NAME, STYLE_TNL, STYLE_LP, STYLE_FLAVOR_TEXT, FONT_BODY,
@@ -21,8 +22,10 @@ interface CardEditorState {
   cardName: string;
   tribe: string;
   spellbookLimit: string;
-  primaryElement: Element | null;
-  secondaryElement: Element | null;
+  primaryElement: ElementOrCustom | null;
+  secondaryElement: ElementOrCustom | null;
+  customPrimary: CustomElementDef | null;
+  customSecondary: CustomElementDef | null;
   traits: (string | null)[];
   terras: (string | null)[];
   strongAgainst: (Element | null)[];
@@ -50,10 +53,10 @@ interface CardEditorState {
   setTextField: (semanticKey: string, value: string) => void;
   setImageField: (semanticKey: string, value: string) => void;
   setStyleField: (semanticKey: string, value: string) => void;
-  setPrimaryElement: (el: Element | null) => void;
-  setSecondaryElement: (el: Element | null) => void;
-  setTrait: (index: number, trait: string | null) => void;
-  setTerra: (index: number, terra: string | null) => void;
+  setPrimaryElement: (el: ElementOrCustom | null, customDef?: CustomElementDef | null) => void;
+  setSecondaryElement: (el: ElementOrCustom | null, customDef?: CustomElementDef | null) => void;
+  setTrait: (index: number, trait: string | null, customIconUrl?: string) => void;
+  setTerra: (index: number, terra: string | null, customIconUrl?: string) => void;
   setStrongAgainst: (index: number, el: Element | null) => void;
   setCardArt: (url: string | null) => void;
   setBorderless: (v: boolean) => void;
@@ -72,12 +75,20 @@ interface CardEditorState {
   loadSnapshot: (snapshot: CardSnapshot) => void;
 }
 
+function elementIconFor(el: ElementOrCustom | null, def?: CustomElementDef | null): string {
+  if (!el) return '';
+  if (el === 'Custom') return def?.icon ?? '';
+  return `${el}.png`;
+}
+
 function applyAuraColors(
   newData: CardData,
   layoutType: LayoutType,
-  primary: Element | null,
-  secondary: Element | null,
+  primary: ElementOrCustom | null,
+  secondary: ElementOrCustom | null,
   cardType?: CardType,
+  customPrimary?: CustomElementDef | null,
+  customSecondary?: CustomElementDef | null,
 ) {
   const bannerKey = getImageZoneId(layoutType, 'Banner');
   if (bannerKey) {
@@ -88,19 +99,19 @@ function applyAuraColors(
   const aura2Key = getImageZoneId(layoutType, 'Aura2');
   if (cardType === 'Aura') {
     if (aura1Key) newData[aura1Key] = '';
-    if (aura2Key) newData[aura2Key] = primary ? `${primary}.png` : '';
+    if (aura2Key) newData[aura2Key] = elementIconFor(primary, customPrimary);
   } else if (cardType === 'Special Aura') {
     if (aura1Key) newData[aura1Key] = '';
     if (aura2Key) newData[aura2Key] = 'Special.png';
   } else {
-    if (aura1Key) newData[aura1Key] = primary ? `${primary}.png` : '';
-    if (aura2Key) newData[aura2Key] = secondary ? `${secondary}.png` : '';
+    if (aura1Key) newData[aura1Key] = elementIconFor(primary, customPrimary);
+    if (aura2Key) newData[aura2Key] = elementIconFor(secondary, customSecondary);
   }
 
   const colorPrimary = primary ?? 'Neutral';
   const artBorderStyleKey = getStyleZoneId(layoutType, 'ArtBorder');
   if (artBorderStyleKey) {
-    const artBorderBg = resolveArtBorderStyle(colorPrimary, secondary);
+    const artBorderBg = resolveArtBorderStyle(colorPrimary, secondary, customPrimary, customSecondary);
     newData[artBorderStyleKey] = artBorderBg ? `{background:${artBorderBg}}` : '';
   }
 
@@ -109,7 +120,7 @@ function applyAuraColors(
     if (layoutType === 'Terra') {
       newData[bgColorStyleKey] = '{background:transparent}';
     } else {
-      const bgOverlay = resolveBgOverlayStyle(colorPrimary, secondary);
+      const bgOverlay = resolveBgOverlayStyle(colorPrimary, secondary, customPrimary, customSecondary);
       newData[bgColorStyleKey] = bgOverlay ? `{background:${bgOverlay}}` : '';
     }
   }
@@ -118,11 +129,13 @@ function applyAuraColors(
 function applyStrongAgainst(
   newData: CardData,
   layoutType: LayoutType,
-  primary: Element | null,
-  secondary: Element | null,
+  primary: ElementOrCustom | null,
+  secondary: ElementOrCustom | null,
   locale: Locale = 'en',
+  customPrimary?: CustomElementDef | null,
+  customSecondary?: CustomElementDef | null,
 ): Element[] {
-  const strengths = computeStrongAgainst(primary, secondary);
+  const strengths = computeStrongAgainst(primary, secondary, customPrimary, customSecondary);
   const saKeys = ['SAura1', 'SAura2', 'SAura3', 'SAura4'];
   for (let i = 0; i < saKeys.length; i++) {
     const imgKey = getImageZoneId(layoutType, saKeys[i]);
@@ -207,6 +220,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   spellbookLimit: DEFAULT_SPELLBOOK_LIMIT,
   primaryElement: null,
   secondaryElement: null,
+  customPrimary: null,
+  customSecondary: null,
   traits: [null, null, null],
   terras: [null, null],
   strongAgainst: [null, null, null, null],
@@ -301,7 +316,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardData: newData,
       ...(noTerra ? { terras: [null, null] as [null, null] } : {}),
       ...(noTraits ? { traits: [null, null, null] as [null, null, null] } : {}),
-      ...(clearElements ? { primaryElement: null, secondaryElement: null } : {}),
+      ...(clearElements ? { primaryElement: null, secondaryElement: null, customPrimary: null, customSecondary: null } : {}),
     });
   },
 
@@ -332,8 +347,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       if (artKey) newCardData[artKey] = state.cardArtUrl;
     }
 
-    applyAuraColors(newCardData, type, state.primaryElement, state.secondaryElement, state.cardType);
-    applyStrongAgainst(newCardData, type, state.primaryElement, state.secondaryElement, state.locale);
+    applyAuraColors(newCardData, type, state.primaryElement, state.secondaryElement, state.cardType, state.customPrimary, state.customSecondary);
+    applyStrongAgainst(newCardData, type, state.primaryElement, state.secondaryElement, state.locale, state.customPrimary, state.customSecondary);
 
     const effectPatch = composeEffectBlocks(state.effectBlocks, type, state.cardType, state.locale, state.borderless);
     Object.assign(newCardData, effectPatch);
@@ -393,27 +408,29 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     set({ cardData: { ...cardData, [key]: value } });
   },
 
-  setPrimaryElement: (el) => {
-    const { layoutType, cardData, secondaryElement, cardType, locale } = get();
+  setPrimaryElement: (el, customDef) => {
+    const { layoutType, cardData, secondaryElement, customSecondary, cardType, locale } = get();
+    const customPrimary = el === 'Custom' ? (customDef ?? get().customPrimary) : null;
     const newData = { ...cardData };
-    applyAuraColors(newData, layoutType, el, secondaryElement, cardType);
-    const strengths = applyStrongAgainst(newData, layoutType, el, secondaryElement, locale);
+    applyAuraColors(newData, layoutType, el, secondaryElement, cardType, customPrimary, customSecondary);
+    const strengths = applyStrongAgainst(newData, layoutType, el, secondaryElement, locale, customPrimary, customSecondary);
     const sa: (Element | null)[] = [null, null, null, null];
     strengths.forEach((s, i) => { sa[i] = s; });
-    set({ primaryElement: el, strongAgainst: sa, cardData: newData });
+    set({ primaryElement: el, customPrimary, strongAgainst: sa, cardData: newData });
   },
 
-  setSecondaryElement: (el) => {
-    const { layoutType, cardData, primaryElement, cardType, locale } = get();
+  setSecondaryElement: (el, customDef) => {
+    const { layoutType, cardData, primaryElement, customPrimary, cardType, locale } = get();
+    const customSecondary = el === 'Custom' ? (customDef ?? get().customSecondary) : null;
     const newData = { ...cardData };
-    applyAuraColors(newData, layoutType, primaryElement, el, cardType);
-    const strengths = applyStrongAgainst(newData, layoutType, primaryElement, el, locale);
+    applyAuraColors(newData, layoutType, primaryElement, el, cardType, customPrimary, customSecondary);
+    const strengths = applyStrongAgainst(newData, layoutType, primaryElement, el, locale, customPrimary, customSecondary);
     const sa: (Element | null)[] = [null, null, null, null];
     strengths.forEach((s, i) => { sa[i] = s; });
-    set({ secondaryElement: el, strongAgainst: sa, cardData: newData });
+    set({ secondaryElement: el, customSecondary, strongAgainst: sa, cardData: newData });
   },
 
-  setTrait: (index, trait) => {
+  setTrait: (index, trait, customIconUrl) => {
     const { layoutType, cardData, traits } = get();
     const newTraits = [...traits];
     newTraits[index] = trait;
@@ -422,13 +439,13 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const traitKeys = ['Trait1', 'Trait2', 'Trait3'];
     const key = getImageZoneId(layoutType, traitKeys[index]);
     if (key) {
-      newData[key] = trait ? `OpenZoo Traits/${trait}.png` : '';
+      newData[key] = customIconUrl ?? (trait ? `OpenZoo Traits/${trait}.png` : '');
     }
 
     set({ traits: newTraits, cardData: newData });
   },
 
-  setTerra: (index, terra) => {
+  setTerra: (index, terra, customIconUrl) => {
     const { layoutType, cardData, terras } = get();
     const newTerras = [...terras];
     newTerras[index] = terra;
@@ -437,7 +454,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const terraKeys = ['Terra1', 'Terra2'];
     const key = getImageZoneId(layoutType, terraKeys[index]);
     if (key) {
-      newData[key] = terra ? `OpenZoo Terra/${terra}.png` : '';
+      newData[key] = customIconUrl ?? (terra ? `OpenZoo Terra/${terra}.png` : '');
     }
 
     set({ terras: newTerras, cardData: newData });
@@ -543,7 +560,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const limitKey = getTextZoneId(lt, 'SpellbookLimit');
     if (limitKey && spellbookLimit) newData[limitKey] = formatSpellbookLimitLocale(spellbookLimit, locale);
 
-    applyStrongAgainst(newData, lt, primaryElement, secondaryElement, locale);
+    applyStrongAgainst(newData, lt, primaryElement, secondaryElement, locale, state.customPrimary, state.customSecondary);
 
     const effectPatch = composeEffectBlocks(effectBlocks, lt, cardType, locale, get().borderless);
     Object.assign(newData, effectPatch);
@@ -561,6 +578,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       spellbookLimit: DEFAULT_SPELLBOOK_LIMIT,
       primaryElement: null,
       secondaryElement: null,
+      customPrimary: null,
+      customSecondary: null,
       traits: [null, null, null],
       terras: [null, null],
       strongAgainst: [null, null, null, null],
@@ -598,6 +617,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       spellbookLimit: s.spellbookLimit,
       primaryElement: s.primaryElement,
       secondaryElement: s.secondaryElement,
+      customPrimary: s.customPrimary,
+      customSecondary: s.customSecondary,
       traits: s.traits,
       terras: s.terras,
       strongAgainst: s.strongAgainst,
@@ -618,6 +639,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     if (prev) clearTimeout(prev);
 
     const locale = snapshot.locale ?? 'en';
+    const customPrimary = snapshot.customPrimary ?? null;
+    const customSecondary = snapshot.customSecondary ?? null;
     const newData = { ...snapshot.cardData };
     const lt = snapshot.layoutType;
     const artKey = getImageZoneId(lt, 'CardArt') || getImageZoneId(lt, 'Art');
@@ -635,8 +658,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       }
     }
 
-    applyAuraColors(newData, lt, snapshot.primaryElement, snapshot.secondaryElement, snapshot.cardType);
-    applyStrongAgainst(newData, lt, snapshot.primaryElement, snapshot.secondaryElement, locale);
+    applyAuraColors(newData, lt, snapshot.primaryElement, snapshot.secondaryElement, snapshot.cardType, customPrimary, customSecondary);
+    applyStrongAgainst(newData, lt, snapshot.primaryElement, snapshot.secondaryElement, locale, customPrimary, customSecondary);
 
     const timer = setTimeout(() => {
       set({ _isLoadingSnapshot: false, _snapshotTimer: null });
@@ -646,6 +669,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       ...snapshot,
       cardData: newData,
       locale,
+      customPrimary,
+      customSecondary,
       borderless: snapshot.borderless ?? false,
       mainTextBoxNudge: snapshot.mainTextBoxNudge ?? 0,
       mainTextBoxExtraShrink: snapshot.mainTextBoxExtraShrink ?? 0,

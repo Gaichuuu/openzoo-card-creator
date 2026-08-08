@@ -1,5 +1,6 @@
-import type { Element, Trait, Terra, CardType } from '@/types/card';
+import type { Element, ElementOrCustom, Trait, Terra, CardType } from '@/types/card';
 import type { LayoutType } from '@/types/layout';
+import type { CustomElementDef } from '@/types/customIcons';
 
 export const ELEMENTS: Element[] = [
   'Neutral',
@@ -64,7 +65,7 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function makeAuraColor(cardBg: string, artBorder: string): AuraColor {
+export function makeAuraColor(cardBg: string, artBorder: string): AuraColor {
   return {
     cardBackground: cardBg,
     artBorder,
@@ -88,35 +89,46 @@ export const AURA_COLORS: Record<Element, AuraColor> = {
   Special:   makeAuraColor('#DAA520', '#FFD700'),
 };
 
+export function getAuraColor(el: ElementOrCustom, custom?: CustomElementDef | null): AuraColor {
+  if (el === 'Custom') {
+    return custom ? makeAuraColor(custom.cardBackground, custom.artBorder) : AURA_COLORS.Neutral;
+  }
+  return AURA_COLORS[el];
+}
+
 export function resolveArtBorderStyle(
-  primary: Element | null,
-  secondary: Element | null
+  primary: ElementOrCustom | null,
+  secondary: ElementOrCustom | null,
+  customPrimary?: CustomElementDef | null,
+  customSecondary?: CustomElementDef | null,
 ): string {
   if (!primary) return '';
-  const pc = AURA_COLORS[primary];
+  const pc = getAuraColor(primary, customPrimary);
 
   if (primary === 'Light' && (!secondary || secondary === 'Light' || secondary === 'Neutral')) {
     return 'linear-gradient(135deg, #8F00FF 0%, #0000FF 17%, #FFFFFF 33%, #00FF00 50%, #FFFF00 67%, #FF8F00 83%, #FF0000 100%)';
   }
 
-  if (!secondary || secondary === primary || secondary === 'Neutral') {
+  if (!secondary || secondary === 'Neutral' || (secondary === primary && primary !== 'Custom')) {
     return pc.artBorderRgba;
   }
-  const sc = AURA_COLORS[secondary];
+  const sc = getAuraColor(secondary, customSecondary);
   return `linear-gradient(90deg, ${pc.artBorderRgba} 0%, ${sc.artBorderRgba} 100%)`;
 }
 
 export function resolveBgOverlayStyle(
-  primary: Element | null,
-  secondary: Element | null
+  primary: ElementOrCustom | null,
+  secondary: ElementOrCustom | null,
+  customPrimary?: CustomElementDef | null,
+  customSecondary?: CustomElementDef | null,
 ): string {
   if (!primary) return '';
-  const pc = AURA_COLORS[primary];
+  const pc = getAuraColor(primary, customPrimary);
 
-  if (!secondary || secondary === primary || secondary === 'Neutral') {
+  if (!secondary || secondary === 'Neutral' || (secondary === primary && primary !== 'Custom')) {
     return pc.bgOverlayRgba;
   }
-  const sc = AURA_COLORS[secondary];
+  const sc = getAuraColor(secondary, customSecondary);
   return `linear-gradient(90deg, ${pc.bgOverlayRgba} 0%, ${sc.bgOverlayRgba} 100%)`;
 }
 
@@ -136,13 +148,18 @@ export const AURA_STRENGTHS: Record<Element, Element[]> = {
 };
 
 export function computeStrongAgainst(
-  primary: Element | null,
-  secondary: Element | null,
+  primary: ElementOrCustom | null,
+  secondary: ElementOrCustom | null,
+  customPrimary?: CustomElementDef | null,
+  customSecondary?: CustomElementDef | null,
 ): Element[] {
+  const strengthsOf = (el: ElementOrCustom, custom?: CustomElementDef | null): Element[] =>
+    el === 'Custom' ? (custom?.strongAgainst ?? []) : AURA_STRENGTHS[el];
+
   const result: Element[] = [];
-  if (primary) result.push(...AURA_STRENGTHS[primary]);
-  if (secondary && secondary !== primary) {
-    for (const el of AURA_STRENGTHS[secondary]) {
+  if (primary) result.push(...strengthsOf(primary, customPrimary));
+  if (secondary && !(secondary === primary && primary !== 'Custom')) {
+    for (const el of strengthsOf(secondary, customSecondary)) {
       if (!result.includes(el)) result.push(el);
     }
   }
@@ -163,7 +180,6 @@ export const FONT_TITLE = "'Archivo Black', sans-serif";
 // Shared style override constants used by EditorSidebar and store
 export const STYLE_TYPES_TRIBES = '{fontSize:9px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}';
 export const STYLE_TYPES_TRIBES_TOKEN = '{fontSize:9px;height:10px;maxHeight:none;justifyContent:flex-start;paddingLeft:2px}';
-// Same style as TypesTribes — both are TNL child zones with identical base overrides
 export const STYLE_SPELLBOOK_LIMIT = STYLE_TYPES_TRIBES;
 export const STYLE_TNL = '{flex:1;minWidth:0;alignItems:stretch}';
 export const STYLE_TNL_TOKEN = '{flex:1;minWidth:0;alignItems:stretch;justifyContent:flex-end}';

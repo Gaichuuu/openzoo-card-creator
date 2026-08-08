@@ -1,4 +1,4 @@
-import { useDeferredValue, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
@@ -8,7 +8,10 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { useIsMobile } from '@/lib/useIsMobile';
 import { displayCardName } from '@/lib/exportUtils';
 
-type MobileTab = 'editor' | 'help' | 'preview';
+type MobileTab = 'editor' | 'preview' | 'help';
+
+const TAB_ORDER: MobileTab[] = ['editor', 'preview', 'help'];
+const SWIPE_MIN_X = 60;
 
 export function CardEditor() {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -19,9 +22,8 @@ export function CardEditor() {
   const cardType = useCardStore((s) => s.cardType);
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
   const sidebarRef = useRef<EditorSidebarHandle>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isMobile = useIsMobile();
-  const peekLayoutType = useDeferredValue(layoutType);
-  const peekCardData = useDeferredValue(cardData);
 
   const handleClear = () => sidebarRef.current?.confirmClear();
 
@@ -33,10 +35,29 @@ export function CardEditor() {
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_MIN_X || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const nextIndex = TAB_ORDER.indexOf(mobileTab) + (dx < 0 ? 1 : -1);
+    if (nextIndex >= 0 && nextIndex < TAB_ORDER.length) {
+      setMobileTab(TAB_ORDER[nextIndex]);
+    }
+  };
+
   const tabs: { key: MobileTab; label: string }[] = [
     { key: 'editor', label: 'Editor' },
-    { key: 'help', label: 'Help' },
     { key: 'preview', label: 'Preview' },
+    { key: 'help', label: 'Help' },
   ];
 
   const fullscreenIcon = (
@@ -86,28 +107,13 @@ export function CardEditor() {
         ))}
       </div>
 
-      <div className="flex flex-col md:flex-row flex-1 min-h-0">
+      <div
+        className="flex flex-col md:flex-row flex-1 min-h-0"
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
+      >
         {/* Editor rail */}
         <div className={`${mobileTab === 'editor' ? 'flex' : 'hidden'} md:flex flex-col flex-1 md:flex-none min-h-0`}>
-          {/* Peek strip */}
-          {isMobile && (
-            <button
-              onClick={() => setMobileTab('preview')}
-              className="flex items-center gap-3.5 px-4 py-2.5 bg-navy-990 border-b border-navy-700 shrink-0 text-left"
-              aria-label="Open full-size preview"
-            >
-              <span className="shrink-0 overflow-hidden" style={{ width: '110px', height: '153px' }}>
-                <CardRenderer layoutType={peekLayoutType} cardData={peekCardData} scale={0.46} />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block text-xs font-semibold text-gray-300">Live preview</span>
-                <span className="block text-[11px] text-gray-500">Updates as you edit. Tap for full size.</span>
-              </span>
-              <span aria-hidden="true" className="w-11 h-11 flex items-center justify-center border border-navy-600 text-gray-400 shrink-0">
-                {fullscreenIcon}
-              </span>
-            </button>
-          )}
           <EditorSidebar cardRef={cardRef} ref={sidebarRef} />
         </div>
 

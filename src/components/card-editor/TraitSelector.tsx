@@ -1,7 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { TRAITS } from '@/data/constants';
 import type { Trait } from '@/types/card';
+import type { CustomIcon } from '@/types/customIcons';
+import { CustomIconPicker } from './CustomIconPicker';
 
 const POTION_TRAITS: Trait[] = ['Trap'];
 const SPELL_TRAITS: Trait[] = ['Equipment', 'Trap'];
@@ -13,6 +15,7 @@ export function TraitSelector() {
   const cardType = useCardStore((s) => s.cardType);
 
   const snapshotGuard = useRef(false);
+  const [pickerSlot, setPickerSlot] = useState<number | null>(null);
   const isPotion = cardType === 'Potion';
   const isSpell = cardType === 'Spell';
   const slotCount = isPotion || isSpell ? 1 : 3;
@@ -68,17 +71,34 @@ export function TraitSelector() {
             <span className="text-xs text-gold-400 w-10">Slot {i + 1}</span>
             <select
               value={traits[i] || ''}
-              onChange={(e) => setTrait(i, e.target.value || null)}
+              onChange={(e) => {
+                if (e.target.value === '__custom__') { setPickerSlot(i); return; }
+                setTrait(i, e.target.value || null);
+              }}
               className="flex-1 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
             >
               <option value="">None</option>
               {availableTraits.map((trait) => (
                 <option key={trait} value={trait}>{trait}</option>
               ))}
+              {traits[i] && !availableTraits.includes(traits[i] as Trait) && (
+                <option value={traits[i]!}>{traits[i]} (custom)</option>
+              )}
+              <option value="__custom__">Custom…</option>
             </select>
           </div>
         ))}
       </div>
+      <CustomIconPicker
+        type="trait"
+        title="Custom trait"
+        open={pickerSlot !== null}
+        onClose={() => setPickerSlot(null)}
+        onSelect={(icon: CustomIcon) => {
+          if (pickerSlot === null) return;
+          setTrait(pickerSlot, icon.name || 'Custom', icon.image);
+        }}
+      />
     </div>
   );
 }

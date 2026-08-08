@@ -3,33 +3,44 @@ import { useSearchParams } from 'react-router-dom';
 import { CardEditor } from './CardEditor';
 import { useCardStore } from '@/lib/store';
 import { fetchCard } from '@/lib/galleryService';
+import { getCurrentUid } from '@/lib/auth';
 
 export function CreatePage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
-  const [loading, setLoading] = useState(!!remixId);
+  const editId = searchParams.get('edit');
+  const loadId = editId || remixId;
+  const [loading, setLoading] = useState(!!loadId);
   const [error, setError] = useState<string | null>(null);
   const loadSnapshot = useCardStore((s) => s.loadSnapshot);
   const snapshotVersion = useCardStore((s) => s._snapshotVersion);
 
   const resetCard = useCardStore((s) => s.resetCard);
   useEffect(() => {
-    if (!remixId) {
+    if (!loadId) {
       resetCard();
     }
-  }, [remixId, resetCard]);
+  }, [loadId, resetCard]);
 
   useEffect(() => {
-    if (!remixId) return;
+    if (!loadId) return;
     let cancelled = false;
 
-    fetchCard(remixId)
+    fetchCard(loadId)
       .then(async (card) => {
         if (cancelled) return;
         if (!card) {
           setError('Card not found');
           setLoading(false);
           return;
+        }
+        if (editId) {
+          const uid = await getCurrentUid();
+          if (cancelled) return;
+          if (!card.ownerUid || card.ownerUid !== uid) {
+            setSearchParams({ remix: editId }, { replace: true });
+            return;
+          }
         }
         let cardArtUrl = card.cardArtUrl;
         if (cardArtUrl && cardArtUrl.startsWith('http')) {
@@ -64,7 +75,7 @@ export function CreatePage() {
       });
 
     return () => { cancelled = true; };
-  }, [remixId, loadSnapshot]);
+  }, [loadId, editId, loadSnapshot, setSearchParams]);
 
   if (loading) {
     return (

@@ -1,6 +1,7 @@
 import type { LayoutType } from './layout';
 import type { EffectBlock } from './effects';
 import type { Locale } from '@/data/locales';
+import type { CustomElementDef } from './customIcons';
 
 export type Element =
   | 'Cosmic'
@@ -15,6 +16,8 @@ export type Element =
   | 'Special'
   | 'Spirit'
   | 'Water';
+
+export type ElementOrCustom = Element | 'Custom';
 
 export type Trait =
   | 'Blood Sucker'
@@ -101,8 +104,8 @@ export interface CardSnapshot {
   cardName: string;
   tribe: string;
   spellbookLimit: string;
-  primaryElement: Element | null;
-  secondaryElement: Element | null;
+  primaryElement: ElementOrCustom | null;
+  secondaryElement: ElementOrCustom | null;
   traits: (string | null)[];
   terras: (string | null)[];
   strongAgainst: (Element | null)[];
@@ -115,12 +118,15 @@ export interface CardSnapshot {
   cardArtPositionX?: number;
   cardArtPositionY?: number;
   artNeeded?: boolean;
+  customPrimary?: CustomElementDef | null;
+  customSecondary?: CustomElementDef | null;
 }
 
 export interface SavedCard extends CardSnapshot {
   id: string;
   thumbnailUrl: string;
   creatorName: string;
+  ownerUid: string | null;
   tags: CardTag[];
   remixedFrom: string | null;
   remixedFromName: string;
