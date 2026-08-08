@@ -1,6 +1,6 @@
 {
   "name": "openzoo-card-creator",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "Web-based card creator for the OpenZoo trading card game",
   "license": "MIT",
   "homepage": "https://openzootcg.com/",
@@ -25,7 +25,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "bash scripts/deploy.sh"
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:site": "bash scripts/deploy.sh --site"
   },
   "dependencies": {
     "@google/model-viewer": "^4.1.0",

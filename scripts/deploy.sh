@@ -4,6 +4,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 ENV_FILE="${PROJECT_ROOT}/.deploy.env"
 
+SITE_ONLY=false
+for arg in "$@"; do
+  case "$arg" in
+    --site) SITE_ONLY=true ;;
+    *) echo "Unknown option: $arg (supported: --site)"; exit 1 ;;
+  esac
+done
+
 if [ ! -f "$ENV_FILE" ]; then
   echo "Error: .deploy.env not found. Create it with:"
   echo '  DEPLOY_USER="your-user"'
@@ -19,8 +27,10 @@ echo "==> Building project..."
 cd "$PROJECT_ROOT"
 npm run build
 
-echo "==> Deploying Firestore indexes..."
-firebase deploy --only firestore:indexes --project openzoo
+if [ "$SITE_ONLY" = false ]; then
+  echo "==> Deploying Firestore indexes..."
+  firebase deploy --only firestore:indexes --project openzoo
+fi
 
 echo "==> Generating sitemap..."
 npx tsx scripts/generate-sitemap.ts
@@ -34,13 +44,16 @@ rsync -avz --delete \
 echo "==> Deploying sitemap..."
 rsync -avz sitemap.xml "$REMOTE"
 
-echo "==> Deploying PHP files..."
-rsync -avz gallery/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/gallery/"
-rsync -avz --exclude='config.php' api/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/api/"
-rsync -avz lib/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/lib/"
+if [ "$SITE_ONLY" = false ]; then
+  echo "==> Deploying PHP files..."
+  rsync -avz gallery/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/gallery/"
+  rsync -avz --exclude='config.php' api/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/api/"
+  rsync -avz lib/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/lib/"
 
-echo "==> Deploying NGINX config..."
-ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p ~/nginx/openzootcg.com"
-rsync -avz nginx/openzootcg.com/nginx.conf "${DEPLOY_USER}@${DEPLOY_HOST}:~/nginx/openzootcg.com/nginx.conf"
+  echo "==> Deploying NGINX config..."
+  ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p ~/nginx/openzootcg.com"
+  rsync -avz nginx/openzootcg.com/nginx.conf "${DEPLOY_USER}@${DEPLOY_HOST}:~/nginx/openzootcg.com/nginx.conf"
+  echo "Note: nginx config changes need Reload HTTP in the DreamHost panel."
+fi
 
 echo "==> Deploy complete!"
