@@ -101,6 +101,8 @@ This will:
 5. Deploy PHP files (`gallery/`, `api/`, `lib/`)
 6. Deploy the nginx config
 
+For front-end-only changes, `npm run deploy:site` runs steps 1, 3, and 4 and skips Firestore, PHP, and nginx.
+
 ### Server-Side Config
 
 The server uses PHP for SEO (OG meta tags) and Discord webhook notifications. After first deploy, create the config file on the server:
