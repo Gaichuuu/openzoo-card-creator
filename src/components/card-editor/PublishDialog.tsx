@@ -128,10 +128,9 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
             </button>
           </div>
           <div className="px-8.5 pt-1.5 pb-8.5 text-center">
-            <div className="text-[11px] uppercase tracking-[.18em] text-gold-500 mb-2.5">{isUpdate ? 'Updated' : 'Published'}</div>
-            <h3 className="text-gold-gradient font-title font-normal text-[28px] m-0 mb-3">It&rsquo;s in the book</h3>
+            <h3 className="text-gold-gradient font-title font-normal text-[28px] m-0 mb-3">{isUpdate ? 'Updated' : 'Published'}</h3>
             <p className="text-sm text-gray-400 m-0 mb-6">
-              {displayCardName(cardName) || 'Your card'} {isUpdate ? 'has been updated in the gallery.' : 'is now in the gallery for anyone to remix.'}
+              {displayCardName(cardName) || 'Your card'} {isUpdate ? 'has been updated in the gallery.' : 'has been published to the gallery.'}
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <button

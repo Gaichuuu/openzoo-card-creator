@@ -127,7 +127,6 @@ const FacetSections = memo(function FacetSections({
     <>
       {myCount > 0 && (
         <div>
-          <div className={FACET_HEADING_CLASS}>Yours</div>
           <div className="flex flex-col gap-1.75 text-[13px]">
             <button
               onClick={() => setFilterMine(!filterMine)}

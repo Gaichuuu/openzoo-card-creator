@@ -76,7 +76,7 @@ export function LandingPage() {
           <SiteHeader sticky />
 
           {/* Hero: type block + card */}
-          <div className="flex flex-col lg:flex-row flex-1 items-center justify-center px-4 md:px-15 pt-8 lg:pt-10 pb-2 gap-8 lg:gap-18">
+          <div className="flex flex-col-reverse lg:flex-row flex-1 items-center justify-center px-14 md:px-15 pt-2 lg:pt-0 pb-0 gap-5 lg:gap-18">
             <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-135">
               <h1
                 className="text-gold-gradient font-title font-normal text-[52px] md:text-[72px] lg:text-[90px] leading-[.94] tracking-[-.018em] m-0"
@@ -87,9 +87,9 @@ export function LandingPage() {
                 Trading Card Game
               </h2>
               <p className="text-xl leading-relaxed italic text-gray-400 mt-4.5" style={{ textWrap: 'pretty' }}>
-                The only TCG where your <span className="text-gray-300 font-semibold">surroundings</span> matter!
+                The only TCG where your <span className="font-semibold">surroundings</span> matter!
               </p>
-              <div className="flex flex-col sm:flex-row flex-wrap justify-center lg:justify-start gap-3.5 mt-8.5">
+              <div className="flex flex-col sm:flex-row flex-wrap justify-center lg:w-full gap-3.5 mt-8.5">
                 <Link
                   to="/create"
                   className="px-8 py-3.75 bg-green-600 hover:bg-green-500 text-white text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
@@ -109,7 +109,7 @@ export function LandingPage() {
 
           {/* Recent strip */}
           {(loading || justPublished.length > 0) && (
-            <div className="shrink-0 px-4 md:px-10 pt-8.5 pb-6.5">
+            <div className="shrink-0 px-4 md:px-10 pt-10 pb-7 lg:pt-0">
               <div className="md:w-fit md:mx-auto">
                 <div className="pb-4">
                   <span className="text-xs tracking-[.16em] uppercase text-gray-400">Recently published</span>

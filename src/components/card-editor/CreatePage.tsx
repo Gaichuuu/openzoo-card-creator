@@ -65,8 +65,7 @@ export function CreatePage() {
       .catch((err) => {
         if (!cancelled) {
           console.error('Card load failed:', err);
-          const msg = err instanceof Error ? err.message : '';
-          setError(`Failed to load card${msg ? `: ${msg}` : ''}`);
+          setError('Failed to load card');
           setLoading(false);
         }
       });
