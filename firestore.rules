@@ -8,10 +8,31 @@ service cloud.firestore {
       // Anyone can read cards
       allow read: if true;
 
-      // Create only (no update/delete) with schema validation
+      // Create with schema validation; ownerUid stamp must be honest
       allow create: if
-        isValidCardDocument(request.resource.data);
+        isValidCardDocument(request.resource.data)
+        && (!('ownerUid' in request.resource.data)
+            || (request.auth != null && request.resource.data.ownerUid == request.auth.uid));
 
+      // Owner-only update; ownerUid/id/createdAt are immutable
+      allow update: if
+        request.auth != null
+        && resource.data.get('ownerUid', null) == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidCardDocument(request.resource.data);
+
+      // Owner-only delete
+      allow delete: if
+        request.auth != null
+        && resource.data.get('ownerUid', null) == request.auth.uid;
+    }
+
+    // Community custom icons
+    match /customIcons/{iconId} {
+      allow read: if true;
+      allow create: if isValidCustomIcon(request.resource.data);
       allow update, delete: if false;
     }
 
@@ -33,4 +54,16 @@ function isValidCardDocument(data) {
     && (!('tribe' in data) || (data.tribe is string && data.tribe.size() <= 40))
     // Enforce reasonable document size (Firestore 1MB limit, but we want much less)
     && request.resource.size() < 500000;
+}
+
+function isValidCustomIcon(data) {
+  return data.keys().hasAll(['id', 'type', 'name', 'imageUrl', 'createdAt'])
+    && data.id is string
+    && data.type in ['set', 'trait', 'terra', 'aura', 'background']
+    && data.name is string
+    && data.name.size() <= 40
+    && data.imageUrl is string
+    && data.imageUrl.size() <= 2048
+    && (!('creatorName' in data) || (data.creatorName is string && data.creatorName.size() <= 50))
+    && request.resource.size() < 10000;
 }
