@@ -24,17 +24,13 @@ import { db, storage } from './firebase';
 import { readSessionStorage, writeSessionStorage, removeSessionStorage } from './safeStorage';
 import { dataUrlToBlob, MAX_UPLOAD_BYTES } from './exportUtils';
 import { ensureAnonymousUser } from './auth';
-import { versionedName } from './publishUtils';
+import { generateId, versionedName } from './publishUtils';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element, ElementOrCustom } from '@/types/card';
 import type { CustomElementDef } from '@/types/customIcons';
 import type { LayoutType } from '@/types/layout';
 import type { EffectBlock } from '@/types/effects';
 import type { Locale } from '@/data/locales';
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
 
 interface PublishOptions {
   creatorName: string;
@@ -63,18 +59,28 @@ export async function publishCard(
   const ts = Date.now();
 
   const cardData = { ...snapshot.cardData };
+  const ownerUidPromise = existing ? null : ensureAnonymousUser();
+
+  const uploadedUrls = new Map<string, Promise<string>>();
+  const uploadDataUrl = (dataUrl: string, name: string, ext = 'png'): Promise<string> => {
+    let pending = uploadedUrls.get(dataUrl);
+    if (!pending) {
+      pending = (async () => {
+        const storageRef = ref(storage, `cards/${cardId}/${versionedName(name, ext, ts)}`);
+        await uploadBlob(dataUrlToBlob(dataUrl), storageRef);
+        return getDownloadURL(storageRef);
+      })();
+      uploadedUrls.set(dataUrl, pending);
+    }
+    return pending;
+  };
 
   const uploads: Promise<void>[] = [];
 
   for (const key of Object.keys(cardData)) {
     const value = cardData[key];
     if (value && value.startsWith('data:image/')) {
-      uploads.push((async () => {
-        const blob = dataUrlToBlob(value);
-        const storageRef = ref(storage, `cards/${cardId}/${versionedName(`zone-${key}`, 'png', ts)}`);
-        await uploadBlob(blob, storageRef);
-        cardData[key] = await getDownloadURL(storageRef);
-      })());
+      uploads.push(uploadDataUrl(value, `zone-${key}`).then((url) => { cardData[key] = url; }));
     }
   }
 
@@ -82,39 +88,24 @@ export async function publishCard(
   const customSecondary = snapshot.customSecondary ? { ...snapshot.customSecondary } : null;
   for (const [def, name] of [[customPrimary, 'custom-primary'], [customSecondary, 'custom-secondary']] as const) {
     if (def && def.icon.startsWith('data:image/')) {
-      uploads.push((async () => {
-        const blob = dataUrlToBlob(def.icon);
-        const storageRef = ref(storage, `cards/${cardId}/${versionedName(name, 'png', ts)}`);
-        await uploadBlob(blob, storageRef);
-        def.icon = await getDownloadURL(storageRef);
-      })());
+      uploads.push(uploadDataUrl(def.icon, name).then((url) => { def.icon = url; }));
     }
   }
 
   let cardArtUrl = snapshot.cardArtUrl || '';
   if (cardArtUrl.startsWith('data:image/')) {
-    uploads.push((async () => {
-      const blob = dataUrlToBlob(cardArtUrl);
-      const storageRef = ref(storage, `cards/${cardId}/${versionedName('art', 'png', ts)}`);
-      await uploadBlob(blob, storageRef);
-      cardArtUrl = await getDownloadURL(storageRef);
-    })());
+    uploads.push(uploadDataUrl(cardArtUrl, 'art').then((url) => { cardArtUrl = url; }));
   }
 
   let thumbnailUrl = '';
   if (thumbnailDataUrl) {
-    uploads.push((async () => {
-      const blob = dataUrlToBlob(thumbnailDataUrl);
-      const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
-      const storageRef = ref(storage, `cards/${cardId}/${versionedName('thumb', ext, ts)}`);
-      await uploadBlob(blob, storageRef);
-      thumbnailUrl = await getDownloadURL(storageRef);
-    })());
+    const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+    uploads.push(uploadDataUrl(thumbnailDataUrl, 'thumb', ext).then((url) => { thumbnailUrl = url; }));
   }
 
   await Promise.all(uploads);
 
-  const ownerUid = existing ? existing.ownerUid : await ensureAnonymousUser();
+  const ownerUid = existing ? existing.ownerUid : await ownerUidPromise;
 
   const now = Timestamp.now();
   const savedCard = {
@@ -130,8 +121,8 @@ export async function publishCard(
     thumbnailUrl,
     creatorName: options.creatorName,
     tags: options.tags,
-    remixedFrom: options.remixedFrom,
-    remixedFromName: options.remixedFromName,
+    remixedFrom: existing ? existing.remixedFrom : options.remixedFrom,
+    remixedFromName: existing ? existing.remixedFromName : options.remixedFromName,
     ...(ownerUid ? { ownerUid } : {}),
     createdAt: existing ? Timestamp.fromDate(existing.createdAt) : now,
     updatedAt: now,

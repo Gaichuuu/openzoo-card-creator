@@ -28,7 +28,7 @@ import { JsonExportButton } from './JsonExportButton';
 import { JsonImportButton } from './JsonImportButton';
 import { PublishDialog } from './PublishDialog';
 import { fetchCard } from '@/lib/galleryService';
-import type { CardTag, SavedCard } from '@/types/card';
+import type { SavedCard } from '@/types/card';
 
 export interface EditorSidebarHandle {
   confirmClear: () => void;
@@ -123,26 +123,22 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
   const clearRemix = () => {
     if (remixId || editId) {
       setSearchParams({}, { replace: true });
-      setRemixSource(null);
-      setEditCard(null);
+      setSourceCard(null);
     }
   };
-  const [remixSource, setRemixSource] = useState<{ name: string; tags: CardTag[] } | null>(null);
-  const [editCard, setEditCard] = useState<SavedCard | null>(null);
+  const [sourceCard, setSourceCard] = useState<SavedCard | null>(null);
+  const editCard = editId ? sourceCard : null;
+  const remixSource = sourceCard ? { name: sourceCard.cardName, tags: sourceCard.tags } : null;
 
+  const sourceId = editId || remixId;
   useEffect(() => {
-    if (!remixId) return;
-    fetchCard(remixId).then((card) => {
-      if (card) setRemixSource({ name: card.cardName, tags: card.tags });
+    if (!sourceId) { setSourceCard(null); return; }
+    let stale = false;
+    fetchCard(sourceId).then((card) => {
+      if (!stale && card) setSourceCard(card);
     });
-  }, [remixId]);
-
-  useEffect(() => {
-    if (!editId) { setEditCard(null); return; }
-    fetchCard(editId).then((card) => {
-      if (card) setEditCard(card);
-    });
-  }, [editId]);
+    return () => { stale = true; };
+  }, [sourceId]);
   const cardType = useCardStore((s) => s.cardType);
   const cardName = useCardStore((s) => s.cardName);
   const setCardName = useCardStore((s) => s.setCardName);

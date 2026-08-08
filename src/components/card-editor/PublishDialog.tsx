@@ -65,8 +65,8 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       const cardId = await publishCard(snapshot, thumbnailDataUrl, {
         creatorName: creatorName.trim(),
         tags: selectedTags,
-        remixedFrom: editCard ? editCard.remixedFrom : (remixedFrom || null),
-        remixedFromName: editCard ? editCard.remixedFromName : (remixedFromName || ''),
+        remixedFrom: remixedFrom || null,
+        remixedFromName: remixedFromName || '',
         existingCard: editCard ?? undefined,
       });
 

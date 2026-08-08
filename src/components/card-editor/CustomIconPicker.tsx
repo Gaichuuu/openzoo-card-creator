@@ -5,9 +5,12 @@ import type { CustomIcon, CustomIconType } from '@/types/customIcons';
 import {
   ICON_MAX_DIM, BACKGROUND_MAX_DIM,
   loadLocalIcons, saveLocalIcon, deleteLocalIcon,
-  processIconFile, fetchCommunityIcons, shareIcon, imageUrlToDataUrl,
+  fetchCommunityIcons, shareIcon,
 } from '@/lib/customIconLibrary';
-import { generateIconId } from '@/lib/customIconUtils';
+import { processImageFile } from '@/lib/imageUtils';
+import { fetchAsDataUrl } from '@/lib/exportUtils';
+import { generateId } from '@/lib/publishUtils';
+import { DEFAULT_CUSTOM_BG, DEFAULT_CUSTOM_BORDER } from '@/lib/customIconUtils';
 
 interface CustomIconPickerProps {
   type: CustomIconType;
@@ -17,13 +20,9 @@ interface CustomIconPickerProps {
   onSelect: (icon: CustomIcon) => void;
 }
 
-const DEFAULT_BG = '#888888';
-const DEFAULT_BORDER = '#CCCCCC';
-
 export function CustomIconPicker({ type, title, open, onClose, onSelect }: CustomIconPickerProps) {
   const [localIcons, setLocalIcons] = useState<CustomIcon[]>([]);
-  const [community, setCommunity] = useState<CustomIcon[] | null>(null);
-  const [communityError, setCommunityError] = useState(false);
+  const [community, setCommunity] = useState<CustomIcon[] | 'error' | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,8 +30,8 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
   const [name, setName] = useState('');
   const [share, setShare] = useState(false);
   const [creatorName, setCreatorName] = useState('');
-  const [cardBackground, setCardBackground] = useState(DEFAULT_BG);
-  const [artBorder, setArtBorder] = useState(DEFAULT_BORDER);
+  const [cardBackground, setCardBackground] = useState(DEFAULT_CUSTOM_BG);
+  const [artBorder, setArtBorder] = useState(DEFAULT_CUSTOM_BORDER);
   const [strongAgainst, setStrongAgainst] = useState<Element[]>([]);
 
   const isAura = type === 'aura';
@@ -42,11 +41,10 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
     if (!open) return;
     setLocalIcons(loadLocalIcons(type));
     setCommunity(null);
-    setCommunityError(false);
     setError('');
     fetchCommunityIcons(type)
       .then(setCommunity)
-      .catch(() => { setCommunity([]); setCommunityError(true); });
+      .catch(() => setCommunity('error'));
   }, [open, type]);
 
   if (!open) return null;
@@ -54,7 +52,10 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
   async function handleFileChange(f: File) {
     setError('');
     try {
-      setPreview(await processIconFile(f, maxDim));
+      const { url } = type === 'background'
+        ? await processImageFile(f, maxDim, 'image/webp', 0.9)
+        : await processImageFile(f, maxDim);
+      setPreview(url);
     } catch {
       setError('Could not read that image.');
       setPreview('');
@@ -73,7 +74,7 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
     setBusy(true);
     setError('');
     const icon: CustomIcon = {
-      id: generateIconId(),
+      id: generateId(),
       type,
       name: name.trim(),
       image: preview,
@@ -81,18 +82,24 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
       ...(creatorName.trim() ? { creatorName: creatorName.trim() } : {}),
       createdAt: Date.now(),
     };
-    if (!saveLocalIcon(icon)) {
-      setError('Could not save to your library (storage full).');
-    }
+    const saved = saveLocalIcon(icon);
+    let shareFailed = false;
     if (share) {
       try {
         await shareIcon(icon);
       } catch {
-        setError('Sharing to the community failed. The icon was still applied to your card.');
+        shareFailed = true;
       }
     }
     setBusy(false);
     onSelect(icon);
+    if (!saved || shareFailed) {
+      const problem = saved
+        ? 'Sharing to the community failed.'
+        : 'Could not save to your library (storage full).';
+      setError(`${problem} The icon was still applied to your card.`);
+      return;
+    }
     onClose();
   }
 
@@ -105,7 +112,7 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
     }
     setBusy(true);
     try {
-      const dataUrl = await imageUrlToDataUrl(icon.image);
+      const dataUrl = await fetchAsDataUrl(icon.image);
       onSelect({ ...icon, image: dataUrl });
       onClose();
     } catch {
@@ -257,11 +264,11 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">Community</label>
           {community === null && <div className="text-xs text-gold-500">Loading…</div>}
-          {communityError && <div className="text-xs text-gray-500">Community icons unavailable.</div>}
-          {community !== null && !communityError && community.length === 0 && (
+          {community === 'error' && <div className="text-xs text-gray-500">Community icons unavailable.</div>}
+          {Array.isArray(community) && community.length === 0 && (
             <div className="text-xs text-gray-500">No shared icons yet.</div>
           )}
-          {community !== null && community.length > 0 && tileGrid(community, false)}
+          {Array.isArray(community) && community.length > 0 && tileGrid(community, false)}
         </div>
 
         {error && <div className="text-[11px] text-red-400">{error}</div>}

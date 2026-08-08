@@ -48,7 +48,6 @@ const DENSITY_OPTIONS: { value: Density; label: string }[] = [
 
 interface FacetSectionsProps {
   counts: GalleryCounts | null;
-  showMine: boolean;
   myCount: number;
   filterMine: boolean;
   setFilterMine: (mine: boolean) => void;
@@ -117,7 +116,7 @@ function FacetList<T extends string>({ title, items, active, onSelect, countFor 
 }
 
 const FacetSections = memo(function FacetSections({
-  counts, showMine, myCount, filterMine, setFilterMine,
+  counts, myCount, filterMine, setFilterMine,
   filterTag, setFilterTag, filterElement, setFilterElement, filterType, setFilterType,
   filterTerra, setFilterTerra, filterTrait, setFilterTrait,
 }: FacetSectionsProps) {
@@ -126,7 +125,7 @@ const FacetSections = memo(function FacetSections({
   const usedTraits = TRAITS.filter((trait) => counts !== null && (counts.byTrait[trait] ?? 1) > 0);
   return (
     <>
-      {showMine && (
+      {myCount > 0 && (
         <div>
           <div className={FACET_HEADING_CLASS}>Yours</div>
           <div className="flex flex-col gap-1.75 text-[13px]">
@@ -322,14 +321,15 @@ export function GalleryPage() {
       .catch((err) => console.error('Gallery counts failed:', err));
   }, []);
 
+  const mineUid = filterMine ? uid : null;
   const buildFilters = useCallback(() => ({
     cardType: filterType || undefined,
     element: filterElement || undefined,
     tag: filterTag || undefined,
     terra: filterTerra || undefined,
     trait: filterTrait || undefined,
-    ownerUid: filterMine && uid ? uid : undefined,
-  }), [filterType, filterElement, filterTag, filterTerra, filterTrait, filterMine, uid]);
+    ownerUid: mineUid || undefined,
+  }), [filterType, filterElement, filterTag, filterTerra, filterTrait, mineUid]);
 
   const activeFilterCount = [filterType, filterElement, filterTag, filterTerra, filterTrait].filter(Boolean).length + (filterMine ? 1 : 0);
   const hasFilters = activeFilterCount > 0;
@@ -449,12 +449,11 @@ export function GalleryPage() {
     () => ({
       counts, filterTag, setFilterTag, filterElement, setFilterElement, filterType, setFilterType,
       filterTerra, setFilterTerra, filterTrait, setFilterTrait,
-      showMine: !!uid && myCount > 0,
       myCount,
       filterMine,
       setFilterMine,
     }),
-    [counts, filterTag, filterElement, filterType, filterTerra, filterTrait, uid, myCount, filterMine],
+    [counts, filterTag, filterElement, filterType, filterTerra, filterTrait, myCount, filterMine],
   );
 
   return (

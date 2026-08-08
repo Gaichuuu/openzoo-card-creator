@@ -6,10 +6,13 @@ export function readLocalStorage(key: string): string | null {
   }
 }
 
-export function writeLocalStorage(key: string, value: string): void {
+export function writeLocalStorage(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
-  } catch { /* unavailable */ }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function readSessionStorage(key: string): string | null {

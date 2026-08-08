@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CardEditor } from './CardEditor';
 import { useCardStore } from '@/lib/store';
 import { fetchCard } from '@/lib/galleryService';
+import { fetchAsDataUrl } from '@/lib/exportUtils';
 import { getCurrentUid } from '@/lib/auth';
 
 export function CreatePage() {
@@ -26,6 +27,7 @@ export function CreatePage() {
     if (!loadId) return;
     let cancelled = false;
 
+    const uidPromise = editId ? getCurrentUid() : null;
     fetchCard(loadId)
       .then(async (card) => {
         if (cancelled) return;
@@ -35,7 +37,7 @@ export function CreatePage() {
           return;
         }
         if (editId) {
-          const uid = await getCurrentUid();
+          const uid = await uidPromise;
           if (cancelled) return;
           if (!card.ownerUid || card.ownerUid !== uid) {
             setSearchParams({ remix: editId }, { replace: true });
@@ -45,17 +47,7 @@ export function CreatePage() {
         let cardArtUrl = card.cardArtUrl;
         if (cardArtUrl && cardArtUrl.startsWith('http')) {
           try {
-            const r = await fetch(cardArtUrl);
-            const blob = await r.blob();
-            if (cancelled) return;
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            });
-            if (cancelled) return;
-            cardArtUrl = dataUrl;
+            cardArtUrl = await fetchAsDataUrl(cardArtUrl);
           } catch {
             console.warn(
               'Could not fetch card art for remix (CORS). ' +

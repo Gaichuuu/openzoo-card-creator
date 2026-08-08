@@ -75,7 +75,7 @@ interface CardEditorState {
   loadSnapshot: (snapshot: CardSnapshot) => void;
 }
 
-function elementIconFor(el: ElementOrCustom | null, def?: CustomElementDef | null): string {
+export function elementIconFor(el: ElementOrCustom | null, def?: CustomElementDef | null): string {
   if (!el) return '';
   if (el === 'Custom') return def?.icon ?? '';
   return `${el}.png`;

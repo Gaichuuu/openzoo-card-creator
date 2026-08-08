@@ -3,14 +3,9 @@ import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { auth } from './firebase';
 
 /** Never signs in */
-export function getCurrentUid(): Promise<string | null> {
-  return new Promise((resolve) => {
-    const unsub = onAuthStateChanged(
-      auth,
-      (user) => { unsub(); resolve(user?.uid ?? null); },
-      () => { unsub(); resolve(null); },
-    );
-  });
+export async function getCurrentUid(): Promise<string | null> {
+  await auth.authStateReady();
+  return auth.currentUser?.uid ?? null;
 }
 
 /** Signs in anonymously if needed */
