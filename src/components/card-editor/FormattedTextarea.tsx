@@ -37,8 +37,8 @@ export function FormattedTextarea({ value, onChange, placeholder, rows = 2, head
           <button type="button" onClick={() => wrapSelection('B')} className={`${FMT_BTN} font-bold`} title="Bold {B:text}">B</button>
           <button type="button" onClick={() => wrapSelection('I')} className={`${FMT_BTN} italic`} title="Italic {I:text}">I</button>
           <button type="button" onClick={() => wrapSelection('BI')} className={`${FMT_BTN} font-bold italic`} title="Bold Italic {BI:text}">BI</button>
-          <button type="button" onClick={() => wrapSelection('R')} className={FMT_BTN} title="Regular — cancel inherited italic {R:text}">R</button>
-          <button type="button" onClick={() => wrapSelection('RB')} className={`${FMT_BTN} font-bold`} title="Regular Bold — bold without italic {RB:text}">RB</button>
+          <button type="button" onClick={() => wrapSelection('R')} className={FMT_BTN} title="Regular: cancel inherited italic {R:text}">R</button>
+          <button type="button" onClick={() => wrapSelection('RB')} className={`${FMT_BTN} font-bold`} title="Regular Bold: bold without italic {RB:text}">RB</button>
         </div>
       </div>
       <textarea

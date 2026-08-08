@@ -144,7 +144,7 @@ export function ImageUploader() {
       </label>
       {artSizeMB !== null && artSizeMB > MAX_UPLOAD_MB && (
         <div className="text-[11px] text-red-400">
-          Image is {artSizeMB.toFixed(1)}MB — exceeds {MAX_UPLOAD_MB}MB upload limit. Try a smaller image.
+          Image is {artSizeMB.toFixed(1)}MB, over the {MAX_UPLOAD_MB}MB upload limit. Try a smaller image.
         </div>
       )}
       {cardArtUrl && (

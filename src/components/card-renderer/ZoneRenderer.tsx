@@ -17,7 +17,7 @@ function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outli
     if (!wrapper || !container) return;
 
     const measure = () => {
-      // Do NOT clear wrapper.style.transform — if scale is unchanged,
+      // Do NOT clear wrapper.style.transform; if scale is unchanged,
       // React won't re-apply the inline style (no-op setState).
       wrapper.style.width = 'max-content';
       wrapper.style.position = 'absolute';
@@ -153,7 +153,7 @@ function buildZoneStyle(zone: Zone, styleOverride: CSSProperties): CSSProperties
       const lastParen = bg.lastIndexOf(')');
       raw.backgroundImage = lastParen !== -1 ? bg.slice(0, lastParen + 1) : bg;
     } else if (bg.includes('url(')) {
-      // Reject url() in style overrides — images should go through resolveImagePath
+      // Reject url() in style overrides; images should go through resolveImagePath
     } else if (!raw.backgroundColor) {
       raw.backgroundColor = bg;
     }

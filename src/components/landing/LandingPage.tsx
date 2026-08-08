@@ -47,7 +47,7 @@ export function LandingPage() {
   return (
     <div className="flex flex-col min-h-dvh bg-navy-950">
       <div className="relative flex flex-col min-h-dvh overflow-clip">
-        {/* Layer 1 — wallpaper */}
+        {/* Layer 1: wallpaper */}
         <div
           aria-hidden="true"
           className="absolute -inset-15 grid grid-cols-4 md:grid-cols-8 gap-4.5 opacity-15"
@@ -64,18 +64,18 @@ export function LandingPage() {
           ))}
         </div>
 
-        {/* Layer 2 — scrim */}
+        {/* Layer 2: scrim */}
         <div
           aria-hidden="true"
           className="absolute inset-0"
           style={{ background: 'radial-gradient(66% 66% at 50% 40%, rgba(8,10,25,.45) 0%, rgba(8,10,25,.88) 100%)' }}
         />
 
-        {/* Layer 3 — content */}
+        {/* Layer 3: content */}
         <div className="relative flex flex-col flex-1">
           <SiteHeader sticky />
 
-          {/* Hero — type block + card */}
+          {/* Hero: type block + card */}
           <div className="flex flex-col lg:flex-row flex-1 items-center justify-center px-4 md:px-15 pt-8 lg:pt-10 pb-2 gap-8 lg:gap-18">
             <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-135">
               <h1

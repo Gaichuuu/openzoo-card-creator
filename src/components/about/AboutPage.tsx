@@ -194,57 +194,53 @@ function SourceLink({ url }: { url: string }) {
 
 function AttributionTable({ data, iconFolder }: { data: Attribution[]; iconFolder?: string }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead>
-          <tr>
-            <th className={`${TH_CLASS} pl-0 w-[24%]`}>Symbol</th>
-            <th className={`${TH_CLASS} w-[28%]`}>Original icon</th>
-            <th className={`${TH_CLASS} w-[24%]`}>Author</th>
-            <th className={`${TH_CLASS} w-[16%]`}>License</th>
-            <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+    <table className="w-full table-fixed md:table-auto text-sm text-left border-collapse">
+      <thead>
+        <tr>
+          <th className={`${TH_CLASS} pl-0 w-[26%]`}>Symbol</th>
+          <th className={`${TH_CLASS} w-[28%]`}>Original icon</th>
+          <th className={`${TH_CLASS} w-[22%]`}>Author</th>
+          <th className={`${TH_CLASS} w-[16%]`}>License</th>
+          <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((row) => (
+          <tr key={row.symbol}>
+            <td className={`${TD_CLASS} pl-0 text-white break-words`}><SymbolCell symbol={row.symbol} folder={iconFolder} /></td>
+            <td className={`${TD_CLASS} text-gray-300 break-words`}>{row.originalIcon}</td>
+            <td className={`${TD_CLASS} text-gray-300 break-words`}>{row.originalAuthor}</td>
+            <td className={`${TD_CLASS} text-gray-400 md:whitespace-nowrap`}>{row.originalLicense}</td>
+            <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
           </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr key={row.symbol}>
-              <td className={`${TD_CLASS} pl-0 text-white`}><SymbolCell symbol={row.symbol} folder={iconFolder} /></td>
-              <td className={`${TD_CLASS} text-gray-300`}>{row.originalIcon}</td>
-              <td className={`${TD_CLASS} text-gray-300`}>{row.originalAuthor}</td>
-              <td className={`${TD_CLASS} text-gray-400 whitespace-nowrap`}>{row.originalLicense}</td>
-              <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
 function ScpTable({ data }: { data: ScpAttribution[] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead>
-          <tr>
-            <th className={`${TH_CLASS} pl-0 w-[24%]`}>Card</th>
-            <th className={`${TH_CLASS} w-[28%]`}>SCP Article</th>
-            <th className={`${TH_CLASS} w-[40%]`}>Author(s)</th>
-            <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+    <table className="w-full table-fixed md:table-auto text-sm text-left border-collapse">
+      <thead>
+        <tr>
+          <th className={`${TH_CLASS} pl-0 w-[26%]`}>Card</th>
+          <th className={`${TH_CLASS} w-[28%]`}>SCP Article</th>
+          <th className={`${TH_CLASS} w-[38%]`}>Author(s)</th>
+          <th className={`${TH_CLASS} pr-0 w-[8%] text-right`}>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((row) => (
+          <tr key={row.card}>
+            <td className={`${TD_CLASS} pl-0 text-white break-words md:whitespace-nowrap`}>{row.card}</td>
+            <td className={`${TD_CLASS} text-gray-300 break-words`}>{row.article}</td>
+            <td className={`${TD_CLASS} text-gray-300 break-words`}>{row.authors}</td>
+            <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
           </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr key={row.card}>
-              <td className={`${TD_CLASS} pl-0 text-white whitespace-nowrap`}>{row.card}</td>
-              <td className={`${TD_CLASS} text-gray-300`}>{row.article}</td>
-              <td className={`${TD_CLASS} text-gray-300`}>{row.authors}</td>
-              <td className={`${TD_CLASS} pr-0 text-right`}><SourceLink url={row.sourceUrl} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
