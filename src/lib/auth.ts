@@ -15,7 +15,8 @@ export async function ensureAnonymousUser(): Promise<string | null> {
     if (existing) return existing;
     const cred = await signInAnonymously(auth);
     return cred.user.uid;
-  } catch {
+  } catch (err) {
+    console.warn('Anonymous sign-in failed; publishing without ownership (card will not be editable):', err);
     return null;
   }
 }

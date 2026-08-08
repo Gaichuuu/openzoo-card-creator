@@ -47,30 +47,14 @@ function SectionDivider({ alwaysVisible }: { alwaysVisible?: boolean }) {
   return <hr className={`border-navy-600 ${alwaysVisible ? '' : 'hidden md:block'}`} />;
 }
 
-function EditorSection({ id, title, summary, openSection, onToggle, className = '', children }: {
-  id: string;
+function EditorSection({ title, children }: {
   title: string;
-  summary?: React.ReactNode;
-  openSection: string | null;
-  onToggle: (id: string) => void;
-  className?: string;
   children: React.ReactNode;
 }) {
-  const open = openSection === id;
   return (
-    <div className={`max-md:border-b max-md:border-navy-700 ${className}`}>
-      <button
-        type="button"
-        onClick={() => onToggle(id)}
-        className="md:hidden w-full h-11 flex items-center justify-between gap-3 text-left cursor-pointer"
-      >
-        <span className="text-sm font-semibold text-white shrink-0">{title}</span>
-        <span className="flex items-center gap-2 text-xs text-gray-500 min-w-0">
-          <span className="truncate">{summary}</span>
-          <span className={`transition-transform ${open ? 'rotate-90' : ''}`}>›</span>
-        </span>
-      </button>
-      <div className={`${open ? 'flex' : 'hidden'} md:flex flex-col gap-4 max-md:pb-4`}>
+    <div>
+      <div className="md:hidden text-sm font-semibold text-white mb-3">{title}</div>
+      <div className="flex flex-col gap-4">
         {children}
       </div>
     </div>
@@ -143,11 +127,6 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
   const locale = useCardStore((s) => s.locale);
   const setLocale = useCardStore((s) => s.setLocale);
   const snapshotVersion = useCardStore((s) => s._snapshotVersion);
-  const effectCount = useCardStore((s) => s.effectBlocks.length);
-  const artNeeded = useCardStore((s) => s.artNeeded);
-  const hasCardArt = useCardStore((s) => Boolean(s.cardArtUrl));
-  const auraSummary = useCardStore((s) => [s.primaryElement, s.secondaryElement].filter(Boolean).join(' · '));
-  const traitsSummary = useCardStore((s) => [...s.traits.filter(Boolean), ...s.terras.filter(Boolean)].join(', '));
   const [lp, setLp] = useState('10');
   const [flavorText, setFlavorText] = useState('');
   const [auraEffectText, setAuraEffectText] = useState('');
@@ -155,7 +134,6 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
   const [artist, setArtist] = useState('');
   const [borderStyle, setBorderStyle] = useState('Red');
   const [showPublish, setShowPublish] = useState(false);
-  const [openSection, setOpenSection] = useState<string | null>('identity');
   const snapshotGuard = useRef(false);
   const layout = CARD_TYPE_TO_LAYOUT[cardType];
   const isBasic = layout.startsWith('Basic');
@@ -380,28 +358,10 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
   useImperativeHandle(ref, () => ({ confirmClear }));
 
-  const toggleSection = (id: string) => setOpenSection((prev) => (prev === id ? null : id));
-
   const showTraits = !isTerra && !isAura;
   const showTerraSlots = !TYPES_WITHOUT_TERRA.has(cardType);
   const showAuraSection = isBasic || isRegularAura || isToken || isTerra;
   const showEffectSection = showTraits || isSpecialTerra || isSpecialAura;
-
-  const identitySummary = [
-    hasTribe && tribe,
-    hasLP && lp && `${lp} LP`,
-    hasSpellbookLimit && spellbookLimit,
-  ].filter(Boolean).join(' · ');
-  const effectSummary = `${effectCount} component${effectCount === 1 ? '' : 's'}`;
-  const artSummary = artNeeded
-    ? <span className="text-red-300">Art needed</span>
-    : hasCardArt ? 'Attached' : '';
-  const loreSummary = [
-    flavorText.trim() && 'Flavor',
-    artist.trim() && 'Artist',
-    hasMetadata && 'Metadata',
-  ].filter(Boolean).join(' · ');
-  const languageSummary = `${locale === 'ja' ? '日本語' : 'English'} · ${borderStyle === 'None' ? 'Borderless' : borderStyle}`;
 
   return (
     <div className="w-full md:w-82 bg-navy-900 md:border-r border-navy-600 flex flex-col min-h-0 flex-1">
@@ -418,7 +378,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         </div>
 
         {/* Language + Border */}
-        <EditorSection id="language" title="Language & border" summary={languageSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-7">
+        <EditorSection title="Language & border">
           <div className="flex gap-4">
             <div className="w-1/2 space-y-1">
               <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
@@ -464,7 +424,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
           </div>
         </EditorSection>
 
-        <EditorSection id="identity" title="Identity & stats" summary={identitySummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-1">
+        <EditorSection title="Identity & stats">
           {/* Card Type */}
           <CardTypeSelector />
 
@@ -531,14 +491,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
         {/* Aura */}
         {showAuraSection && (
-          <EditorSection
-            id="aura"
-            title={isBasic ? 'Aura cost' : isTerra ? 'Terra' : 'Aura'}
-            summary={auraSummary}
-            openSection={openSection}
-            onToggle={toggleSection}
-            className="max-md:order-2"
-          >
+          <EditorSection title={isBasic ? 'Aura cost' : isTerra ? 'Terra' : 'Aura'}>
             {isBasic && (
               <>
                 <CostEditor />
@@ -562,7 +515,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
         {/* Traits + Terra */}
         {(showTraits || showTerraSlots) && (
-          <EditorSection id="traits" title="Traits & Terra" summary={traitsSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-3">
+          <EditorSection title="Traits & Terra">
             {showTraits && (
               <TraitSelector />
             )}
@@ -573,7 +526,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         )}
 
         {/* Card Art */}
-        <EditorSection id="art" title="Card art" summary={artSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-5">
+        <EditorSection title="Card art">
           <SectionDivider />
           <ImageUploader />
           <BackgroundSelector />
@@ -581,7 +534,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
         {/* Effect Text */}
         {showEffectSection && (
-          <EditorSection id="effect" title="Effect text" summary={effectSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-4">
+          <EditorSection title="Effect text">
             {/* Effect Text */}
             {showTraits && (
               <>
@@ -626,7 +579,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
           </EditorSection>
         )}
 
-        <EditorSection id="lore" title="Lore & credits" summary={loreSummary} openSection={openSection} onToggle={toggleSection} className="max-md:order-6">
+        <EditorSection title="Lore & credits">
           {/* Metadata */}
           {hasMetadata && (
             <>
@@ -665,7 +618,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
           />
         </EditorSection>
 
-        <div className="flex flex-col gap-4 max-md:order-8">
+        <div className="flex flex-col gap-4">
           <SectionDivider alwaysVisible />
 
           <button

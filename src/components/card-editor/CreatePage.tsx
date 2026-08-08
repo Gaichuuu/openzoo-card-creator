@@ -62,9 +62,11 @@ export function CreatePage() {
         loadSnapshot({ ...card, cardArtUrl });
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setError('Failed to load card');
+          console.error('Card load failed:', err);
+          const msg = err instanceof Error ? err.message : '';
+          setError(`Failed to load card${msg ? `: ${msg}` : ''}`);
           setLoading(false);
         }
       });
