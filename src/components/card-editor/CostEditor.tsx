@@ -3,7 +3,7 @@ import { useCardStore, elementIconFor } from '@/lib/store';
 import { ELEMENTS } from '@/data/constants';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import type { Element, ElementOrCustom } from '@/types/card';
-import type { CustomIcon } from '@/types/customIcons';
+import type { CustomElementDef, CustomIcon } from '@/types/customIcons';
 import { stripParagraphWrap } from '@/lib/textParserUtils';
 import { isCustomIconValue, customIconToElementDef } from '@/lib/customIconUtils';
 import { CustomIconPicker } from './CustomIconPicker';
@@ -118,35 +118,26 @@ export function CostEditor() {
     }
   }, [cardType]);
 
-  const handleSlot1ElChange = (el: ElementOrCustom) => {
-    if (el === 'Custom') { setPickerSlot(1); return; }
+  const handleSlot1ElChange = (el: ElementOrCustom, def?: CustomElementDef) => {
+    if (el === 'Custom' && !def) { setPickerSlot(1); return; }
     setSlot1El(el);
-    setPrimaryElement(colorElement(el));
+    setPrimaryElement(colorElement(el), def);
     applySlot(1, el, slot1Cost);
     applySlot(2, slot2El, slot2Cost);
   };
 
-  const handleSlot2ElChange = (el: ElementOrCustom | '') => {
-    if (el === 'Custom') { setPickerSlot(2); return; }
+  const handleSlot2ElChange = (el: ElementOrCustom | '', def?: CustomElementDef) => {
+    if (el === 'Custom' && !def) { setPickerSlot(2); return; }
     setSlot2El(el);
-    setSecondaryElement(colorElement(el));
+    setSecondaryElement(colorElement(el), def);
     applySlot(1, slot1El, slot1Cost);
     applySlot(2, el, slot2Cost);
   };
 
   const handleCustomPick = (icon: CustomIcon) => {
     const def = customIconToElementDef(icon);
-    if (pickerSlot === 1) {
-      setSlot1El('Custom');
-      setPrimaryElement('Custom', def);
-      applySlot(1, 'Custom', slot1Cost);
-      applySlot(2, slot2El, slot2Cost);
-    } else if (pickerSlot === 2) {
-      setSlot2El('Custom');
-      setSecondaryElement('Custom', def);
-      applySlot(1, slot1El, slot1Cost);
-      applySlot(2, 'Custom', slot2Cost);
-    }
+    if (pickerSlot === 1) handleSlot1ElChange('Custom', def);
+    else if (pickerSlot === 2) handleSlot2ElChange('Custom', def);
   };
 
   const handleSlot1CostChange = (cost: string) => {
@@ -209,6 +200,26 @@ export function CostEditor() {
             className="w-16 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
           />
         </div>
+        {(slot1El === 'Custom' || slot2El === 'Custom') && (
+          <div className="flex flex-col items-start gap-1 ml-12">
+            {slot1El === 'Custom' && (
+              <button
+                onClick={() => setPickerSlot(1)}
+                className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+              >
+                Change slot 1 custom element…
+              </button>
+            )}
+            {slot2El === 'Custom' && (
+              <button
+                onClick={() => setPickerSlot(2)}
+                className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+              >
+                Change slot 2 custom element…
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <CustomIconPicker
         type="aura"

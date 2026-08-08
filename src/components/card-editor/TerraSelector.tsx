@@ -64,6 +64,7 @@ export function TerraSelector() {
 
   const handleTerraChange = (i: number, value: string) => {
     if (value === '__custom__') { setPickerSlot(i); return; }
+    if (value === (terras[i] || '')) return;
     setTerra(i, value || null);
     if (!value) {
       const newBonuses = [...bonuses];

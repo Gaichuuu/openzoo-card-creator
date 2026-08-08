@@ -52,8 +52,9 @@ function getFontEmbedCSS(): Promise<string> {
       "@font-face { font-family: 'Cambria'; src: local('Cambria'); }",
     );
     fontEmbedCSSCache = rules.join('\n');
-    fontEmbedCSSPending = null;
     return fontEmbedCSSCache;
+  }).finally(() => {
+    fontEmbedCSSPending = null;
   });
   return fontEmbedCSSPending;
 }

@@ -17,7 +17,7 @@ import { CardDetailModal, MODAL_CONTAINER_CLASS, MODAL_CARD_CLASS, MODAL_DETAILS
 import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS, TERRAS, TRAITS } from '@/data/constants';
 import { useLocalStorageState } from '@/lib/useLocalStorageState';
-import { useAuthUid } from '@/lib/auth';
+import { useAuthUid, useAuthReady } from '@/lib/auth';
 
 const FACET_ORDER: Element[] = [
   'Dark', 'Light', 'Water', 'Flame', 'Forest', 'Frost',
@@ -222,6 +222,7 @@ export function GalleryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchName, setSearchName] = useState('');
   const uid = useAuthUid();
+  const authReady = useAuthReady();
   const [myCount, setMyCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -336,11 +337,15 @@ export function GalleryPage() {
 
   useEffect(() => {
     const gen = ++queryGenRef.current;
-    setLoading(true);
     setError(false);
     setCards([]);
     setCursor(null);
     setHasMore(false);
+    if (filterMine && !mineUid) {
+      setLoading(!authReady);
+      return;
+    }
+    setLoading(true);
     fetchCards(buildFilters(), null, undefined, sort)
       .then((result) => {
         if (queryGenRef.current !== gen) return;
@@ -355,10 +360,11 @@ export function GalleryPage() {
         setError(true);
         setLoading(false);
       });
-  }, [buildFilters, sort, refreshKey]);
+  }, [buildFilters, sort, refreshKey, filterMine, mineUid, authReady]);
 
   useEffect(() => {
     if (!hasFilters) { setFilteredCount(null); return; }
+    if (filterMine && !mineUid) { setFilteredCount(authReady ? 0 : null); return; }
     const facetCount = [filterType, filterElement, filterTag, filterTerra, filterTrait].filter(Boolean).length;
     if (facetCount === 1 && !filterMine && counts) {
       const cached =
@@ -377,7 +383,7 @@ export function GalleryPage() {
       .then((n) => { if (!stale) setFilteredCount(n); })
       .catch(() => { if (!stale) setFilteredCount(null); });
     return () => { stale = true; };
-  }, [buildFilters, hasFilters, filterTag, filterType, filterElement, filterTerra, filterTrait, filterMine, counts]);
+  }, [buildFilters, hasFilters, filterTag, filterType, filterElement, filterTerra, filterTrait, filterMine, mineUid, authReady, counts]);
 
   const loadMore = useCallback(async () => {
     if (loadingMoreRef.current || !hasMore || !cursor) return;

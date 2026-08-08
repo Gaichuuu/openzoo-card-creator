@@ -145,6 +145,7 @@ function blockToPlain(block: EffectBlock): Record<string, unknown> {
 function docToSavedCard(data: Record<string, unknown>): SavedCard {
   const tags: CardTag[] = Array.isArray(data.tags) ? data.tags as CardTag[]
     : data.status === 'testing' ? ['Playtesting' as CardTag] : [];
+  const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date();
   return {
     id: data.id as string,
     cardType: data.cardType as CardType,
@@ -175,8 +176,8 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     tags,
     remixedFrom: (data.remixedFrom || null) as string | null,
     remixedFromName: (data.remixedFromName || '') as string,
-    createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
-    updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
+    createdAt,
+    updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : createdAt,
   };
 }
 

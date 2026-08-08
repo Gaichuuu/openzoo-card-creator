@@ -95,6 +95,14 @@ export function AuraElementSelector() {
         ))}
         <option value="Custom">Custom…</option>
       </select>
+      {element === 'Custom' && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+        >
+          Change custom element…
+        </button>
+      )}
       <CustomIconPicker
         type="aura"
         title="Custom aura element"

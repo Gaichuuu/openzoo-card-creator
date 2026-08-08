@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { publishCard } from '@/lib/galleryService';
 import { exportStandardPng, displayCardName } from '@/lib/exportUtils';
@@ -18,6 +18,7 @@ interface PublishDialogProps {
 
 export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, initialTags, editCard }: PublishDialogProps) {
   const navigate = useNavigate();
+  const [, setSearchParams] = useSearchParams();
   const isUpdate = !!editCard;
   const getSnapshot = useCardStore((s) => s.getSnapshot);
   const artNeeded = useCardStore((s) => s.artNeeded);
@@ -95,6 +96,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
   }
 
   function closeAfterSuccess() {
+    setSearchParams({}, { replace: true });
     useCardStore.getState().resetCard();
     onClose();
   }

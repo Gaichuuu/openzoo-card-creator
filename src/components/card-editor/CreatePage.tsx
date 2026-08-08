@@ -28,7 +28,9 @@ export function CreatePage() {
     let cancelled = false;
 
     const uidPromise = editId ? getCurrentUid() : null;
-    fetchCard(loadId)
+    const cached = useCardStore.getState().sourceCard;
+    const cardPromise = cached?.id === loadId ? Promise.resolve(cached) : fetchCard(loadId);
+    cardPromise
       .then(async (card) => {
         if (cancelled) return;
         if (!card) {
@@ -36,6 +38,7 @@ export function CreatePage() {
           setLoading(false);
           return;
         }
+        useCardStore.getState().setSourceCard(card);
         if (editId) {
           const uid = await uidPromise;
           if (cancelled) return;

@@ -72,8 +72,10 @@ export function TraitSelector() {
             <select
               value={traits[i] || ''}
               onChange={(e) => {
-                if (e.target.value === '__custom__') { setPickerSlot(i); return; }
-                setTrait(i, e.target.value || null);
+                const value = e.target.value;
+                if (value === '__custom__') { setPickerSlot(i); return; }
+                if (value === (traits[i] || '')) return;
+                setTrait(i, value || null);
               }}
               className="flex-1 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
             >

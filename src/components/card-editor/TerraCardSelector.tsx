@@ -91,6 +91,14 @@ export function TerraCardSelector() {
         ))}
         <option value="__custom__">Custom…</option>
       </select>
+      {terra === '__custom__' && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+        >
+          Change custom terra…
+        </button>
+      )}
       <CustomIconPicker
         type="terra"
         title="Custom terra"

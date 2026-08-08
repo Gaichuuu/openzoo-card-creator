@@ -42,6 +42,12 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
     setLocalIcons(loadLocalIcons(type));
     setCommunity(null);
     setError('');
+    setPreview('');
+    setName('');
+    setShare(false);
+    setCardBackground(DEFAULT_CUSTOM_BG);
+    setArtBorder(DEFAULT_CUSTOM_BORDER);
+    setStrongAgainst([]);
     fetchCommunityIcons(type)
       .then(setCommunity)
       .catch(() => setCommunity('error'));
@@ -181,7 +187,9 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f && f.type !== 'image/svg+xml') handleFileChange(f);
+                  if (!f) return;
+                  if (f.type === 'image/svg+xml') { setError('SVG files are not supported.'); return; }
+                  handleFileChange(f);
                 }}
               />
             </label>

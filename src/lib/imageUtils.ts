@@ -25,7 +25,11 @@ export function processImageFile(
       URL.revokeObjectURL(objectUrl);
       if (!ctx) { reject(new Error('Canvas 2D not supported')); return; }
       ctx.drawImage(img, 0, 0, width, height);
-      resolve({ url: canvas.toDataURL(mimeType, quality), width, height });
+      let url = canvas.toDataURL(mimeType, quality);
+      if (mimeType !== 'image/png' && !url.startsWith(`data:${mimeType}`)) {
+        url = canvas.toDataURL('image/jpeg', quality ?? 0.9);
+      }
+      resolve({ url, width, height });
     };
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);

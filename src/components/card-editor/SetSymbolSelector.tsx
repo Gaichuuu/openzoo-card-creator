@@ -105,6 +105,14 @@ export function SetSymbolSelector() {
           </span>
         )}
       </div>
+      {set === '__custom__' && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+        >
+          Change custom symbol…
+        </button>
+      )}
       <CustomIconPicker
         type="set"
         title="Custom set symbol"

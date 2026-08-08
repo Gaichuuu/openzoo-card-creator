@@ -26,3 +26,14 @@ export function useAuthUid(): string | null {
   useEffect(() => onAuthStateChanged(auth, (u) => setUid(u?.uid ?? null)), []);
   return uid;
 }
+
+/** True once Firebase has finished restoring any persisted session */
+export function useAuthReady(): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let stale = false;
+    auth.authStateReady().then(() => { if (!stale) setReady(true); });
+    return () => { stale = true; };
+  }, []);
+  return ready;
+}

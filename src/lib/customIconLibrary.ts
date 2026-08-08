@@ -67,7 +67,9 @@ export async function fetchCommunityIcons(type: CustomIconType): Promise<CustomI
 }
 
 export async function shareIcon(icon: CustomIcon): Promise<void> {
-  const storageRef = ref(storage, `customIcons/${icon.id}.png`);
+  const mime = icon.image.match(/^data:(image\/\w+);/)?.[1];
+  const ext = mime === 'image/webp' ? 'webp' : mime === 'image/jpeg' ? 'jpg' : 'png';
+  const storageRef = ref(storage, `customIcons/${icon.id}.${ext}`);
   await uploadBytes(storageRef, dataUrlToBlob(icon.image));
   const imageUrl = await getDownloadURL(storageRef);
   await setDoc(doc(db, 'customIcons', icon.id), {

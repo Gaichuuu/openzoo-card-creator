@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { LayoutType } from '@/types/layout';
-import type { CardData, CardSnapshot, CardType, Element, ElementOrCustom } from '@/types/card';
+import type { CardData, CardSnapshot, CardType, Element, ElementOrCustom, SavedCard } from '@/types/card';
 import type { CustomElementDef } from '@/types/customIcons';
 import {
   CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA, TYPES_WITHOUT_TRAITS,
@@ -39,6 +39,7 @@ interface CardEditorState {
   cardArtPositionX: number;
   cardArtPositionY: number;
   artNeeded: boolean;
+  sourceCard: SavedCard | null;
   _artNeededTouched: boolean;
   _isLoadingSnapshot: boolean;
   _snapshotVersion: number;
@@ -64,6 +65,7 @@ interface CardEditorState {
   setMainTextBoxExtraShrink: (v: number) => void;
   setCardArtPosition: (x: number, y: number) => void;
   setArtNeeded: (v: boolean) => void;
+  setSourceCard: (card: SavedCard | null) => void;
   _setAutoFitRatio: (ratio: number) => void;
   setRawCardData: (key: string, value: string) => void;
   addEffectBlock: (type: EffectBlockType) => void;
@@ -235,6 +237,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   cardArtPositionX: 0,
   cardArtPositionY: 0,
   artNeeded: true,
+  sourceCard: null,
   _artNeededTouched: false,
   _isLoadingSnapshot: false,
   _snapshotVersion: 0,
@@ -591,6 +594,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardArtPositionX: 0,
       cardArtPositionY: 0,
       artNeeded: true,
+      sourceCard: null,
       _artNeededTouched: false,
       _autoFitRatio: 1,
       _isLoadingSnapshot: false,
@@ -605,6 +609,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardData: data,
     });
   },
+
+  setSourceCard: (card) => set({ sourceCard: card }),
 
   getSnapshot: () => {
     const s = get();
@@ -658,8 +664,14 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       }
     }
 
-    applyAuraColors(newData, lt, snapshot.primaryElement, snapshot.secondaryElement, snapshot.cardType, customPrimary, customSecondary);
-    applyStrongAgainst(newData, lt, snapshot.primaryElement, snapshot.secondaryElement, locale, customPrimary, customSecondary);
+    const derived: CardData = {};
+    applyAuraColors(derived, lt, snapshot.primaryElement, snapshot.secondaryElement, snapshot.cardType, customPrimary, customSecondary);
+    applyStrongAgainst(derived, lt, snapshot.primaryElement, snapshot.secondaryElement, locale, customPrimary, customSecondary);
+    for (const key of Object.keys(derived)) {
+      if (!(key in newData)) {
+        newData[key] = derived[key];
+      }
+    }
 
     const timer = setTimeout(() => {
       set({ _isLoadingSnapshot: false, _snapshotTimer: null });
@@ -687,6 +699,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
 }));
 
 const AUTOSAVE_KEY = 'openzoo-card-autosave';
+const AUTOSAVE_MAX_VALUE_CHARS = 256 * 1024;
 let _saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 useCardStore.subscribe((state) => {
@@ -695,7 +708,14 @@ useCardStore.subscribe((state) => {
   _saveTimer = setTimeout(() => {
     try {
       const snapshot = useCardStore.getState().getSnapshot();
-      sessionStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...snapshot, cardArtUrl: null }));
+      const cardData = { ...snapshot.cardData };
+      for (const key of Object.keys(cardData)) {
+        const value = cardData[key];
+        if (value && value.startsWith('data:') && value.length > AUTOSAVE_MAX_VALUE_CHARS) {
+          delete cardData[key];
+        }
+      }
+      sessionStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...snapshot, cardData, cardArtUrl: null }));
     } catch { /* sessionStorage quota exceeded or unavailable */ }
   }, 500);
 });
