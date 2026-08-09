@@ -18,6 +18,7 @@ import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS, TERRAS, TRAITS } from '@/data/constants';
 import { useLocalStorageState } from '@/lib/useLocalStorageState';
 import { useAuthUid, useAuthReady } from '@/lib/auth';
+import { buildCardSearchText } from '@/lib/cardSearchText';
 
 const FACET_ORDER: Element[] = [
   'Dark', 'Light', 'Water', 'Flame', 'Forest', 'Frost',
@@ -437,12 +438,19 @@ export function GalleryPage() {
   }, [cardId, cards, closeModal]);
 
   const search = searchName.trim().toLowerCase();
+  // TODO: search is limited to the currently loaded cards. We should fetch full results from server.
+  const searchTexts = useMemo(() => {
+    const texts = new Map<string, string>();
+    for (const c of cards) texts.set(c.id, buildCardSearchText(c));
+    return texts;
+  }, [cards]);
   const filteredCards = useMemo(() => (search
     ? cards.filter((c) =>
         c.cardName.toLowerCase().includes(search)
         || c.tribe.toLowerCase().includes(search)
-        || c.creatorName.toLowerCase().includes(search))
-    : cards), [cards, search]);
+        || c.creatorName.toLowerCase().includes(search)
+        || (searchTexts.get(c.id) || '').includes(search))
+    : cards), [cards, search, searchTexts]);
 
   const exactCount = search ? null : (hasFilters ? filteredCount : counts?.total) ?? null;
   const shownCount = exactCount ?? filteredCards.length;
@@ -479,7 +487,7 @@ export function GalleryPage() {
               type="text"
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              placeholder="Search cards, tribes, authors…"
+              placeholder="Card name, effects, flavor text…"
               maxLength={50}
               className="input-plain w-full max-w-60 min-w-0 shrink bg-navy-800 rounded px-2 py-1 text-sm text-white placeholder-gray-500"
             />

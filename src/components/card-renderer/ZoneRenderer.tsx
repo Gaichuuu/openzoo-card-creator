@@ -375,9 +375,11 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       for (const d of Array.from(el.querySelectorAll('[data-oz-pitch]')) as HTMLElement[]) {
         d.style.lineHeight = d.dataset.ozPrevLh ?? '';
         if (d.dataset.ozPrevPt !== undefined) d.style.paddingTop = d.dataset.ozPrevPt;
+        if (d.dataset.ozPrevPb !== undefined) d.style.paddingBottom = d.dataset.ozPrevPb;
         delete d.dataset.ozPitch;
         delete d.dataset.ozPrevLh;
         delete d.dataset.ozPrevPt;
+        delete d.dataset.ozPrevPb;
       }
       for (const child of children) {
         const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
@@ -502,12 +504,12 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           }
         }
 
-        const toGrid = (v: number) => Math.floor(v * ratio * 4) / 4 / ratio;
+        const gridNear = (v: number) => Math.round(v * ratio * 4) / 4 / ratio;
         for (const d of Array.from(el.querySelectorAll('[data-zone-id]')) as HTMLElement[]) {
           const cs = getComputedStyle(d);
           const lh = parseFloat(cs.lineHeight);
           if (!isNaN(lh) && lh > 0) {
-            const q = toGrid(lh);
+            const q = gridNear(lh);
             if (Math.abs(q - lh) > 0.001) {
               d.dataset.ozPitch = '1';
               d.dataset.ozPrevLh = d.style.lineHeight;
@@ -516,7 +518,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           }
           const pt = parseFloat(cs.paddingTop);
           if (pt > 0) {
-            const q = toGrid(pt);
+            const q = gridNear(pt);
             if (Math.abs(q - pt) > 0.001) {
               if (d.dataset.ozPitch !== '1') {
                 d.dataset.ozPitch = '1';
@@ -526,6 +528,9 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
               d.style.paddingTop = `${q}px`;
             }
           }
+        }
+        if (el.scrollHeight > parseFloat(el.style.height)) {
+          el.style.height = `${el.scrollHeight}px`;
         }
 
         el.style.transform = mainTextBoxNudge !== 0
