@@ -195,16 +195,14 @@ select.input-plain:focus {
   z-index: 1 !important;
 }
 
-.card-exporting [data-zone-key="CryptidInfoBar"] > * {
-  transform: translateY(0.5px) !important;
-}
 .card-exporting [data-zone-key="StrongAgainst"] > span {
   transform: translateY(1px) !important;
-}
-.card-exporting [data-zone-key="AttackDivider"] {
-  margin-top: 1px !important;
-  margin-bottom: 1px !important;
 }
 .card-exporting [data-zone-key="FlavorText"] > * {
   transform: translateY(0.5px) !important;
 }
+.card-exporting [data-zone-key="AttackEffect 1"] > *,
+.card-exporting [data-zone-key="AttackEffect"] > * {
+  transform: translateY(0.5px) !important;
+}
+

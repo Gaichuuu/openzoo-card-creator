@@ -68,6 +68,7 @@ interface ZoneRendererProps {
   cardData: CardData;
   borderless?: boolean;
   inBorderlessTextScope?: boolean;
+  textBoxReserve?: number;
 }
 
 const TERRA_BONUS_FIX: CSSProperties = {
@@ -77,21 +78,39 @@ const TERRA_BONUS_FIX: CSSProperties = {
   width: '26px',
 };
 const ATTACK_NAME_FIX: CSSProperties = {
-  marginBottom: '-2px',
+  marginBottom: '-1px',
   alignItems: 'flex-end',
 };
 const ATTACK_EFFECT_FIX: CSSProperties = {
   paddingBottom: '1.5px',
+  lineHeight: '9px',
+};
+const FLAVOR_TEXT_FIX: CSSProperties = {
+  lineHeight: '0.95',
+};
+const METADATA_TEXT_FIX: CSSProperties = {
+  lineHeight: '8px',
+};
+const MAIN_TEXT_FIX: CSSProperties = {
+  lineHeight: '8px',
 };
 const ZONE_FIXES: Record<string, CSSProperties> = {
   Terra1ATK: TERRA_BONUS_FIX,
   Terra1LP: TERRA_BONUS_FIX,
   Terra2ATK: TERRA_BONUS_FIX,
   Terra2LP: TERRA_BONUS_FIX,
-  'Attack 1': ATTACK_NAME_FIX,
-  Attack: ATTACK_NAME_FIX,
   'AttackEffect 1': ATTACK_EFFECT_FIX,
   AttackEffect: ATTACK_EFFECT_FIX,
+  FlavorText: FLAVOR_TEXT_FIX,
+  'Height/Length': METADATA_TEXT_FIX,
+  Weight: METADATA_TEXT_FIX,
+  GPS: METADATA_TEXT_FIX,
+  'DOB/Discovered:': METADATA_TEXT_FIX,
+  MainTextBox: MAIN_TEXT_FIX,
+};
+const CONTAINER_ZONE_FIXES: Record<string, CSSProperties> = {
+  'Attack 1': ATTACK_NAME_FIX,
+  Attack: ATTACK_NAME_FIX,
 };
 
 const BORDERLESS_TEXT_OUTLINE: OutlineStyle = {
@@ -186,7 +205,8 @@ function getOutlinedZoneStyle(zone: Zone, overrideStr: string): OutlinedZoneStyl
   if (!entry) {
     if (byOverride.size > 64) byOverride.clear(); // nudge sliders can churn override strings
     const zoneKey = zone.imageDataKey || zone.textDataKey;
-    const fix = zoneKey ? ZONE_FIXES[zoneKey] : undefined;
+    const fixMap = zone.type === 'container' ? CONTAINER_ZONE_FIXES : ZONE_FIXES;
+    const fix = zoneKey ? fixMap[zoneKey] : undefined;
     entry = applyStrokeOutline(buildZoneStyle(zone, { ...fix, ...parseStyleString(overrideStr) }));
     byOverride.set(overrideStr, entry);
   }
@@ -214,7 +234,7 @@ const FLEX_LAYOUT_KEYS = new Set([
   'gap', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
 ]);
 
-export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessTextScope = false }: ZoneRendererProps) {
+export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessTextScope = false, textBoxReserve }: ZoneRendererProps) {
   const zoneRef = useRef<HTMLDivElement>(null);
   const shouldAutoFit = zone.type === 'container' && zone.imageDataKey === 'MainTextBox';
   const isCardArtZone = zone.imageDataKey === 'CardArt' || zone.imageDataKey === 'Art';
@@ -338,12 +358,16 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
         child.style.width = cz ? (cz.style.width as string || '') : '';
         child.style.height = cz ? (cz.style.height as string || '') : '';
+        child.style.transform = cz ? (cz.style.transform as string || '') : '';
         child.style.minHeight = '';
         child.style.flexShrink = '';
       }
 
       const containerOverride = parseStyleString(cardData[`s${zone.id}`] || '');
       el.style.paddingTop = (containerOverride.paddingTop as string) || '1px';
+      if (textBoxReserve != null) {
+        el.style.paddingBottom = `${textBoxReserve}px`;
+      }
       for (const child of children) {
         const childId = child.getAttribute('data-zone-id');
         if (childId) {
@@ -375,21 +399,62 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         boostPaddingEl.style.paddingTop = '0px';
       }
 
-      const contentHeight = el.offsetHeight;
-      const availableHeight = baseHeight - boostPaddingValue;
-      const autoRatio = contentHeight > availableHeight
-        ? (availableHeight - 2) / contentHeight
-        : 1;
-      const finalRatio = autoRatio * (1 - mainTextBoxExtraShrink * 0.02);
+      const fixedWidthChildren = children
+        .map((child) => {
+          const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
+          const w = cz ? parseFloat(cz.style.width as string) : NaN;
+          return { child, baseW: !isNaN(w) && w > 0 ? w : 0 };
+        })
+        .filter((c) => c.baseW > 0);
+
+      const measureAt = (r: number): number => {
+        el.style.width = `${baseWidth / r}px`;
+        for (const { child, baseW } of fixedWidthChildren) {
+          child.style.width = `${baseW / r}px`;
+        }
+        return el.offsetHeight;
+      };
+
+      const fitsAt = (r: number): boolean =>
+        measureAt(r) * r <= baseHeight - boostPaddingValue - 2;
+
+      let autoRatio = 1;
+      if (!fitsAt(1)) {
+        let lo = 0.3;
+        let hi = 1.0;
+        for (let i = 0; i < 10; i++) {
+          const mid = (lo + hi) / 2;
+          if (fitsAt(mid)) lo = mid;
+          else hi = mid;
+        }
+        autoRatio = lo;
+      }
+      const finalRatio = Math.min(1, autoRatio * (1 - mainTextBoxExtraShrink * 0.02));
+
+      const snapThinChildren = (ratio: number) => {
+        const rootRect = el.getBoundingClientRect();
+        const layoutWidth = parseFloat(el.style.width);
+        if (!rootRect.width || !layoutWidth) return;
+        const screenPerLocal = rootRect.width / layoutWidth;
+        for (const child of children) {
+          const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
+          const h = cz ? parseFloat(cz.style.height as string) : NaN;
+          if (isNaN(h) || h <= 0 || h > 2) continue;
+          const y = ((child.getBoundingClientRect().top - rootRect.top) / screenPerLocal) * ratio;
+          const delta = Math.round(y) - y;
+          if (Math.abs(delta) > 0.02) {
+            child.style.transform = `translateY(${delta / ratio}px)`;
+          }
+        }
+      };
 
       useCardStore.getState()._setAutoFitRatio(autoRatio);
 
       if (finalRatio < 1) {
         const ratio = finalRatio;
-        const childWidths = children.map((c) => c.offsetWidth);
+        const contentHeight = measureAt(ratio);
 
         el.style.zoom = String(ratio);
-        el.style.width = `${baseWidth / ratio}px`;
 
         if (boostPaddingEl) {
           const compensatedPadding = boostPaddingValue / ratio;
@@ -399,26 +464,25 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           el.style.height = `${contentHeight}px`;
         }
 
-        children.forEach((child, i) => {
-          if (childWidths[i] > 0) {
-            child.style.width = `${childWidths[i] / ratio}px`;
-          }
+        for (const child of children) {
           const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
           if (cz) {
             const h = parseFloat(cz.style.height as string);
             if (!isNaN(h) && h > 0 && h <= 2) {
-              const compensated = `${(h + 0.05) / ratio}px`;
+              const compensated = `${h / ratio}px`;
               child.style.height = compensated;
               child.style.minHeight = compensated;
               child.style.flexShrink = '0';
             }
           }
-        });
+        }
 
         el.style.transform = mainTextBoxNudge !== 0
           ? `translateY(${mainTextBoxNudge}px)`
           : '';
+        snapThinChildren(ratio);
       } else {
+        measureAt(1);
         el.style.zoom = '1';
         el.style.height = `${baseHeight}px`;
         if (boostPaddingEl) {
@@ -427,6 +491,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         el.style.transform = mainTextBoxNudge !== 0
           ? `translateY(${mainTextBoxNudge}px)`
           : '';
+        snapThinChildren(1);
       }
     };
 
@@ -516,7 +581,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         <div ref={zoneRef} style={innerStyle}>
           {textContent && shouldAutoFitFlavor && wrapOutline(<ParsedText html={textContent} />, outline)}
           {zone.childZones.map((child, idx) => (
-            <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} />
+            <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} />
           ))}
         </div>
       </div>
@@ -532,7 +597,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       )}
 
       {zone.childZones.map((child, idx) => (
-        <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} />
+        <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} />
       ))}
     </div>
   );
