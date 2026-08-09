@@ -804,7 +804,7 @@ export function RulebookPage() {
   return (
     <div className="min-h-dvh bg-navy-950 text-white">
       <SiteHeader sticky />
-      <nav className="hidden lg:block fixed top-[var(--site-header-h)] left-0 w-68 h-[calc(100dvh-var(--site-header-h))] overflow-y-auto border-r border-navy-600 bg-navy-900 py-6.5 px-5 z-10">
+      <nav className="hidden lg:block fixed top-(--site-header-h) left-0 w-68 h-[calc(100dvh-var(--site-header-h))] overflow-y-auto border-r border-navy-600 bg-navy-900 py-6.5 px-5 z-10">
         <span className="block text-[10px] uppercase tracking-[.18em] text-gold-500 mb-4">Contents</span>
         <div className="flex flex-col gap-0.5">
           {tocTree.map(({ section, number, children }) => (
