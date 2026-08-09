@@ -256,7 +256,7 @@ export function CustomIconPicker({ type, title, open, onClose, onSelect }: Custo
             disabled={busy || !preview}
             className="w-full bg-navy-800 border border-gold text-gold-400 rounded px-2 py-1 text-sm hover:text-white disabled:opacity-50"
           >
-            {busy ? 'Working…' : 'Use this icon'}
+            {busy ? 'Working…' : type === 'background' ? 'Use this image' : 'Use this icon'}
           </button>
         </div>
 

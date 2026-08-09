@@ -205,4 +205,8 @@ select.input-plain:focus {
 .card-exporting [data-zone-key="AttackEffect"] > * {
   transform: translateY(0.5px) !important;
 }
+.card-exporting [data-zone-key="AttackDivider"] {
+  margin-top: 2px !important;
+  margin-bottom: 0px !important;
+}
 
