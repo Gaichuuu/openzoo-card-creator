@@ -15,7 +15,7 @@ export function Stepper({ label, value, min, max, onChange, valueWidth = 'w-4' }
   valueWidth?: string;
 }) {
   return (
-    <div className="flex items-center gap-1.5 w-1/2">
+    <div className="flex items-center gap-1.5 flex-1">
       <span className="text-[10px] text-gold-500">{label}</span>
       <button
         onClick={() => onChange(value - 1)}
@@ -50,10 +50,10 @@ export function TextBoxBuilder() {
   const addEffectBlock = useCardStore((s) => s.addEffectBlock);
   const removeEffectBlock = useCardStore((s) => s.removeEffectBlock);
   const updateEffectBlock = useCardStore((s) => s.updateEffectBlock);
-  const nudge = useCardStore((s) => s.mainTextBoxNudge);
-  const setNudge = useCardStore((s) => s.setMainTextBoxNudge);
   const extraShrink = useCardStore((s) => s.mainTextBoxExtraShrink);
   const setExtraShrink = useCardStore((s) => s.setMainTextBoxExtraShrink);
+  const lineHeightAdj = useCardStore((s) => s.mainTextBoxLineHeight);
+  const setLineHeightAdj = useCardStore((s) => s.setMainTextBoxLineHeight);
   const autoFitRatio = useCardStore((s) => s._autoFitRatio);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const available = AVAILABLE_BLOCKS[layoutType] || [];
@@ -94,10 +94,10 @@ export function TextBoxBuilder() {
         </div>
       </div>
 
-      {sorted.length > 0 && <div className="flex">
-        <Stepper label="Nudge" value={nudge} min={-10} max={10} onChange={setNudge} />
+      {sorted.length > 0 && <div className="flex gap-2">
+        <Stepper label="Height" value={lineHeightAdj} min={-6} max={6} onChange={setLineHeightAdj} />
         <Stepper
-          label={<>Shrink{totalShrinkPct > 0 && <span className="text-gray-500 ml-0.5">({totalShrinkPct}%)</span>}</>}
+          label={<>Shrink<span className="text-gray-500 ml-0.5 inline-block w-8 tabular-nums">({totalShrinkPct}%)</span></>}
           value={extraShrink} min={-20} max={20} onChange={setExtraShrink}
         />
       </div>}

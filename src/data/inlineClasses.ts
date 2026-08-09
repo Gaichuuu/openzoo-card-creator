@@ -54,6 +54,7 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
     fontWeight: 'bold',
     display: 'inline',
     color: 'inherit',
+    paddingLeft: '0.2em',
   },
   Power: {
     paddingLeft: '0.3em',
@@ -71,8 +72,8 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
     marginTop: '0.15em',
     height: 'auto',
     lineHeight: '1',
-    paddingTop: '0.358em',
-    paddingBottom: '0.242em',
+    paddingTop: '0.25em',
+    paddingBottom: '0.25em',
     textTransform: 'uppercase' as const,
     fontSize: '0.7em',
     boxShadow: '0px 0.5px 1px rgba(0, 0, 0, 0.25)',

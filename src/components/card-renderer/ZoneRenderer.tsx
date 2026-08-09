@@ -79,7 +79,6 @@ const TERRA_BONUS_FIX: CSSProperties = {
 };
 const ATTACK_NAME_FIX: CSSProperties = {
   marginBottom: '-1px',
-  alignItems: 'flex-end',
 };
 const ATTACK_EFFECT_FIX: CSSProperties = {
   paddingBottom: '1.5px',
@@ -107,6 +106,7 @@ const ZONE_FIXES: Record<string, CSSProperties> = {
   GPS: METADATA_TEXT_FIX,
   'DOB/Discovered:': METADATA_TEXT_FIX,
   MainTextBox: MAIN_TEXT_FIX,
+  MainText: MAIN_TEXT_FIX,
 };
 const CONTAINER_ZONE_FIXES: Record<string, CSSProperties> = {
   'Attack 1': ATTACK_NAME_FIX,
@@ -238,8 +238,12 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   const zoneRef = useRef<HTMLDivElement>(null);
   const shouldAutoFit = zone.type === 'container' && zone.imageDataKey === 'MainTextBox';
   const isCardArtZone = zone.imageDataKey === 'CardArt' || zone.imageDataKey === 'Art';
+  const isMainTextZone = zone.type === 'text'
+    && (zone.textDataKey === 'MainTextBox' || zone.textDataKey === 'MainText');
   const mainTextBoxNudge = useCardStore((s) => shouldAutoFit ? s.mainTextBoxNudge : 0);
   const mainTextBoxExtraShrink = useCardStore((s) => shouldAutoFit ? s.mainTextBoxExtraShrink : 0);
+  const mainTextLineHeightAdj = useCardStore((s) =>
+    (isMainTextZone || shouldAutoFit) ? s.mainTextBoxLineHeight : 0);
   const cardArtPositionX = useCardStore((s) => isCardArtZone ? s.cardArtPositionX : 0);
   const cardArtPositionY = useCardStore((s) => isCardArtZone ? s.cardArtPositionY : 0);
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
@@ -333,14 +337,28 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       el.style.height = `${baseHeight}px`;
 
       const naturalWidth = el.offsetWidth;
+      const children = Array.from(el.children) as HTMLElement[];
+      const childZoneById = new Map(zone.childZones.map((z) => [String(z.id), z]));
+      const metaLineHeight = parseFloat(METADATA_TEXT_FIX.lineHeight as string);
 
       if (naturalWidth > baseWidth) {
         const ratio = baseWidth / naturalWidth;
         el.style.zoom = String(ratio);
         el.style.width = `${naturalWidth}px`;
         el.style.height = `${baseHeight / ratio}px`;
+        for (const child of children) {
+          const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
+          const h = cz ? parseFloat(cz.style.height as string) : NaN;
+          if (!isNaN(h) && h > 0) child.style.height = `${h / ratio}px`;
+          child.style.lineHeight = `${metaLineHeight / ratio}px`;
+        }
       } else {
         el.style.width = `${baseWidth}px`;
+        for (const child of children) {
+          const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
+          child.style.height = cz ? (cz.style.height as string || '') : '';
+          child.style.lineHeight = `${metaLineHeight}px`;
+        }
       }
       return;
     }
@@ -354,6 +372,13 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
       const childZoneById = new Map(zone.childZones.map((z) => [String(z.id), z]));
       const children = Array.from(el.children) as HTMLElement[];
+      for (const d of Array.from(el.querySelectorAll('[data-oz-pitch]')) as HTMLElement[]) {
+        d.style.lineHeight = d.dataset.ozPrevLh ?? '';
+        if (d.dataset.ozPrevPt !== undefined) d.style.paddingTop = d.dataset.ozPrevPt;
+        delete d.dataset.ozPitch;
+        delete d.dataset.ozPrevLh;
+        delete d.dataset.ozPrevPt;
+      }
       for (const child of children) {
         const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
         child.style.width = cz ? (cz.style.width as string || '') : '';
@@ -477,6 +502,32 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           }
         }
 
+        const toGrid = (v: number) => Math.floor(v * ratio * 4) / 4 / ratio;
+        for (const d of Array.from(el.querySelectorAll('[data-zone-id]')) as HTMLElement[]) {
+          const cs = getComputedStyle(d);
+          const lh = parseFloat(cs.lineHeight);
+          if (!isNaN(lh) && lh > 0) {
+            const q = toGrid(lh);
+            if (Math.abs(q - lh) > 0.001) {
+              d.dataset.ozPitch = '1';
+              d.dataset.ozPrevLh = d.style.lineHeight;
+              d.style.lineHeight = `${q}px`;
+            }
+          }
+          const pt = parseFloat(cs.paddingTop);
+          if (pt > 0) {
+            const q = toGrid(pt);
+            if (Math.abs(q - pt) > 0.001) {
+              if (d.dataset.ozPitch !== '1') {
+                d.dataset.ozPitch = '1';
+                d.dataset.ozPrevLh = d.style.lineHeight;
+              }
+              d.dataset.ozPrevPt = d.style.paddingTop;
+              d.style.paddingTop = `${q}px`;
+            }
+          }
+        }
+
         el.style.transform = mainTextBoxNudge !== 0
           ? `translateY(${mainTextBoxNudge}px)`
           : '';
@@ -552,6 +603,9 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         : (style.backgroundPosition || 'center'),
       backgroundRepeat: 'no-repeat',
     } : {}),
+    ...(isMainTextZone && mainTextLineHeightAdj !== 0
+      ? { lineHeight: `${8 + mainTextLineHeightAdj * 0.5}px` }
+      : {}),
     boxSizing: 'border-box',
   };
 

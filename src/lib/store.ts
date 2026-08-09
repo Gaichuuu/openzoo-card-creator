@@ -35,6 +35,7 @@ interface CardEditorState {
   borderless: boolean;
   mainTextBoxNudge: number;
   mainTextBoxExtraShrink: number;
+  mainTextBoxLineHeight: number;
   _autoFitRatio: number;
   cardArtPositionX: number;
   cardArtPositionY: number;
@@ -63,6 +64,7 @@ interface CardEditorState {
   setBorderless: (v: boolean) => void;
   setMainTextBoxNudge: (v: number) => void;
   setMainTextBoxExtraShrink: (v: number) => void;
+  setMainTextBoxLineHeight: (v: number) => void;
   setCardArtPosition: (x: number, y: number) => void;
   setArtNeeded: (v: boolean) => void;
   setSourceCard: (card: SavedCard | null) => void;
@@ -233,6 +235,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   borderless: false,
   mainTextBoxNudge: 0,
   mainTextBoxExtraShrink: 0,
+  mainTextBoxLineHeight: 0,
   _autoFitRatio: 1,
   cardArtPositionX: 0,
   cardArtPositionY: 0,
@@ -510,6 +513,10 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     set({ mainTextBoxExtraShrink: Math.max(-20, Math.min(20, v)) });
   },
 
+  setMainTextBoxLineHeight: (v) => {
+    set({ mainTextBoxLineHeight: Math.max(-6, Math.min(6, v)) });
+  },
+
   setCardArtPosition: (x, y) => {
     set({ cardArtPositionX: Math.max(-50, Math.min(50, x)), cardArtPositionY: Math.max(-50, Math.min(50, y)) });
   },
@@ -591,6 +598,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       borderless: false,
       mainTextBoxNudge: 0,
       mainTextBoxExtraShrink: 0,
+      mainTextBoxLineHeight: 0,
       cardArtPositionX: 0,
       cardArtPositionY: 0,
       artNeeded: true,
@@ -634,6 +642,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       borderless: s.borderless,
       mainTextBoxNudge: s.mainTextBoxNudge,
       mainTextBoxExtraShrink: s.mainTextBoxExtraShrink,
+      mainTextBoxLineHeight: s.mainTextBoxLineHeight,
       cardArtPositionX: s.cardArtPositionX,
       cardArtPositionY: s.cardArtPositionY,
       artNeeded: s.artNeeded,
@@ -686,6 +695,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       borderless: snapshot.borderless ?? false,
       mainTextBoxNudge: snapshot.mainTextBoxNudge ?? 0,
       mainTextBoxExtraShrink: snapshot.mainTextBoxExtraShrink ?? 0,
+      mainTextBoxLineHeight: snapshot.mainTextBoxLineHeight ?? 0,
       cardArtPositionX: snapshot.cardArtPositionX ?? 0,
       cardArtPositionY: snapshot.cardArtPositionY ?? 0,
       artNeeded: snapshot.artNeeded ?? false,
