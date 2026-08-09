@@ -115,6 +115,7 @@ export interface CardSnapshot {
   borderless?: boolean;
   mainTextBoxNudge?: number;
   mainTextBoxExtraShrink?: number;
+  mainTextBoxLineHeight?: number;
   cardArtPositionX?: number;
   cardArtPositionY?: number;
   artNeeded?: boolean;

@@ -183,7 +183,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
               maxLength={40}
               className="w-full bg-navy-950 text-white text-[15px] px-3 py-2.5"
             />
-            <p className="text-[11px] text-gray-500 m-0">Username shown on the card in the gallery.</p>
+            <p className="text-[11px] text-gray-500 m-0">Username shown on the published card.</p>
           </div>
 
           <div className="flex flex-col gap-2">
