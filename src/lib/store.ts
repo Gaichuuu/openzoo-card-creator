@@ -507,7 +507,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   },
 
   setMainTextBoxExtraShrink: (v) => {
-    set({ mainTextBoxExtraShrink: Math.max(0, Math.min(20, v)) });
+    set({ mainTextBoxExtraShrink: Math.max(-20, Math.min(20, v)) });
   },
 
   setCardArtPosition: (x, y) => {

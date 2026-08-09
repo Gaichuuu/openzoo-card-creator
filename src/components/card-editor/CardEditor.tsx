@@ -1,12 +1,10 @@
 import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
-import { EditorSidebar, type EditorSidebarHandle } from './EditorSidebar';
+import { EditorSidebar } from './EditorSidebar';
 import { InfoPanel } from './InfoPanel';
 import { SiteHeader } from '@/components/SiteHeader';
 import { useIsMobile } from '@/lib/useIsMobile';
-import { displayCardName } from '@/lib/exportUtils';
 
 type MobileTab = 'editor' | 'preview' | 'help';
 
@@ -23,18 +21,13 @@ export function CardEditor() {
   const trackRef = useRef<HTMLDivElement>(null);
   const layoutType = useCardStore((s) => s.layoutType);
   const cardData = useCardStore((s) => s.cardData);
-  const cardName = useCardStore((s) => s.cardName);
-  const cardType = useCardStore((s) => s.cardType);
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
-  const sidebarRef = useRef<EditorSidebarHandle>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const dragAxisRef = useRef<'h' | 'v' | null>(null);
   const dragDxRef = useRef(0);
   const isMobile = useIsMobile();
 
   const tabIndex = TAB_ORDER.indexOf(mobileTab);
-
-  const handleClear = () => sidebarRef.current?.confirmClear();
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
@@ -123,25 +116,8 @@ export function CardEditor() {
   return (
     <div className="flex flex-col h-dvh">
       {/* Header */}
-      <div className="hidden md:block shrink-0">
+      <div className="shrink-0">
         <SiteHeader />
-      </div>
-
-      {/* Mobile title row */}
-      <div className="flex md:hidden items-center gap-1 px-1 py-1.5 bg-navy-950 shrink-0">
-        <Link to="/" className="w-11 h-11 flex items-center justify-center text-gray-400 text-2xl" aria-label="Back to home">
-          ‹
-        </Link>
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-bold text-white truncate">{displayCardName(cardName) || 'Untitled card'}</div>
-          <div className="text-[11px] text-gray-500">{cardType}</div>
-        </div>
-        <button
-          onClick={handleClear}
-          className="px-3 py-1.5 mr-1 text-xs text-gold-400 border border-navy-600 shrink-0"
-        >
-          Clear
-        </button>
       </div>
 
       {/* Mobile tab bar */}
@@ -176,7 +152,7 @@ export function CardEditor() {
         >
           {/* Editor rail */}
           <div className={isMobile ? 'w-full shrink-0 h-full flex flex-col min-h-0' : 'flex flex-col flex-none min-h-0'}>
-            <EditorSidebar cardRef={cardRef} ref={sidebarRef} />
+            <EditorSidebar cardRef={cardRef} />
           </div>
 
           {/* Reference panel */}

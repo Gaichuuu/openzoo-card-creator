@@ -4,6 +4,7 @@ import type { CardData } from '@/types/card';
 import { LAYOUTS } from '@/data/layouts';
 import { useCardStore } from '@/lib/store';
 import { CARD_W, CARD_H } from '@/lib/exportUtils';
+import { computeTextBoxReserve } from '@/lib/textBoxReserve';
 import { ZoneRenderer } from './ZoneRenderer';
 
 interface CardRendererProps {
@@ -49,6 +50,8 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
 
     if (!layout) return <div>Unknown layout: {layoutType}</div>;
 
+    const textBoxReserve = computeTextBoxReserve(layoutType, cardData, borderless);
+
     return (
       <div
         style={{
@@ -72,7 +75,7 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
             borderRadius: borderless ? '0' : '10px',
           }}
         >
-          <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} />
+          <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} textBoxReserve={textBoxReserve} />
           {artNeeded && artRect && (
             <div className="art-needed-overlay" style={{
               position: 'absolute',

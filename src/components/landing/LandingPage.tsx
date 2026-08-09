@@ -89,16 +89,16 @@ export function LandingPage() {
               <p className="text-xl leading-relaxed italic text-gray-400 mt-4.5" style={{ textWrap: 'pretty' }}>
                 The only TCG where your <span className="font-semibold">surroundings</span> matter!
               </p>
-              <div className="flex flex-col sm:flex-row flex-wrap justify-center lg:w-full gap-3.5 mt-8.5">
+              <div className="flex justify-center lg:w-full gap-3 sm:gap-3.5 mt-8.5">
                 <Link
                   to="/create"
-                  className="px-8 py-3.75 bg-green-600 hover:bg-green-500 text-white text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
+                  className="px-6 sm:px-8 py-3.75 bg-green-600 hover:bg-green-500 text-white text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
                 >
                   Create a card
                 </Link>
                 <Link
                   to="/rulebook"
-                  className="px-8 py-3.75 bg-navy-800 hover:bg-navy-700 text-gold-300 text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
+                  className="px-6 sm:px-8 py-3.75 bg-navy-800 hover:bg-navy-700 text-gold-300 text-[17px] font-semibold whitespace-nowrap transition-colors border-gold text-center"
                 >
                   Read the rules
                 </Link>

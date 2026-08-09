@@ -43,20 +43,16 @@ const BORDER_COLORS: Record<string, string> = {
   PT: 'rgb(204,204,204)',
 };
 
-function SectionDivider({ alwaysVisible }: { alwaysVisible?: boolean }) {
-  return <hr className={`border-navy-600 ${alwaysVisible ? '' : 'hidden md:block'}`} />;
+function SectionDivider() {
+  return <hr className="border-navy-600" />;
 }
 
-function EditorSection({ title, children }: {
-  title: string;
+function EditorSection({ children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <div className="md:hidden text-sm font-semibold text-white mb-3">{title}</div>
-      <div className="flex flex-col gap-4">
-        {children}
-      </div>
+    <div className="flex flex-col gap-4">
+      {children}
     </div>
   );
 }
@@ -366,8 +362,8 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
   return (
     <div className="w-full md:w-82 bg-navy-900 md:border-r border-navy-600 flex flex-col min-h-0 flex-1">
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-        {/* Desktop panel header */}
-        <div className="hidden md:flex items-center justify-between">
+        {/* Panel header */}
+        <div className="flex items-center justify-between">
           <h2 className="text-[15px] font-bold text-white">Card Editor</h2>
           <button
             onClick={confirmClear}
@@ -378,7 +374,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         </div>
 
         {/* Language + Border */}
-        <EditorSection title="Language & border">
+        <EditorSection>
           <div className="flex gap-4">
             <div className="w-1/2 space-y-1">
               <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
@@ -424,7 +420,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
           </div>
         </EditorSection>
 
-        <EditorSection title="Identity & stats">
+        <EditorSection>
           {/* Card Type */}
           <CardTypeSelector />
 
@@ -491,7 +487,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
         {/* Aura */}
         {showAuraSection && (
-          <EditorSection title={isBasic ? 'Aura cost' : isTerra ? 'Terra' : 'Aura'}>
+          <EditorSection>
             {isBasic && (
               <>
                 <CostEditor />
@@ -515,7 +511,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
         {/* Traits + Terra */}
         {(showTraits || showTerraSlots) && (
-          <EditorSection title="Traits & Terra">
+          <EditorSection>
             {showTraits && (
               <TraitSelector />
             )}
@@ -526,7 +522,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         )}
 
         {/* Card Art */}
-        <EditorSection title="Card art">
+        <EditorSection>
           <SectionDivider />
           <ImageUploader />
           <BackgroundSelector />
@@ -534,7 +530,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
         {/* Effect Text */}
         {showEffectSection && (
-          <EditorSection title="Effect text">
+          <EditorSection>
             {/* Effect Text */}
             {showTraits && (
               <>
@@ -579,7 +575,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
           </EditorSection>
         )}
 
-        <EditorSection title="Lore & credits">
+        <EditorSection>
           {/* Metadata */}
           {hasMetadata && (
             <>
@@ -619,7 +615,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         </EditorSection>
 
         <div className="flex flex-col gap-4">
-          <SectionDivider alwaysVisible />
+          <SectionDivider />
 
           <button
             onClick={() => setShowPublish(true)}

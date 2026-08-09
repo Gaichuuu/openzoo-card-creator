@@ -7,6 +7,7 @@ import { LAYOUTS } from '@/data/layouts';
 const VALID_LAYOUT_TYPES: ReadonlySet<string> = new Set(Object.keys(LAYOUTS));
 const VALID_CARD_TYPES: ReadonlySet<string> = new Set(Object.keys(CARD_TYPE_TO_LAYOUT));
 const MAX_STRING_LEN = 1000;
+const MAX_DATA_URL_LEN = 10 * 1024 * 1024;
 const MAX_CARD_DATA_KEYS = 500;
 
 function validateSnapshot(data: unknown): data is CardSnapshot {
@@ -21,8 +22,10 @@ function validateSnapshot(data: unknown): data is CardSnapshot {
   const keys = Object.keys(cardData);
   if (keys.length > MAX_CARD_DATA_KEYS) return false;
   for (const key of keys) {
-    if (typeof cardData[key] !== 'string') return false;
-    if ((cardData[key] as string).length > MAX_STRING_LEN) return false;
+    const value = cardData[key];
+    if (typeof value !== 'string') return false;
+    const limit = value.startsWith('data:image/') ? MAX_DATA_URL_LEN : MAX_STRING_LEN;
+    if (value.length > limit) return false;
   }
 
   if (typeof obj.cardName !== 'string' || obj.cardName.length > 100) return false;

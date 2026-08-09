@@ -59,7 +59,7 @@ export function TextBoxBuilder() {
   const available = AVAILABLE_BLOCKS[layoutType] || [];
   const sorted = sortBlocks(effectBlocks);
   if (available.length === 0) return null;
-  const totalRatio = autoFitRatio * (1 - extraShrink * 0.02);
+  const totalRatio = Math.min(1, autoFitRatio * (1 - extraShrink * 0.02));
   const totalShrinkPct = Math.round((1 - totalRatio) * 100);
 
   return (
@@ -98,7 +98,7 @@ export function TextBoxBuilder() {
         <Stepper label="Nudge" value={nudge} min={-10} max={10} onChange={setNudge} />
         <Stepper
           label={<>Shrink{totalShrinkPct > 0 && <span className="text-gray-500 ml-0.5">({totalShrinkPct}%)</span>}</>}
-          value={extraShrink} min={0} max={20} onChange={setExtraShrink}
+          value={extraShrink} min={-20} max={20} onChange={setExtraShrink}
         />
       </div>}
 
