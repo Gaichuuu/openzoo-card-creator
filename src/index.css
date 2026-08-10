@@ -205,8 +205,16 @@ select.input-plain:focus {
 .card-exporting [data-zone-key="AttackEffect"] > * {
   transform: translateY(0.5px) !important;
 }
-.card-exporting [data-zone-key="AttackDivider"] {
-  margin-top: 2px !important;
-  margin-bottom: 0px !important;
+.card-exporting [data-oz-pill] > * {
+  transform: translateY(0.5px) !important;
+}
+.card-exporting [data-zone-key="MainTextBox"],
+.card-exporting [data-zone-key="MainText"],
+.card-exporting [data-zone-key="AttackEffect 1"],
+.card-exporting [data-zone-key="AttackEffect"],
+.card-exporting [data-zone-key="FlavorText"],
+.card-exporting [data-zone-key="Aura/Terra Text Box"],
+.card-exporting [data-zone-key="Aura/Terra Text Box 1"] {
+  letter-spacing: -0.02px !important;
 }
 

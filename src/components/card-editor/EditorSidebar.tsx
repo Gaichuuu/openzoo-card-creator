@@ -186,6 +186,11 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         setStyleIfMissing('TypesTribes', STYLE_TYPES_TRIBES_TOKEN);
         setStyleIfMissing('SpellbookLimit', '{display:none}');
         setStyleIfMissing('TNL', STYLE_TNL_TOKEN);
+        const tnlZoneId = ZONE_ID_MAPS[s.layoutType]?.['TNL'];
+        const tnlStyle = tnlZoneId != null ? s.cardData[`s${tnlZoneId}`] : undefined;
+        if (tnlStyle && !tnlStyle.includes('justifyContent')) {
+          setStyleField('TNL', `${tnlStyle.slice(0, -1)};justifyContent:flex-end}`);
+        }
       } else {
         setStyleIfMissing('TypesTribes', STYLE_TYPES_TRIBES);
         setStyleIfMissing('SpellbookLimit', STYLE_SPELLBOOK_LIMIT);
