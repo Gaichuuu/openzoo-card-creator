@@ -227,6 +227,14 @@ function isZoneVisible(zone: Zone, cardData: CardData): boolean {
   return false;
 }
 
+const PITCH_PROPS = [
+  ['lineHeight', 'Lh'],
+  ['paddingTop', 'Pt'],
+  ['paddingBottom', 'Pb'],
+  ['borderTopWidth', 'Bt'],
+  ['borderBottomWidth', 'Bb'],
+] as const;
+
 const FLEX_LAYOUT_KEYS = new Set([
   'display', 'flexDirection', 'justifyContent', 'alignItems', 'alignContent',
   'gap', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
@@ -371,17 +379,17 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       const childZoneById = new Map(zone.childZones.map((z) => [String(z.id), z]));
       const children = Array.from(el.children) as HTMLElement[];
       for (const d of Array.from(el.querySelectorAll('[data-oz-pitch]')) as HTMLElement[]) {
-        d.style.lineHeight = d.dataset.ozPrevLh ?? '';
-        if (d.dataset.ozPrevPt !== undefined) d.style.paddingTop = d.dataset.ozPrevPt;
-        if (d.dataset.ozPrevPb !== undefined) d.style.paddingBottom = d.dataset.ozPrevPb;
-        if (d.dataset.ozPrevBt !== undefined) d.style.borderTopWidth = d.dataset.ozPrevBt;
-        if (d.dataset.ozPrevBb !== undefined) d.style.borderBottomWidth = d.dataset.ozPrevBb;
+        for (const [prop, k] of PITCH_PROPS) {
+          const prev = d.dataset[`ozPrev${k}`];
+          if (prev === undefined) continue;
+          const written = d.dataset[`ozQ${k}`];
+          if (written === undefined || d.style[prop] === written) {
+            d.style[prop] = prev;
+          }
+          delete d.dataset[`ozPrev${k}`];
+          delete d.dataset[`ozQ${k}`];
+        }
         delete d.dataset.ozPitch;
-        delete d.dataset.ozPrevLh;
-        delete d.dataset.ozPrevPt;
-        delete d.dataset.ozPrevPb;
-        delete d.dataset.ozPrevBt;
-        delete d.dataset.ozPrevBb;
       }
       for (const child of children) {
         const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
@@ -446,8 +454,26 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       }
       const reservePB = textBoxReserve ?? parseFloat(el.dataset.ozBasePb);
 
+      const pitchTargets: { d: HTMLElement; lh: number; pt: number }[] = [];
+      for (const d of Array.from(el.querySelectorAll('[data-zone-id]')) as HTMLElement[]) {
+        const cs = getComputedStyle(d);
+        const lh = parseFloat(cs.lineHeight);
+        const pt = parseFloat(cs.paddingTop);
+        const hasLh = !isNaN(lh) && lh > 0;
+        const hasPt = pt > 0;
+        if (!hasLh && !hasPt) continue;
+        d.dataset.ozPitch = '1';
+        if (hasLh) d.dataset.ozPrevLh = d.style.lineHeight;
+        if (hasPt) d.dataset.ozPrevPt = d.style.paddingTop;
+        pitchTargets.push({ d, lh: hasLh ? lh : 0, pt: hasPt ? pt : 0 });
+      }
+
       const measureAt = (r: number): number => {
         el.style.width = `${baseWidth / r}px`;
+        for (const t of pitchTargets) {
+          if (t.lh) t.d.style.lineHeight = `${Math.round(t.lh * r) / r}px`;
+          if (t.pt) t.d.style.paddingTop = `${Math.round(t.pt * r) / r}px`;
+        }
         if (reservePB > 0) {
           el.style.paddingBottom = `${reservePB / r}px`;
         }
@@ -512,29 +538,11 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         }
       };
 
-      const quantizePitch = (ratio: number) => {
-        const gridNear = (v: number) => Math.round(v * ratio) / ratio;
-        for (const d of Array.from(el.querySelectorAll('[data-zone-id]')) as HTMLElement[]) {
-          const cs = getComputedStyle(d);
-          const lh = parseFloat(cs.lineHeight);
-          if (!isNaN(lh) && lh > 0) {
-            const q = gridNear(lh);
-            if (Math.abs(q - lh) > 0.001) {
-              d.dataset.ozPitch = '1';
-              d.dataset.ozPrevLh = d.style.lineHeight;
-              d.style.lineHeight = `${q}px`;
-            }
-          }
-          const pt = parseFloat(cs.paddingTop);
-          if (pt > 0) {
-            const q = gridNear(pt);
-            if (Math.abs(q - pt) > 0.001) {
-              if (d.dataset.ozPitch !== '1') {
-                d.dataset.ozPitch = '1';
-                d.dataset.ozPrevLh = d.style.lineHeight;
-              }
-              d.dataset.ozPrevPt = d.style.paddingTop;
-              d.style.paddingTop = `${q}px`;
+      const recordQuantized = () => {
+        for (const d of Array.from(el.querySelectorAll('[data-oz-pitch]')) as HTMLElement[]) {
+          for (const [prop, k] of PITCH_PROPS) {
+            if (d.dataset[`ozPrev${k}`] !== undefined) {
+              d.dataset[`ozQ${k}`] = d.style[prop];
             }
           }
         }
@@ -592,7 +600,6 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           }
         }
 
-        quantizePitch(ratio);
         quantizePills(ratio);
         if (el.scrollHeight > parseFloat(el.style.height)) {
           el.style.height = `${el.scrollHeight}px`;
@@ -603,6 +610,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           : '';
         snapChildFlowTops(ratio);
         snapThinChildren(ratio);
+        recordQuantized();
       } else {
         measureAt(1);
         el.style.zoom = '1';
@@ -610,13 +618,13 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         if (boostPaddingEl) {
           boostPaddingEl.style.paddingTop = `${boostPaddingValue}px`;
         }
-        quantizePitch(1);
         quantizePills(1);
         el.style.transform = mainTextBoxNudge !== 0
           ? `translateY(${mainTextBoxNudge}px)`
           : '';
         snapChildFlowTops(1);
         snapThinChildren(1);
+        recordQuantized();
       }
     };
 
