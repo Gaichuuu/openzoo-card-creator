@@ -68,7 +68,7 @@ function renderSegments(segments: Segment[], keyPrefix: string = ''): React.Reac
     const outline = INLINE_CLASS_OUTLINES[seg.className] || null;
     const innerSegments = parseSegments(seg.content);
     return (
-      <span key={key} style={style}>
+      <span key={key} style={style} data-oz-pill={seg.className === 'Power' ? '' : undefined}>
         {wrapOutline(renderSegments(innerSegments, `${key}-`), outline)}
       </span>
     );
