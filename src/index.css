@@ -201,13 +201,6 @@ select.input-plain:focus {
 .card-exporting [data-zone-key="FlavorText"] > * {
   transform: translateY(0.5px) !important;
 }
-.card-exporting [data-zone-key="AttackEffect 1"] > *,
-.card-exporting [data-zone-key="AttackEffect"] > * {
-  transform: translateY(0.5px) !important;
-}
-.card-exporting [data-oz-pill] > * {
-  transform: translateY(0.5px) !important;
-}
 .card-exporting [data-zone-key="MainTextBox"],
 .card-exporting [data-zone-key="MainText"],
 .card-exporting [data-zone-key="AttackEffect 1"],

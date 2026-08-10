@@ -1,4 +1,44 @@
-import { toPng } from 'html-to-image';
+import { toSvg } from 'html-to-image';
+
+type SvgOptions = NonNullable<Parameters<typeof toSvg>[1]>;
+interface CardPngOptions extends SvgOptions {
+  pixelRatio: number;
+  width: number;
+  height: number;
+}
+
+async function cardToPng(el: HTMLElement, opts: CardPngOptions): Promise<string> {
+  const marked: HTMLElement[] = [];
+  for (const node of Array.from(el.querySelectorAll('div, span')) as HTMLElement[]) {
+    const inlineW = node.style.width;
+    if (inlineW !== '' && inlineW !== 'auto') continue;
+    const cs = getComputedStyle(node);
+    const collapse = cs.getPropertyValue('white-space-collapse') || cs.whiteSpace;
+    if (collapse.includes('break-spaces')) {
+      node.dataset.ozWauto = '1';
+      marked.push(node);
+    }
+  }
+  let svgDataUrl: string;
+  try {
+    svgDataUrl = await toSvg(el, opts);
+  } finally {
+    for (const node of marked) delete node.dataset.ozWauto;
+  }
+  const prefix = 'data:image/svg+xml;charset=utf-8,';
+  const svgText = decodeURIComponent(svgDataUrl.slice(prefix.length));
+  const fixed = svgText.replace(/<[a-z]+ [^>]*data-oz-wauto="1"[^>]*>/g, (tag) =>
+    tag
+      .replace(/(?<![a-z-])width: [\d.]+px/g, 'width: auto')
+      .replace(/(?<![a-z-])inline-size: [\d.]+px/g, 'inline-size: auto'));
+  const img = await loadImage(prefix + encodeURIComponent(fixed));
+  const canvas = document.createElement('canvas');
+  canvas.width = opts.width * opts.pixelRatio;
+  canvas.height = opts.height * opts.pixelRatio;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/png');
+}
 
 export const CARD_W = 238;
 export const CARD_H = 333;
@@ -114,8 +154,8 @@ export async function exportStandardPng(
     fontEmbedCSS,
     style: { transform: 'none', borderRadius: borderless ? '0' : undefined },
   };
-  await toPng(el, opts);
-  return toPng(el, opts);
+  await cardToPng(el, opts);
+  return cardToPng(el, opts);
 }
 
 export async function exportPrintReadyPng(
@@ -176,8 +216,8 @@ async function exportPrintBorderless(
       return true;
     },
   };
-  await toPng(el, overlayOpts);
-  const overlayUrl = await toPng(el, overlayOpts);
+  await cardToPng(el, overlayOpts);
+  const overlayUrl = await cardToPng(el, overlayOpts);
   const overlayImg = await loadImage(overlayUrl);
   ctx.drawImage(overlayImg, bPx, bPx);
 
@@ -201,8 +241,8 @@ async function exportPrintBordered(el: HTMLElement): Promise<string> {
     filter: (node: Node) =>
       !(node instanceof HTMLElement && node.classList.contains('art-needed-overlay')),
   };
-  await toPng(el, borderedOpts);
-  const cardDataUrl = await toPng(el, borderedOpts);
+  await cardToPng(el, borderedOpts);
+  const cardDataUrl = await cardToPng(el, borderedOpts);
 
   const pr = PIXEL_RATIO;
   const canvas = document.createElement('canvas');

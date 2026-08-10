@@ -390,6 +390,10 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         child.style.transform = cz ? (cz.style.transform as string || '') : '';
         child.style.minHeight = '';
         child.style.flexShrink = '';
+        if (child.dataset.ozSnapMb !== undefined) {
+          child.style.marginBottom = child.dataset.ozSnapMb;
+          delete child.dataset.ozSnapMb;
+        }
       }
 
       const containerOverride = parseStyleString(cardData[`s${zone.id}`] || '');
@@ -398,15 +402,6 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         el.style.paddingBottom = `${textBoxReserve}px`;
       }
 
-      const containerCs = getComputedStyle(el);
-      if (containerCs.flexDirection === 'column-reverse' && containerCs.justifyContent === 'flex-end') {
-        for (const child of children) {
-          const cz = childZoneById.get(child.getAttribute('data-zone-id') || '');
-          if (cz && (cz.textDataKey === 'MainTextBox' || cz.textDataKey === 'MainText')) {
-            child.style.marginBottom = 'auto';
-          }
-        }
-      }
       for (const child of children) {
         const childId = child.getAttribute('data-zone-id');
         if (childId) {
@@ -491,6 +486,28 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           const delta = Math.round(y) - y;
           if (Math.abs(delta) > 0.02) {
             child.style.transform = `translateY(${delta / ratio}px)`;
+          }
+        }
+      };
+
+      const snapChildFlowTops = (ratio: number) => {
+        const rootRect = el.getBoundingClientRect();
+        const layoutWidth = parseFloat(el.style.width);
+        if (!rootRect.width || !layoutWidth) return;
+        const screenPerLocal = rootRect.width / layoutWidth;
+        for (const child of children) {
+          if (getComputedStyle(child).display === 'none') continue;
+          const y = ((child.getBoundingClientRect().top - rootRect.top) / screenPerLocal) * ratio;
+          const delta = Math.round(y) - y;
+          if (Math.abs(delta) < 0.02 || Math.abs(delta) > 0.75) continue;
+          const mb = parseFloat(getComputedStyle(child).marginBottom) || 0;
+          if (child.dataset.ozSnapMb === undefined) {
+            child.dataset.ozSnapMb = child.style.marginBottom;
+          }
+          child.style.marginBottom = `${mb - delta / ratio}px`;
+          const y2 = ((child.getBoundingClientRect().top - rootRect.top) / screenPerLocal) * ratio;
+          if (Math.abs(Math.round(y2) - y2) > Math.abs(delta)) {
+            child.style.marginBottom = `${mb + delta / ratio}px`;
           }
         }
       };
@@ -584,6 +601,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         el.style.transform = mainTextBoxNudge !== 0
           ? `translateY(${mainTextBoxNudge}px)`
           : '';
+        snapChildFlowTops(ratio);
         snapThinChildren(ratio);
       } else {
         measureAt(1);
@@ -597,6 +615,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         el.style.transform = mainTextBoxNudge !== 0
           ? `translateY(${mainTextBoxNudge}px)`
           : '';
+        snapChildFlowTops(1);
         snapThinChildren(1);
       }
     };
