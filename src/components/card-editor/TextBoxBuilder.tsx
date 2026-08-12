@@ -54,9 +54,12 @@ export function TextBoxBuilder() {
   const setExtraShrink = useCardStore((s) => s.setMainTextBoxExtraShrink);
   const lineHeightAdj = useCardStore((s) => s.mainTextBoxLineHeight);
   const setLineHeightAdj = useCardStore((s) => s.setMainTextBoxLineHeight);
+  const autoFitRatio = useCardStore((s) => s._autoFitRatio);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const available = AVAILABLE_BLOCKS[layoutType] || [];
   const sorted = sortBlocks(effectBlocks);
+  const totalRatio = Math.min(1, autoFitRatio * (1 - extraShrink * 0.01));
+  const totalShrinkPct = Math.round((1 - totalRatio) * 100);
   if (available.length === 0) return null;
 
   return (
@@ -93,7 +96,10 @@ export function TextBoxBuilder() {
 
       {sorted.length > 0 && <div className="flex gap-2">
         <Stepper label="Height" value={lineHeightAdj} min={-6} max={6} onChange={setLineHeightAdj} />
-        <Stepper label="Shrink" value={extraShrink} min={-20} max={20} onChange={setExtraShrink} />
+        <Stepper
+          label={<>Shrink{totalShrinkPct > 0 && <span className="text-gray-500 ml-0.5">({totalShrinkPct}%)</span>}</>}
+          value={extraShrink} min={-20} max={20} onChange={setExtraShrink}
+        />
       </div>}
 
       {sorted.length === 0 && (
