@@ -6,6 +6,8 @@ import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
 import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
 import { useCardStore } from '@/lib/store';
 import { ParsedText } from './TextParser';
+import { getFitMode } from '@/lib/fitMode';
+import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, type FitCandidate } from '@/lib/textBoxLadder';
 
 function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null }) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
@@ -255,6 +257,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
   const shouldAutoFitMetadata = zone.type === 'container' && zone.imageDataKey === 'CryptidInfoBar';
   const shouldAutoFitFlavor = zone.textDataKey === 'FlavorText';
+  const fitMode = getFitMode();
   const needsTwoDiv = shouldAutoFit || shouldAutoFitTNL || shouldAutoFitMetadata || shouldAutoFitFlavor;
 
   useLayoutEffect(() => {
@@ -370,6 +373,56 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     }
 
     const baseWidth = parseFloat(zone.style.width as string) || 0;
+
+    const runLadderFit = () => {
+      el.style.zoom = '1';
+      el.style.width = `${baseWidth}px`;
+      el.style.height = 'auto';
+
+      const containerOverride = parseStyleString(cardData[`s${zone.id}`] || '');
+      el.style.paddingTop = (containerOverride.paddingTop as string) || '1px';
+      if (el.dataset.ozBasePb === undefined) {
+        el.dataset.ozBasePb = String(parseFloat(getComputedStyle(el).paddingBottom) || 0);
+      }
+      el.style.paddingBottom = textBoxReserve != null
+        ? `${textBoxReserve}px`
+        : `${el.dataset.ozBasePb}px`;
+
+      for (const child of Array.from(el.children) as HTMLElement[]) {
+        const childId = child.getAttribute('data-zone-id');
+        if (!childId) continue;
+        const childOverride = parseStyleString(cardData[`s${childId}`] || '');
+        child.style.paddingTop = childOverride.paddingTop
+          ? (childOverride.paddingTop as string)
+          : '';
+      }
+
+      const budget = baseHeight - 2;
+      const scale = el.getBoundingClientRect().width / baseWidth;
+      const fits = (candidate: FitCandidate) => {
+        applyRung(el, candidate, mainTextLineHeightAdj);
+        snapPitchGrid(el);
+        snapInlineImages(el);
+        snapChildHeights(el, scale);
+        return el.offsetHeight <= budget;
+      };
+
+      const autoIndex = pickCandidate(fits);
+      const offset = Math.round(mainTextBoxExtraShrink / 5) * TIERS_PER_CELL;
+      const index = Math.min(FIT_CANDIDATES.length - 1, Math.max(0, autoIndex + offset));
+      const rung = FIT_CANDIDATES[index];
+      applyRung(el, rung, mainTextLineHeightAdj);
+      snapPitchGrid(el);
+      snapInlineImages(el);
+      snapChildHeights(el, scale);
+
+      el.style.height = `${baseHeight}px`;
+      el.style.transform = mainTextBoxNudge !== 0
+        ? `translateY(${mainTextBoxNudge}px)`
+        : '';
+
+      useCardStore.getState()._setAutoFitRatio(FIT_CANDIDATES[autoIndex].main.pitch / FIT_CANDIDATES[0].main.pitch);
+    };
 
     const runAutoFit = () => {
       el.style.zoom = '1';
@@ -628,11 +681,12 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       }
     };
 
-    runAutoFit();
+    const run = fitMode === 'ladder' ? runLadderFit : runAutoFit;
+    run();
 
     const images = Array.from(el.querySelectorAll('img')).filter(img => !img.complete);
     if (images.length > 0) {
-      const onLoad = () => runAutoFit();
+      const onLoad = () => run();
       for (const img of images) {
         img.addEventListener('load', onLoad, { once: true });
       }
@@ -685,7 +739,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         : (style.backgroundPosition || 'center'),
       backgroundRepeat: 'no-repeat',
     } : {}),
-    ...(isMainTextZone && mainTextLineHeightAdj !== 0
+    ...(fitMode === 'zoom' && isMainTextZone && mainTextLineHeightAdj !== 0
       ? { lineHeight: `${8 + mainTextLineHeightAdj * 0.5}px` }
       : {}),
     boxSizing: 'border-box',
