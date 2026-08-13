@@ -1,9 +1,9 @@
 export type FitMode = 'zoom' | 'ladder';
 
 const STORAGE_KEY = 'openzoo-fit-mode';
+const DEFAULT_MODE: FitMode = 'ladder';
 
 function readMode(): FitMode {
-  if (typeof window === 'undefined') return 'ladder';
   const param = new URLSearchParams(window.location.search).get('fit');
   if (param === 'ladder' || param === 'zoom') return param;
   try {
@@ -12,11 +12,18 @@ function readMode(): FitMode {
   } catch {
     // private browsing
   }
-  return 'ladder';
+  return DEFAULT_MODE;
 }
 
-const MODE = readMode();
+let cachedSearch: string | null = null;
+let cachedMode: FitMode = DEFAULT_MODE;
 
 export function getFitMode(): FitMode {
-  return MODE;
+  if (typeof window === 'undefined') return DEFAULT_MODE;
+  const search = window.location.search;
+  if (search !== cachedSearch) {
+    cachedSearch = search;
+    cachedMode = readMode();
+  }
+  return cachedMode;
 }

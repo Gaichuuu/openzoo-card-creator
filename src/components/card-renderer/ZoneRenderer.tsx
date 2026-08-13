@@ -7,7 +7,7 @@ import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineSt
 import { useCardStore } from '@/lib/store';
 import { ParsedText } from './TextParser';
 import { getFitMode } from '@/lib/fitMode';
-import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, type FitCandidate } from '@/lib/textBoxLadder';
+import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
 
 function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null }) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
@@ -229,13 +229,7 @@ function isZoneVisible(zone: Zone, cardData: CardData): boolean {
   return false;
 }
 
-const PITCH_PROPS = [
-  ['lineHeight', 'Lh'],
-  ['paddingTop', 'Pt'],
-  ['paddingBottom', 'Pb'],
-  ['borderTopWidth', 'Bt'],
-  ['borderBottomWidth', 'Bb'],
-] as const;
+const PITCH_PROPS = SNAP_PROPS;
 
 const FLEX_LAYOUT_KEYS = new Set([
   'display', 'flexDirection', 'justifyContent', 'alignItems', 'alignContent',
@@ -399,29 +393,35 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
       const budget = baseHeight - 2;
       const scale = el.getBoundingClientRect().width / baseWidth;
-      const fits = (candidate: FitCandidate) => {
+      let applied = -1;
+      const fits = (candidate: FitCandidate, i: number) => {
         applyRung(el, candidate, mainTextLineHeightAdj);
         snapPitchGrid(el);
         snapInlineImages(el);
         snapChildHeights(el, scale);
+        applied = i;
         return el.offsetHeight <= budget;
       };
 
       const autoIndex = pickCandidate(fits);
       const offset = Math.round(mainTextBoxExtraShrink / 5) * TIERS_PER_CELL;
       const index = Math.min(FIT_CANDIDATES.length - 1, Math.max(0, autoIndex + offset));
-      const rung = FIT_CANDIDATES[index];
-      applyRung(el, rung, mainTextLineHeightAdj);
-      snapPitchGrid(el);
-      snapInlineImages(el);
-      snapChildHeights(el, scale);
+      if (index !== applied) {
+        applyRung(el, FIT_CANDIDATES[index], mainTextLineHeightAdj);
+        snapPitchGrid(el);
+        snapInlineImages(el);
+        snapChildHeights(el, scale);
+      }
 
       el.style.height = `${baseHeight}px`;
+      if (el.scrollHeight > baseHeight) {
+        el.style.height = `${el.scrollHeight}px`;
+      }
       el.style.transform = mainTextBoxNudge !== 0
         ? `translateY(${mainTextBoxNudge}px)`
         : '';
 
-      useCardStore.getState()._setAutoFitRatio(FIT_CANDIDATES[autoIndex].main.pitch / FIT_CANDIDATES[0].main.pitch);
+      useCardStore.getState()._setAutoFitRatio(FIT_CANDIDATES[index].main.pitch / FIT_CANDIDATES[0].main.pitch);
     };
 
     const runAutoFit = () => {
@@ -603,13 +603,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
       const quantizePills = (ratio: number) => {
         const grid = (v: number) => Math.round(v * ratio * 4) / 4 / ratio;
-        const props = [
-          ['lineHeight', 'ozPrevLh'],
-          ['paddingTop', 'ozPrevPt'],
-          ['paddingBottom', 'ozPrevPb'],
-          ['borderTopWidth', 'ozPrevBt'],
-          ['borderBottomWidth', 'ozPrevBb'],
-        ] as const;
+        const props = SNAP_PROPS.map(([prop, k]) => [prop, `ozPrev${k}`] as [SnapProp, string]);
         for (const p of Array.from(el.querySelectorAll('[data-oz-pill]')) as HTMLElement[]) {
           const cs = getComputedStyle(p);
           for (const [prop, key] of props) {

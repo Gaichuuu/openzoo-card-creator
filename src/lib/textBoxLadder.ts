@@ -97,81 +97,79 @@ export function applyRung(el: HTMLElement, rung: FitCandidate, pitchAdjust: numb
 
 const PITCH_GRID = 0.5;
 
-const GRID_PROPS = [
-  ['lineHeight', 'ozGridLh', 'ozGridQLh'],
-  ['paddingTop', 'ozGridPt', 'ozGridQPt'],
-  ['paddingBottom', 'ozGridPb', 'ozGridQPb'],
-  ['borderTopWidth', 'ozGridBt', 'ozGridQBt'],
-  ['borderBottomWidth', 'ozGridBb', 'ozGridQBb'],
+export const SNAP_PROPS = [
+  ['lineHeight', 'Lh'],
+  ['paddingTop', 'Pt'],
+  ['paddingBottom', 'Pb'],
+  ['borderTopWidth', 'Bt'],
+  ['borderBottomWidth', 'Bb'],
 ] as const;
 
-export function snapPitchGrid(el: HTMLElement): void {
-  const nodes = Array.from(
-    el.querySelectorAll('[data-zone-id],[data-oz-pill]'),
-  ) as HTMLElement[];
+export type SnapProp = typeof SNAP_PROPS[number][0];
+
+const GRID_PROPS = SNAP_PROPS.map(
+  ([prop, k]) => [prop, `ozGrid${k}`, `ozGridQ${k}`] as [SnapProp, string, string],
+);
+
+type SnapSpec = readonly [string, string, string];
+
+function snapAll<T extends HTMLElement>(
+  nodes: T[],
+  specs: readonly SnapSpec[],
+  read: (node: T, prop: string) => number,
+  round: (value: number) => number,
+): void {
+  const style = (node: T) => node.style as unknown as Record<string, string>;
   for (const node of nodes) {
-    for (const [prop, baseKey, writtenKey] of GRID_PROPS) {
+    for (const [prop, baseKey, writtenKey] of specs) {
       const written = node.dataset[writtenKey];
-      if (written === undefined || node.style[prop] !== written) {
-        node.dataset[baseKey] = node.style[prop];
+      if (written === undefined || style(node)[prop] !== written) {
+        node.dataset[baseKey] = style(node)[prop];
       }
-      node.style[prop] = node.dataset[baseKey] ?? '';
+      style(node)[prop] = node.dataset[baseKey] ?? '';
     }
   }
-  const resolved = nodes.map((node) => {
-    const cs = getComputedStyle(node);
-    return GRID_PROPS.map(([prop]) => parseFloat(cs[prop]));
-  });
+  const values = nodes.map((node) => specs.map(([prop]) => read(node, prop)));
   nodes.forEach((node, i) => {
-    GRID_PROPS.forEach(([prop, , writtenKey], j) => {
-      const value = resolved[i][j];
-      if (isNaN(value) || value <= 0) return;
-      const snapped = Math.round(value / PITCH_GRID) * PITCH_GRID;
-      if (snapped <= 0) return;
+    specs.forEach(([prop, , writtenKey], j) => {
+      const value = values[i][j];
+      if (!(value > 0) || isNaN(value)) return;
+      const snapped = round(value);
+      if (!(snapped > 0)) return;
       const px = `${snapped}px`;
-      node.style[prop] = px;
+      style(node)[prop] = px;
       node.dataset[writtenKey] = px;
     });
   });
 }
 
+const computed = (node: HTMLElement, prop: string) =>
+  parseFloat((getComputedStyle(node) as unknown as Record<string, string>)[prop]);
+
+export function snapPitchGrid(el: HTMLElement): void {
+  snapAll(
+    Array.from(el.querySelectorAll('[data-zone-id],[data-oz-pill]')) as HTMLElement[],
+    GRID_PROPS,
+    computed,
+    (v) => Math.round(v / PITCH_GRID) * PITCH_GRID,
+  );
+}
+
 export function snapChildHeights(el: HTMLElement, scale: number): void {
   if (!(scale > 0)) return;
-  const kids = Array.from(el.children) as HTMLElement[];
-  for (const kid of kids) {
-    const written = kid.dataset.ozGridQH;
-    if (written === undefined || kid.style.height !== written) {
-      kid.dataset.ozGridH = kid.style.height;
-    }
-    kid.style.height = kid.dataset.ozGridH ?? '';
-  }
-  const heights = kids.map((kid) => kid.getBoundingClientRect().height / scale);
-  kids.forEach((kid, i) => {
-    const h = heights[i];
-    if (!(h > 0)) return;
-    const snapped = Math.ceil(h);
-    if (Math.abs(snapped - h) < 0.001) return;
-    const px = `${snapped}px`;
-    kid.style.height = px;
-    kid.dataset.ozGridQH = px;
-  });
+  snapAll(
+    Array.from(el.children) as HTMLElement[],
+    [['height', 'ozGridH', 'ozGridQH']],
+    (node) => node.getBoundingClientRect().height / scale,
+    Math.ceil,
+  );
 }
 
 export function snapInlineImages(el: HTMLElement): void {
-  const imgs = Array.from(el.querySelectorAll('img')) as HTMLImageElement[];
-  for (const img of imgs) {
-    const written = img.dataset.ozImgQ;
-    if (written === undefined || img.style.height !== written) {
-      img.dataset.ozImgBase = img.style.height;
-    }
-    img.style.height = img.dataset.ozImgBase ?? '';
-  }
-  const naturals = imgs.map((img) => parseFloat(getComputedStyle(img).height));
-  imgs.forEach((img, i) => {
-    const natural = naturals[i];
-    if (!natural || isNaN(natural)) return;
-    const snapped = `${Math.max(1, Math.round(natural))}px`;
-    img.style.height = snapped;
-    img.dataset.ozImgQ = snapped;
-  });
+  snapAll(
+    Array.from(el.querySelectorAll('img')) as HTMLImageElement[],
+    [['height', 'ozImgBase', 'ozImgQ']],
+    computed,
+    (v) => Math.max(1, Math.round(v)),
+  );
 }

@@ -65,10 +65,11 @@ describe('pickCandidate', () => {
   it('probes each cell top-down but only its last index until the winning cell', () => {
     const seen: number[] = [];
     const result = pickCandidate((_candidate, i) => { seen.push(i); return i === 3; });
-    expect(seen).toEqual([
-      2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53,
-      56, 59, 62, 65, 68, 71,
-    ]);
+    const lastOfEachCell = Array.from(
+      { length: FIT_CANDIDATES.length / TIERS_PER_CELL },
+      (_, cell) => cell * TIERS_PER_CELL + TIERS_PER_CELL - 1,
+    );
+    expect(seen).toEqual(lastOfEachCell);
     expect(result).toBe(FIT_CANDIDATES.length - 1);
   });
 
