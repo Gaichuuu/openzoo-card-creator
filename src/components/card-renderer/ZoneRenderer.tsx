@@ -198,20 +198,25 @@ function buildZoneStyle(zone: Zone, styleOverride: CSSProperties): CSSProperties
 interface OutlinedZoneStyle { style: CSSProperties; outline: OutlineStyle | null }
 const ZONE_STYLE_CACHE = new WeakMap<Zone, Map<string, OutlinedZoneStyle>>();
 
-function getOutlinedZoneStyle(zone: Zone, overrideStr: string): OutlinedZoneStyle {
+function getOutlinedZoneStyle(zone: Zone, overrideStr: string, relaxAttackMargin = false): OutlinedZoneStyle {
   let byOverride = ZONE_STYLE_CACHE.get(zone);
   if (!byOverride) {
     byOverride = new Map();
     ZONE_STYLE_CACHE.set(zone, byOverride);
   }
-  let entry = byOverride.get(overrideStr);
+  const cacheKey = relaxAttackMargin ? `relax|${overrideStr}` : overrideStr;
+  let entry = byOverride.get(cacheKey);
   if (!entry) {
     if (byOverride.size > 64) byOverride.clear(); // nudge sliders can churn override strings
     const zoneKey = zone.imageDataKey || zone.textDataKey;
     const fixMap = zone.type === 'container' ? CONTAINER_ZONE_FIXES : ZONE_FIXES;
     const fix = zoneKey ? fixMap[zoneKey] : undefined;
-    entry = applyStrokeOutline(buildZoneStyle(zone, { ...fix, ...parseStyleString(overrideStr) }));
-    byOverride.set(overrideStr, entry);
+    entry = applyStrokeOutline(buildZoneStyle(zone, {
+      ...fix,
+      ...(relaxAttackMargin ? { marginTop: '0px' } : {}),
+      ...parseStyleString(overrideStr),
+    }));
+    byOverride.set(cacheKey, entry);
   }
   return entry;
 }
@@ -253,6 +258,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLineHeight : 0);
   const mainTextLetterSpacingAdj = useCardStore((s) =>
     (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLetterSpacing : 0);
+  const attackEffectSpaced = useCardStore((s) => isAttackEffectZone ? s.attackEffectSpaced : false);
   const cardArtPositionX = useCardStore((s) => isCardArtZone ? s.cardArtPositionX : 0);
   const cardArtPositionY = useCardStore((s) => isCardArtZone ? s.cardArtPositionY : 0);
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
@@ -719,7 +725,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   }
 
   const zoneKey = zone.imageDataKey || zone.textDataKey;
-  const outlined = getOutlinedZoneStyle(zone, cardData[`s${zone.id}`] || '');
+  const outlined = getOutlinedZoneStyle(zone, cardData[`s${zone.id}`] || '', attackEffectSpaced);
   const style = outlined.style;
 
   const inScope = inBorderlessTextScope || (borderless && entersBorderlessTextScope(zone));

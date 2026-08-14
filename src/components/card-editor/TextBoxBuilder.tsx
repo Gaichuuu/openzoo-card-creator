@@ -60,6 +60,8 @@ export function TextBoxBuilder() {
   const setLetterSpacingAdj = useCardStore((s) => s.setMainTextBoxLetterSpacing);
   const nudge = useCardStore((s) => s.mainTextBoxNudge);
   const setNudge = useCardStore((s) => s.setMainTextBoxNudge);
+  const attackEffectSpaced = useCardStore((s) => s.attackEffectSpaced);
+  const setAttackEffectSpaced = useCardStore((s) => s.setAttackEffectSpaced);
   const autoFitRatio = useCardStore((s) => s._autoFitRatio);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const available = AVAILABLE_BLOCKS[layoutType] || [];
@@ -111,6 +113,17 @@ export function TextBoxBuilder() {
           value={extraShrink} min={-20} max={20} step={ladder ? 5 : 1} onChange={setExtraShrink}
         />
         <Stepper label="Nudge" value={nudge} min={-10} max={10} onChange={setNudge} />
+        {sorted.some((b) => b.type === 'attack') && (
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={attackEffectSpaced}
+              onChange={(e) => setAttackEffectSpaced(e.target.checked)}
+              className="accent-gold-400"
+            />
+            <span className="text-[10px] text-gold-500">Spaced attack text</span>
+          </label>
+        )}
       </div>}
 
       {sorted.length === 0 && (
