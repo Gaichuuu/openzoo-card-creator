@@ -6,6 +6,8 @@ import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
 import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
 import { useCardStore } from '@/lib/store';
 import { ParsedText } from './TextParser';
+import { getFitMode } from '@/lib/fitMode';
+import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
 
 function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null }) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
@@ -227,13 +229,7 @@ function isZoneVisible(zone: Zone, cardData: CardData): boolean {
   return false;
 }
 
-const PITCH_PROPS = [
-  ['lineHeight', 'Lh'],
-  ['paddingTop', 'Pt'],
-  ['paddingBottom', 'Pb'],
-  ['borderTopWidth', 'Bt'],
-  ['borderBottomWidth', 'Bb'],
-] as const;
+const PITCH_PROPS = SNAP_PROPS;
 
 const FLEX_LAYOUT_KEYS = new Set([
   'display', 'flexDirection', 'justifyContent', 'alignItems', 'alignContent',
@@ -255,6 +251,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
   const shouldAutoFitMetadata = zone.type === 'container' && zone.imageDataKey === 'CryptidInfoBar';
   const shouldAutoFitFlavor = zone.textDataKey === 'FlavorText';
+  const fitMode = getFitMode();
   const needsTwoDiv = shouldAutoFit || shouldAutoFitTNL || shouldAutoFitMetadata || shouldAutoFitFlavor;
 
   useLayoutEffect(() => {
@@ -370,6 +367,62 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     }
 
     const baseWidth = parseFloat(zone.style.width as string) || 0;
+
+    const runLadderFit = () => {
+      el.style.zoom = '1';
+      el.style.width = `${baseWidth}px`;
+      el.style.height = 'auto';
+
+      const containerOverride = parseStyleString(cardData[`s${zone.id}`] || '');
+      el.style.paddingTop = (containerOverride.paddingTop as string) || '1px';
+      if (el.dataset.ozBasePb === undefined) {
+        el.dataset.ozBasePb = String(parseFloat(getComputedStyle(el).paddingBottom) || 0);
+      }
+      el.style.paddingBottom = textBoxReserve != null
+        ? `${textBoxReserve}px`
+        : `${el.dataset.ozBasePb}px`;
+
+      for (const child of Array.from(el.children) as HTMLElement[]) {
+        const childId = child.getAttribute('data-zone-id');
+        if (!childId) continue;
+        const childOverride = parseStyleString(cardData[`s${childId}`] || '');
+        child.style.paddingTop = childOverride.paddingTop
+          ? (childOverride.paddingTop as string)
+          : '';
+      }
+
+      const budget = baseHeight - 2;
+      const scale = el.getBoundingClientRect().width / baseWidth;
+      let applied = -1;
+      const fits = (candidate: FitCandidate, i: number) => {
+        applyRung(el, candidate, mainTextLineHeightAdj);
+        snapPitchGrid(el);
+        snapInlineImages(el);
+        snapChildHeights(el, scale);
+        applied = i;
+        return el.offsetHeight <= budget;
+      };
+
+      const autoIndex = pickCandidate(fits);
+      const offset = Math.round(mainTextBoxExtraShrink / 5) * TIERS_PER_CELL;
+      const index = Math.min(FIT_CANDIDATES.length - 1, Math.max(0, autoIndex + offset));
+      if (index !== applied) {
+        applyRung(el, FIT_CANDIDATES[index], mainTextLineHeightAdj);
+        snapPitchGrid(el);
+        snapInlineImages(el);
+        snapChildHeights(el, scale);
+      }
+
+      el.style.height = `${baseHeight}px`;
+      if (el.scrollHeight > baseHeight) {
+        el.style.height = `${el.scrollHeight}px`;
+      }
+      el.style.transform = mainTextBoxNudge !== 0
+        ? `translateY(${mainTextBoxNudge}px)`
+        : '';
+
+      useCardStore.getState()._setAutoFitRatio(FIT_CANDIDATES[index].main.pitch / FIT_CANDIDATES[0].main.pitch);
+    };
 
     const runAutoFit = () => {
       el.style.zoom = '1';
@@ -550,13 +603,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
       const quantizePills = (ratio: number) => {
         const grid = (v: number) => Math.round(v * ratio * 4) / 4 / ratio;
-        const props = [
-          ['lineHeight', 'ozPrevLh'],
-          ['paddingTop', 'ozPrevPt'],
-          ['paddingBottom', 'ozPrevPb'],
-          ['borderTopWidth', 'ozPrevBt'],
-          ['borderBottomWidth', 'ozPrevBb'],
-        ] as const;
+        const props = SNAP_PROPS.map(([prop, k]) => [prop, `ozPrev${k}`] as [SnapProp, string]);
         for (const p of Array.from(el.querySelectorAll('[data-oz-pill]')) as HTMLElement[]) {
           const cs = getComputedStyle(p);
           for (const [prop, key] of props) {
@@ -628,11 +675,12 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       }
     };
 
-    runAutoFit();
+    const run = fitMode === 'ladder' ? runLadderFit : runAutoFit;
+    run();
 
     const images = Array.from(el.querySelectorAll('img')).filter(img => !img.complete);
     if (images.length > 0) {
-      const onLoad = () => runAutoFit();
+      const onLoad = () => run();
       for (const img of images) {
         img.addEventListener('load', onLoad, { once: true });
       }
@@ -685,7 +733,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         : (style.backgroundPosition || 'center'),
       backgroundRepeat: 'no-repeat',
     } : {}),
-    ...(isMainTextZone && mainTextLineHeightAdj !== 0
+    ...(fitMode === 'zoom' && isMainTextZone && mainTextLineHeightAdj !== 0
       ? { lineHeight: `${8 + mainTextLineHeightAdj * 0.5}px` }
       : {}),
     boxSizing: 'border-box',

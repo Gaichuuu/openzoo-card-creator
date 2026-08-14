@@ -3,28 +3,30 @@ import { useCardStore } from '@/lib/store';
 import type { LayoutType } from '@/types/layout';
 import type { EffectBlockType } from '@/types/effects';
 import { BLOCK_ORDER, BLOCK_LABELS } from '@/types/effects';
+import { getFitMode } from '@/lib/fitMode';
 import { sortBlocks } from '@/lib/effectComposer';
 import { EffectBlockEditor } from './EffectBlockEditor';
 
-export function Stepper({ label, value, min, max, onChange, valueWidth = 'w-4' }: {
+export function Stepper({ label, value, min, max, onChange, valueWidth = 'w-4', step = 1 }: {
   label: ReactNode;
   value: number;
   min: number;
   max: number;
   onChange: (v: number) => void;
   valueWidth?: string;
+  step?: number;
 }) {
   return (
     <div className="flex items-center gap-1.5 flex-1">
       <span className="text-[10px] text-gold-500">{label}</span>
       <button
-        onClick={() => onChange(value - 1)}
+        onClick={() => onChange(Math.max(min, value - step))}
         disabled={value <= min}
         className="w-5 h-5 text-xs bg-navy-700 hover:bg-navy-600 text-gray-300 rounded flex items-center justify-center disabled:opacity-30"
       >-</button>
       <span className={`text-[10px] text-gray-400 ${valueWidth} text-center tabular-nums`}>{value}</span>
       <button
-        onClick={() => onChange(value + 1)}
+        onClick={() => onChange(Math.min(max, value + step))}
         disabled={value >= max}
         className="w-5 h-5 text-xs bg-navy-700 hover:bg-navy-600 text-gray-300 rounded flex items-center justify-center disabled:opacity-30"
       >+</button>
@@ -58,7 +60,10 @@ export function TextBoxBuilder() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const available = AVAILABLE_BLOCKS[layoutType] || [];
   const sorted = sortBlocks(effectBlocks);
-  const totalRatio = Math.min(1, autoFitRatio * (1 - extraShrink * 0.01));
+  const ladder = getFitMode() === 'ladder';
+  const totalRatio = ladder
+    ? Math.min(1, autoFitRatio)
+    : Math.min(1, autoFitRatio * (1 - extraShrink * 0.01));
   const totalShrinkPct = Math.round((1 - totalRatio) * 100);
   if (available.length === 0) return null;
 
@@ -98,7 +103,7 @@ export function TextBoxBuilder() {
         <Stepper label="Height" value={lineHeightAdj} min={-6} max={6} onChange={setLineHeightAdj} />
         <Stepper
           label={<>Shrink{totalShrinkPct > 0 && <span className="text-gray-500 ml-0.5">({totalShrinkPct}%)</span>}</>}
-          value={extraShrink} min={-20} max={20} onChange={setExtraShrink}
+          value={extraShrink} min={-20} max={20} step={ladder ? 5 : 1} onChange={setExtraShrink}
         />
       </div>}
 
