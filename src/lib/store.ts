@@ -37,6 +37,7 @@ interface CardEditorState {
   mainTextBoxExtraShrink: number;
   mainTextBoxLineHeight: number;
   mainTextBoxLetterSpacing: number;
+  attackEffectSpaced: boolean;
   _autoFitRatio: number;
   cardArtPositionX: number;
   cardArtPositionY: number;
@@ -67,6 +68,7 @@ interface CardEditorState {
   setMainTextBoxExtraShrink: (v: number) => void;
   setMainTextBoxLineHeight: (v: number) => void;
   setMainTextBoxLetterSpacing: (v: number) => void;
+  setAttackEffectSpaced: (v: boolean) => void;
   setCardArtPosition: (x: number, y: number) => void;
   setArtNeeded: (v: boolean) => void;
   setSourceCard: (card: SavedCard | null) => void;
@@ -239,6 +241,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   mainTextBoxExtraShrink: 0,
   mainTextBoxLineHeight: 0,
   mainTextBoxLetterSpacing: 0,
+  attackEffectSpaced: false,
   _autoFitRatio: 1,
   cardArtPositionX: 0,
   cardArtPositionY: 0,
@@ -520,6 +523,10 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     set({ mainTextBoxLineHeight: Math.max(-6, Math.min(6, v)) });
   },
 
+  setAttackEffectSpaced: (v) => {
+    set({ attackEffectSpaced: v });
+  },
+
   setMainTextBoxLetterSpacing: (v) => {
     set({ mainTextBoxLetterSpacing: Math.max(-6, Math.min(6, v)) });
   },
@@ -607,6 +614,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxExtraShrink: 0,
       mainTextBoxLineHeight: 0,
       mainTextBoxLetterSpacing: 0,
+      attackEffectSpaced: false,
       cardArtPositionX: 0,
       cardArtPositionY: 0,
       artNeeded: true,
@@ -652,6 +660,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxExtraShrink: s.mainTextBoxExtraShrink,
       mainTextBoxLineHeight: s.mainTextBoxLineHeight,
       mainTextBoxLetterSpacing: s.mainTextBoxLetterSpacing,
+      attackEffectSpaced: s.attackEffectSpaced,
       cardArtPositionX: s.cardArtPositionX,
       cardArtPositionY: s.cardArtPositionY,
       artNeeded: s.artNeeded,
@@ -706,6 +715,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxExtraShrink: snapshot.mainTextBoxExtraShrink ?? 0,
       mainTextBoxLineHeight: snapshot.mainTextBoxLineHeight ?? 0,
       mainTextBoxLetterSpacing: snapshot.mainTextBoxLetterSpacing ?? 0,
+      attackEffectSpaced: snapshot.attackEffectSpaced ?? false,
       cardArtPositionX: snapshot.cardArtPositionX ?? 0,
       cardArtPositionY: snapshot.cardArtPositionY ?? 0,
       artNeeded: snapshot.artNeeded ?? false,
