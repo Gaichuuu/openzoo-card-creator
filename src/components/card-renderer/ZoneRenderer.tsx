@@ -82,6 +82,8 @@ const ATTACK_NAME_FIX: CSSProperties = {
 };
 const ATTACK_EFFECT_FIX: CSSProperties = {
   paddingBottom: '1.5px',
+  paddingLeft: '3px',
+  paddingRight: '3px',
   lineHeight: '9px',
 };
 const FLAVOR_TEXT_FIX: CSSProperties = {
@@ -242,10 +244,12 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   const isCardArtZone = zone.imageDataKey === 'CardArt' || zone.imageDataKey === 'Art';
   const isMainTextZone = zone.type === 'text'
     && (zone.textDataKey === 'MainTextBox' || zone.textDataKey === 'MainText');
+  const isAttackEffectZone = zone.type === 'text'
+    && (zone.textDataKey === 'AttackEffect' || zone.textDataKey === 'AttackEffect 1');
   const mainTextBoxNudge = useCardStore((s) => shouldAutoFit ? s.mainTextBoxNudge : 0);
   const mainTextBoxExtraShrink = useCardStore((s) => shouldAutoFit ? s.mainTextBoxExtraShrink : 0);
   const mainTextLineHeightAdj = useCardStore((s) =>
-    (isMainTextZone || shouldAutoFit) ? s.mainTextBoxLineHeight : 0);
+    (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLineHeight : 0);
   const cardArtPositionX = useCardStore((s) => isCardArtZone ? s.cardArtPositionX : 0);
   const cardArtPositionY = useCardStore((s) => isCardArtZone ? s.cardArtPositionY : 0);
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
@@ -742,6 +746,9 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     } : {}),
     ...(fitMode === 'zoom' && isMainTextZone && mainTextLineHeightAdj !== 0
       ? { lineHeight: `${8 + mainTextLineHeightAdj * 0.5}px` }
+      : {}),
+    ...(fitMode === 'zoom' && isAttackEffectZone && mainTextLineHeightAdj !== 0
+      ? { lineHeight: `${9 + mainTextLineHeightAdj * 0.5}px` }
       : {}),
     boxSizing: 'border-box',
   };
