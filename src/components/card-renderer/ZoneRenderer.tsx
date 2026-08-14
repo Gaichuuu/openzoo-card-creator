@@ -198,13 +198,13 @@ function buildZoneStyle(zone: Zone, styleOverride: CSSProperties): CSSProperties
 interface OutlinedZoneStyle { style: CSSProperties; outline: OutlineStyle | null }
 const ZONE_STYLE_CACHE = new WeakMap<Zone, Map<string, OutlinedZoneStyle>>();
 
-function getOutlinedZoneStyle(zone: Zone, overrideStr: string, relaxAttackMargin = false): OutlinedZoneStyle {
+function getOutlinedZoneStyle(zone: Zone, overrideStr: string, attackEffectGap = 0): OutlinedZoneStyle {
   let byOverride = ZONE_STYLE_CACHE.get(zone);
   if (!byOverride) {
     byOverride = new Map();
     ZONE_STYLE_CACHE.set(zone, byOverride);
   }
-  const cacheKey = relaxAttackMargin ? `relax|${overrideStr}` : overrideStr;
+  const cacheKey = attackEffectGap !== 0 ? `gap${attackEffectGap}|${overrideStr}` : overrideStr;
   let entry = byOverride.get(cacheKey);
   if (!entry) {
     if (byOverride.size > 64) byOverride.clear(); // nudge sliders can churn override strings
@@ -213,7 +213,7 @@ function getOutlinedZoneStyle(zone: Zone, overrideStr: string, relaxAttackMargin
     const fix = zoneKey ? fixMap[zoneKey] : undefined;
     entry = applyStrokeOutline(buildZoneStyle(zone, {
       ...fix,
-      ...(relaxAttackMargin ? { marginTop: '0px' } : {}),
+      ...(attackEffectGap !== 0 ? { marginTop: `${attackEffectGap - 1}px` } : {}),
       ...parseStyleString(overrideStr),
     }));
     byOverride.set(cacheKey, entry);
@@ -252,13 +252,17 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     && (zone.textDataKey === 'MainTextBox' || zone.textDataKey === 'MainText');
   const isAttackEffectZone = zone.type === 'text'
     && (zone.textDataKey === 'AttackEffect' || zone.textDataKey === 'AttackEffect 1');
+  const isAttackSizedZone = zone.textDataKey === 'Attack Name' || zone.textDataKey === 'Attack Name 1'
+    || zone.textDataKey === 'ATKDMG' || zone.textDataKey === 'ATKDMG 1';
   const mainTextBoxNudge = useCardStore((s) => shouldAutoFit ? s.mainTextBoxNudge : 0);
   const mainTextBoxExtraShrink = useCardStore((s) => shouldAutoFit ? s.mainTextBoxExtraShrink : 0);
   const mainTextLineHeightAdj = useCardStore((s) =>
     (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLineHeight : 0);
   const mainTextLetterSpacingAdj = useCardStore((s) =>
     (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLetterSpacing : 0);
-  const attackEffectSpaced = useCardStore((s) => isAttackEffectZone ? s.attackEffectSpaced : false);
+  const attackEffectGap = useCardStore((s) => isAttackEffectZone ? s.attackEffectGap : 0);
+  const attackNameSizeAdj = useCardStore((s) =>
+    (isAttackSizedZone || shouldAutoFit) ? s.attackNameSize : 0);
   const cardArtPositionX = useCardStore((s) => isCardArtZone ? s.cardArtPositionX : 0);
   const cardArtPositionY = useCardStore((s) => isCardArtZone ? s.cardArtPositionY : 0);
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
@@ -415,7 +419,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       const scale = el.getBoundingClientRect().width / baseWidth;
       let applied = -1;
       const fits = (candidate: FitCandidate, i: number) => {
-        applyRung(el, candidate, mainTextLineHeightAdj, mainTextLetterSpacingAdj);
+        applyRung(el, candidate, { pitch: mainTextLineHeightAdj, spacing: mainTextLetterSpacingAdj, attackName: attackNameSizeAdj });
         snapPitchGrid(el);
         snapInlineImages(el);
         snapChildHeights(el, scale);
@@ -427,7 +431,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       const offset = Math.round(mainTextBoxExtraShrink / 5) * TIERS_PER_CELL;
       const index = Math.min(FIT_CANDIDATES.length - 1, Math.max(0, autoIndex + offset));
       if (index !== applied) {
-        applyRung(el, FIT_CANDIDATES[index], mainTextLineHeightAdj, mainTextLetterSpacingAdj);
+        applyRung(el, FIT_CANDIDATES[index], { pitch: mainTextLineHeightAdj, spacing: mainTextLetterSpacingAdj, attackName: attackNameSizeAdj });
         snapPitchGrid(el);
         snapInlineImages(el);
         snapChildHeights(el, scale);
@@ -725,7 +729,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   }
 
   const zoneKey = zone.imageDataKey || zone.textDataKey;
-  const outlined = getOutlinedZoneStyle(zone, cardData[`s${zone.id}`] || '', attackEffectSpaced);
+  const outlined = getOutlinedZoneStyle(zone, cardData[`s${zone.id}`] || '', attackEffectGap);
   const style = outlined.style;
 
   const inScope = inBorderlessTextScope || (borderless && entersBorderlessTextScope(zone));
@@ -766,6 +770,9 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       : {}),
     ...(fitMode === 'zoom' && isAttackEffectZone && mainTextLineHeightAdj !== 0
       ? { lineHeight: `${9 + mainTextLineHeightAdj * 0.5}px` }
+      : {}),
+    ...(fitMode === 'zoom' && isAttackSizedZone && attackNameSizeAdj !== 0
+      ? { fontSize: `${(parseFloat(zone.style.fontSize as string) || 10) + attackNameSizeAdj * 0.5}px` }
       : {}),
     ...(fitMode === 'zoom' && (isMainTextZone || isAttackEffectZone) && mainTextLetterSpacingAdj !== 0
       ? { letterSpacing: `${mainTextLetterSpacingAdj * 0.01}em` }

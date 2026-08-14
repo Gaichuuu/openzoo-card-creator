@@ -17,19 +17,21 @@ export function Stepper({ label, value, min, max, onChange, valueWidth = 'w-4', 
   step?: number;
 }) {
   return (
-    <div className="flex items-center gap-1.5 flex-1">
+    <div className="flex items-center justify-between gap-1.5">
       <span className="text-[10px] text-gold-500">{label}</span>
-      <button
-        onClick={() => onChange(Math.max(min, value - step))}
-        disabled={value <= min}
-        className="w-5 h-5 text-xs bg-navy-700 hover:bg-navy-600 text-gray-300 rounded flex items-center justify-center disabled:opacity-30"
-      >-</button>
-      <span className={`text-[10px] text-gray-400 ${valueWidth} text-center tabular-nums`}>{value}</span>
-      <button
-        onClick={() => onChange(Math.min(max, value + step))}
-        disabled={value >= max}
-        className="w-5 h-5 text-xs bg-navy-700 hover:bg-navy-600 text-gray-300 rounded flex items-center justify-center disabled:opacity-30"
-      >+</button>
+      <span className="flex items-center gap-1.5">
+        <button
+          onClick={() => onChange(Math.max(min, value - step))}
+          disabled={value <= min}
+          className="w-5 h-5 text-xs bg-navy-700 hover:bg-navy-600 text-gray-300 rounded flex items-center justify-center disabled:opacity-30"
+        >-</button>
+        <span className={`text-[10px] ${value !== 0 ? 'text-gold-300' : 'text-gray-400'} ${valueWidth} text-center tabular-nums`}>{value}</span>
+        <button
+          onClick={() => onChange(Math.min(max, value + step))}
+          disabled={value >= max}
+          className="w-5 h-5 text-xs bg-navy-700 hover:bg-navy-600 text-gray-300 rounded flex items-center justify-center disabled:opacity-30"
+        >+</button>
+      </span>
     </div>
   );
 }
@@ -60,8 +62,10 @@ export function TextBoxBuilder() {
   const setLetterSpacingAdj = useCardStore((s) => s.setMainTextBoxLetterSpacing);
   const nudge = useCardStore((s) => s.mainTextBoxNudge);
   const setNudge = useCardStore((s) => s.setMainTextBoxNudge);
-  const attackEffectSpaced = useCardStore((s) => s.attackEffectSpaced);
-  const setAttackEffectSpaced = useCardStore((s) => s.setAttackEffectSpaced);
+  const attackEffectGap = useCardStore((s) => s.attackEffectGap);
+  const setAttackEffectGap = useCardStore((s) => s.setAttackEffectGap);
+  const attackNameSize = useCardStore((s) => s.attackNameSize);
+  const setAttackNameSize = useCardStore((s) => s.setAttackNameSize);
   const autoFitRatio = useCardStore((s) => s._autoFitRatio);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const available = AVAILABLE_BLOCKS[layoutType] || [];
@@ -105,7 +109,7 @@ export function TextBoxBuilder() {
         </div>
       </div>
 
-      {sorted.length > 0 && <div className="flex flex-wrap gap-2">
+      {sorted.length > 0 && <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
         <Stepper label="Height" value={lineHeightAdj} min={-6} max={6} onChange={setLineHeightAdj} />
         <Stepper label="Spacing" value={letterSpacingAdj} min={-6} max={6} onChange={setLetterSpacingAdj} />
         <Stepper
@@ -114,15 +118,10 @@ export function TextBoxBuilder() {
         />
         <Stepper label="Nudge" value={nudge} min={-10} max={10} onChange={setNudge} />
         {sorted.some((b) => b.type === 'attack') && (
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={attackEffectSpaced}
-              onChange={(e) => setAttackEffectSpaced(e.target.checked)}
-              className="accent-gold-400"
-            />
-            <span className="text-[10px] text-gold-500">Spaced attack text</span>
-          </label>
+          <>
+            <Stepper label="Gap" value={attackEffectGap} min={-1} max={3} onChange={setAttackEffectGap} />
+            <Stepper label="Atk Size" value={attackNameSize} min={-4} max={4} onChange={setAttackNameSize} />
+          </>
         )}
       </div>}
 
