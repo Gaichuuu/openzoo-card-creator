@@ -82,7 +82,7 @@ export function applyRung(el: HTMLElement, rung: FitCandidate, pitchAdjust: numb
   });
   each(el, EFFECT_SELECTOR, (node) => {
     node.style.fontSize = `${rung.effect.font}px`;
-    node.style.lineHeight = `${rung.effect.pitch}px`;
+    node.style.lineHeight = `${rung.effect.pitch + pitchAdjust * 0.5}px`;
   });
   each(el, ATTACK_SELECTOR, (node) => {
     node.style.lineHeight = `${rung.attack.pitch}px`;
