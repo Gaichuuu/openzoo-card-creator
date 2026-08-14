@@ -296,6 +296,13 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         return;
       }
 
+      const flavorCs = getComputedStyle(el);
+      const lineHeightPx = parseFloat(flavorCs.lineHeight);
+      const padding = (parseFloat(flavorCs.paddingTop) || 0) + (parseFloat(flavorCs.paddingBottom) || 0);
+      const maxContentH = lineHeightPx > 0
+        ? Math.max(1, Math.floor((baseHeight - padding) / lineHeightPx)) * lineHeightPx + padding + 0.1
+        : baseHeight;
+
       let lo = 0.1;
       let hi = 1.0;
       let bestRatio = lo;
@@ -308,11 +315,11 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         const contentH = el.offsetHeight;
         const visualH = contentH * mid;
 
-        if (visualH <= baseHeight) {
+        if (visualH <= baseHeight && contentH <= maxContentH) {
           bestRatio = mid;
-          lo = mid; 
+          lo = mid;
         } else {
-          hi = mid; 
+          hi = mid;
         }
       }
 

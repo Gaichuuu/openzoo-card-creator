@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CardEditor } from './CardEditor';
 import { useCardStore } from '@/lib/store';
@@ -17,11 +17,12 @@ export function CreatePage() {
   const snapshotVersion = useCardStore((s) => s._snapshotVersion);
 
   const resetCard = useCardStore((s) => s.resetCard);
+  const enteredBlank = useRef(!loadId);
   useEffect(() => {
-    if (!loadId) {
+    if (enteredBlank.current) {
       resetCard();
     }
-  }, [loadId, resetCard]);
+  }, [resetCard]);
 
   useEffect(() => {
     if (!loadId) return;
