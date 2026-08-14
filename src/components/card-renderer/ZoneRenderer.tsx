@@ -81,6 +81,7 @@ const ATTACK_NAME_FIX: CSSProperties = {
   marginBottom: '-1px',
 };
 const ATTACK_EFFECT_FIX: CSSProperties = {
+  marginTop: '-1px',
   paddingBottom: '1.5px',
   paddingLeft: '3px',
   paddingRight: '3px',
@@ -250,6 +251,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   const mainTextBoxExtraShrink = useCardStore((s) => shouldAutoFit ? s.mainTextBoxExtraShrink : 0);
   const mainTextLineHeightAdj = useCardStore((s) =>
     (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLineHeight : 0);
+  const mainTextLetterSpacingAdj = useCardStore((s) =>
+    (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLetterSpacing : 0);
   const cardArtPositionX = useCardStore((s) => isCardArtZone ? s.cardArtPositionX : 0);
   const cardArtPositionY = useCardStore((s) => isCardArtZone ? s.cardArtPositionY : 0);
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
@@ -406,7 +409,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       const scale = el.getBoundingClientRect().width / baseWidth;
       let applied = -1;
       const fits = (candidate: FitCandidate, i: number) => {
-        applyRung(el, candidate, mainTextLineHeightAdj);
+        applyRung(el, candidate, mainTextLineHeightAdj, mainTextLetterSpacingAdj);
         snapPitchGrid(el);
         snapInlineImages(el);
         snapChildHeights(el, scale);
@@ -418,10 +421,18 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       const offset = Math.round(mainTextBoxExtraShrink / 5) * TIERS_PER_CELL;
       const index = Math.min(FIT_CANDIDATES.length - 1, Math.max(0, autoIndex + offset));
       if (index !== applied) {
-        applyRung(el, FIT_CANDIDATES[index], mainTextLineHeightAdj);
+        applyRung(el, FIT_CANDIDATES[index], mainTextLineHeightAdj, mainTextLetterSpacingAdj);
         snapPitchGrid(el);
         snapInlineImages(el);
         snapChildHeights(el, scale);
+      }
+
+      for (const child of Array.from(el.children) as HTMLElement[]) {
+        const h = parseFloat(child.style.height);
+        if (h > 0 && h <= 2) {
+          child.style.flexShrink = '0';
+          child.style.minHeight = child.style.height;
+        }
       }
 
       el.style.height = `${baseHeight}px`;
@@ -749,6 +760,9 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       : {}),
     ...(fitMode === 'zoom' && isAttackEffectZone && mainTextLineHeightAdj !== 0
       ? { lineHeight: `${9 + mainTextLineHeightAdj * 0.5}px` }
+      : {}),
+    ...(fitMode === 'zoom' && (isMainTextZone || isAttackEffectZone) && mainTextLetterSpacingAdj !== 0
+      ? { letterSpacing: `${mainTextLetterSpacingAdj * 0.01}em` }
       : {}),
     boxSizing: 'border-box',
   };

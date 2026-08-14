@@ -180,8 +180,9 @@
   "locale": "en",
   "borderless": false,
   "mainTextBoxNudge": 0,
-  "mainTextBoxExtraShrink": 0,
+  "mainTextBoxExtraShrink": 5,
   "mainTextBoxLineHeight": 0,
+  "mainTextBoxLetterSpacing": -3,
   "cardArtPositionX": 0,
   "cardArtPositionY": 0,
   "artNeeded": false

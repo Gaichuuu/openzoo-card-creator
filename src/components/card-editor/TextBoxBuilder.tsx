@@ -56,6 +56,10 @@ export function TextBoxBuilder() {
   const setExtraShrink = useCardStore((s) => s.setMainTextBoxExtraShrink);
   const lineHeightAdj = useCardStore((s) => s.mainTextBoxLineHeight);
   const setLineHeightAdj = useCardStore((s) => s.setMainTextBoxLineHeight);
+  const letterSpacingAdj = useCardStore((s) => s.mainTextBoxLetterSpacing);
+  const setLetterSpacingAdj = useCardStore((s) => s.setMainTextBoxLetterSpacing);
+  const nudge = useCardStore((s) => s.mainTextBoxNudge);
+  const setNudge = useCardStore((s) => s.setMainTextBoxNudge);
   const autoFitRatio = useCardStore((s) => s._autoFitRatio);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const available = AVAILABLE_BLOCKS[layoutType] || [];
@@ -99,12 +103,14 @@ export function TextBoxBuilder() {
         </div>
       </div>
 
-      {sorted.length > 0 && <div className="flex gap-2">
+      {sorted.length > 0 && <div className="flex flex-wrap gap-2">
         <Stepper label="Height" value={lineHeightAdj} min={-6} max={6} onChange={setLineHeightAdj} />
+        <Stepper label="Spacing" value={letterSpacingAdj} min={-6} max={6} onChange={setLetterSpacingAdj} />
         <Stepper
           label={<>Shrink{totalShrinkPct > 0 && <span className="text-gray-500 ml-0.5">({totalShrinkPct}%)</span>}</>}
           value={extraShrink} min={-20} max={20} step={ladder ? 5 : 1} onChange={setExtraShrink}
         />
+        <Stepper label="Nudge" value={nudge} min={-10} max={10} onChange={setNudge} />
       </div>}
 
       {sorted.length === 0 && (

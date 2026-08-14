@@ -75,14 +75,17 @@ function each(el: HTMLElement, selector: string, fn: (node: HTMLElement) => void
   for (const node of Array.from(el.querySelectorAll(selector)) as HTMLElement[]) fn(node);
 }
 
-export function applyRung(el: HTMLElement, rung: FitCandidate, pitchAdjust: number): void {
+export function applyRung(el: HTMLElement, rung: FitCandidate, pitchAdjust: number, spacingAdjust: number): void {
+  const spacing = `${spacingAdjust * 0.01}em`;
   each(el, MAIN_SELECTOR, (node) => {
     node.style.fontSize = `${rung.main.font}px`;
     node.style.lineHeight = `${rung.main.pitch + pitchAdjust * 0.5}px`;
+    node.style.letterSpacing = spacing;
   });
   each(el, EFFECT_SELECTOR, (node) => {
     node.style.fontSize = `${rung.effect.font}px`;
     node.style.lineHeight = `${rung.effect.pitch + pitchAdjust * 0.5}px`;
+    node.style.letterSpacing = spacing;
   });
   each(el, ATTACK_SELECTOR, (node) => {
     node.style.lineHeight = `${rung.attack.pitch}px`;
