@@ -117,6 +117,8 @@ export interface CardSnapshot {
   mainTextBoxExtraShrink?: number;
   mainTextBoxLineHeight?: number;
   mainTextBoxLetterSpacing?: number;
+  attackEffectGap?: number;
+  attackNameSize?: number;
   attackEffectSpaced?: boolean;
   cardArtPositionX?: number;
   cardArtPositionY?: number;
