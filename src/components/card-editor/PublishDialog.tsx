@@ -71,6 +71,17 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         existingCard: editCard ?? undefined,
       });
 
+      const prevSource = useCardStore.getState().sourceCard;
+      if (prevSource && prevSource.id === cardId) {
+        useCardStore.getState().setSourceCard({
+          ...prevSource,
+          ...snapshot,
+          creatorName: creatorName.trim(),
+          tags: selectedTags,
+          updatedAt: new Date(),
+        });
+      }
+
       if (!import.meta.env.DEV && !isUpdate) {
         fetch('/api/notify', {
           method: 'POST',
