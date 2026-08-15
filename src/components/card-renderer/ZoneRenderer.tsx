@@ -7,7 +7,7 @@ import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineSt
 import { useCardStore } from '@/lib/store';
 import { ParsedText } from './TextParser';
 import { getFitMode } from '@/lib/fitMode';
-import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
+import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
 
 function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null }) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
@@ -444,6 +444,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           child.style.minHeight = child.style.height;
         }
       }
+
+      centerPillText(el);
 
       el.style.height = `${baseHeight}px`;
       if (el.scrollHeight > baseHeight) {

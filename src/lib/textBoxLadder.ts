@@ -174,6 +174,41 @@ export function snapChildHeights(el: HTMLElement, scale: number): void {
   );
 }
 
+const PILL_CAP_HEIGHT = 0.667;
+
+export function centerPillText(el: HTMLElement): void {
+  for (const pill of Array.from(el.querySelectorAll('[data-oz-pill]')) as HTMLElement[]) {
+    const item = pill.firstElementChild as HTMLElement | null;
+    if (!item) continue;
+    const fill = (item.lastElementChild as HTMLElement | null) ?? item;
+    const cs = getComputedStyle(pill);
+    const fs = parseFloat(cs.fontSize);
+    const lh = parseFloat(cs.lineHeight);
+    const pt = parseFloat(cs.paddingTop) || 0;
+    const pb = parseFloat(cs.paddingBottom) || 0;
+    const bt = parseFloat(cs.borderTopWidth) || 0;
+    const bb = parseFloat(cs.borderBottomWidth) || 0;
+    if (!(fs > 0) || !(lh > 0)) continue;
+    const marker = document.createElement('span');
+    marker.style.cssText = 'display:inline-block;width:0;height:0;padding:0;margin:0;border:0';
+    fill.appendChild(marker);
+    const itemRect = item.getBoundingClientRect();
+    const markerTop = marker.getBoundingClientRect().top;
+    marker.remove();
+    if (!(itemRect.height > 0)) continue;
+    const scale = itemRect.height / lh;
+    const baseline = (markerTop - itemRect.top) / scale;
+    const glyphCenter = bt + pt + baseline - (PILL_CAP_HEIGHT * fs) / 2;
+    const pillCenter = (bt + bb + pt + pb + lh) / 2;
+    const shift = Math.round((pillCenter - glyphCenter) * 2) / 2;
+    if (shift === 0) continue;
+    pill.style.paddingTop = `${Math.max(0, pt + shift)}px`;
+    pill.style.paddingBottom = `${Math.max(0, pb - shift)}px`;
+    pill.dataset.ozGridQPt = pill.style.paddingTop;
+    pill.dataset.ozGridQPb = pill.style.paddingBottom;
+  }
+}
+
 export function snapInlineImages(el: HTMLElement): void {
   snapAll(
     Array.from(el.querySelectorAll('img')) as HTMLImageElement[],
