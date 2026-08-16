@@ -1,6 +1,6 @@
 import { type CSSProperties, useRef, useLayoutEffect, useState } from 'react';
 import type { Zone } from '@/types/layout';
-import type { CardData } from '@/types/card';
+import type { CardData, CardFitSettings } from '@/types/card';
 import { resolveImagePath } from '@/lib/imagePathResolver';
 import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
 import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
@@ -69,6 +69,7 @@ interface ZoneRendererProps {
   borderless?: boolean;
   inBorderlessTextScope?: boolean;
   textBoxReserve?: number;
+  fitOverrides?: CardFitSettings;
 }
 
 const TERRA_BONUS_FIX: CSSProperties = {
@@ -244,7 +245,7 @@ const FLEX_LAYOUT_KEYS = new Set([
   'gap', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
 ]);
 
-export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessTextScope = false, textBoxReserve }: ZoneRendererProps) {
+export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessTextScope = false, textBoxReserve, fitOverrides }: ZoneRendererProps) {
   const zoneRef = useRef<HTMLDivElement>(null);
   const shouldAutoFit = zone.type === 'container' && zone.imageDataKey === 'MainTextBox';
   const isCardArtZone = zone.imageDataKey === 'CardArt' || zone.imageDataKey === 'Art';
@@ -254,17 +255,18 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     && (zone.textDataKey === 'AttackEffect' || zone.textDataKey === 'AttackEffect 1');
   const isAttackSizedZone = zone.textDataKey === 'Attack Name' || zone.textDataKey === 'Attack Name 1'
     || zone.textDataKey === 'ATKDMG' || zone.textDataKey === 'ATKDMG 1';
-  const mainTextBoxNudge = useCardStore((s) => shouldAutoFit ? s.mainTextBoxNudge : 0);
-  const mainTextBoxExtraShrink = useCardStore((s) => shouldAutoFit ? s.mainTextBoxExtraShrink : 0);
+  const ov = fitOverrides;
+  const mainTextBoxNudge = useCardStore((s) => shouldAutoFit ? (ov ? ov.mainTextBoxNudge ?? 0 : s.mainTextBoxNudge) : 0);
+  const mainTextBoxExtraShrink = useCardStore((s) => shouldAutoFit ? (ov ? ov.mainTextBoxExtraShrink ?? 0 : s.mainTextBoxExtraShrink) : 0);
   const mainTextLineHeightAdj = useCardStore((s) =>
-    (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLineHeight : 0);
+    (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? (ov ? ov.mainTextBoxLineHeight ?? 0 : s.mainTextBoxLineHeight) : 0);
   const mainTextLetterSpacingAdj = useCardStore((s) =>
-    (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? s.mainTextBoxLetterSpacing : 0);
-  const attackEffectGap = useCardStore((s) => isAttackEffectZone ? s.attackEffectGap : 0);
+    (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? (ov ? ov.mainTextBoxLetterSpacing ?? 0 : s.mainTextBoxLetterSpacing) : 0);
+  const attackEffectGap = useCardStore((s) => isAttackEffectZone ? (ov ? ov.attackEffectGap ?? 0 : s.attackEffectGap) : 0);
   const attackNameSizeAdj = useCardStore((s) =>
-    (isAttackSizedZone || shouldAutoFit) ? s.attackNameSize : 0);
-  const cardArtPositionX = useCardStore((s) => isCardArtZone ? s.cardArtPositionX : 0);
-  const cardArtPositionY = useCardStore((s) => isCardArtZone ? s.cardArtPositionY : 0);
+    (isAttackSizedZone || shouldAutoFit) ? (ov ? ov.attackNameSize ?? 0 : s.attackNameSize) : 0);
+  const cardArtPositionX = useCardStore((s) => isCardArtZone ? (ov ? ov.cardArtPositionX ?? 0 : s.cardArtPositionX) : 0);
+  const cardArtPositionY = useCardStore((s) => isCardArtZone ? (ov ? ov.cardArtPositionY ?? 0 : s.cardArtPositionY) : 0);
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
   const shouldAutoFitMetadata = zone.type === 'container' && zone.imageDataKey === 'CryptidInfoBar';
   const shouldAutoFitFlavor = zone.textDataKey === 'FlavorText';
@@ -808,7 +810,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         <div ref={zoneRef} style={innerStyle}>
           {textContent && shouldAutoFitFlavor && wrapOutline(<ParsedText html={textContent} />, outline)}
           {zone.childZones.map((child, idx) => (
-            <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} />
+            <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
           ))}
         </div>
       </div>
@@ -824,7 +826,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       )}
 
       {zone.childZones.map((child, idx) => (
-        <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} />
+        <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
       ))}
     </div>
   );

@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useLayoutEffect, useState } from 'react';
 import type { LayoutType } from '@/types/layout';
-import type { CardData } from '@/types/card';
+import type { CardData, CardFitSettings } from '@/types/card';
 import { LAYOUTS } from '@/data/layouts';
 import { useCardStore } from '@/lib/store';
 import { CARD_W, CARD_H } from '@/lib/exportUtils';
@@ -13,12 +13,13 @@ interface CardRendererProps {
   scale?: number;
   borderlessOverride?: boolean;
   artNeededOverride?: boolean;
+  fitOverrides?: CardFitSettings;
 }
 
 interface ArtRect { top: number; left: number; width: number; height: number }
 
 export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
-  ({ layoutType, cardData, scale = 2, borderlessOverride, artNeededOverride }, ref) => {
+  ({ layoutType, cardData, scale = 2, borderlessOverride, artNeededOverride, fitOverrides }, ref) => {
     const storeBorderless = useCardStore((s) => s.borderless);
     const storeArtNeeded = useCardStore((s) => s.artNeeded);
     const artNeeded = artNeededOverride ?? storeArtNeeded;
@@ -75,7 +76,7 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
             borderRadius: borderless ? '0' : '10px',
           }}
         >
-          <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} textBoxReserve={textBoxReserve} />
+          <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
           {artNeeded && artRect && (
             <div className="art-needed-overlay" style={{
               position: 'absolute',

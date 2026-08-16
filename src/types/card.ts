@@ -127,6 +127,10 @@ export interface CardSnapshot {
   customSecondary?: CustomElementDef | null;
 }
 
+export type CardFitSettings = Pick<CardSnapshot,
+  'mainTextBoxNudge' | 'mainTextBoxExtraShrink' | 'mainTextBoxLineHeight' | 'mainTextBoxLetterSpacing'
+  | 'attackEffectGap' | 'attackNameSize' | 'cardArtPositionX' | 'cardArtPositionY'>;
+
 export interface SavedCard extends CardSnapshot {
   id: string;
   thumbnailUrl: string;
