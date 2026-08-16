@@ -174,38 +174,79 @@ export function snapChildHeights(el: HTMLElement, scale: number): void {
   );
 }
 
-const PILL_CAP_HEIGHT = 0.667;
+interface PillPaintEntry { target?: number; baselineOffset: number }
+const PILL_PAINT: Record<string, PillPaintEntry> = {
+  '6.30': { target: 0.53, baselineOffset: 0.47 },
+  '5.95': { baselineOffset: -0.031 },
+  '5.60': { target: 0.81, baselineOffset: 0.484 },
+  '5.25': { target: 0.70, baselineOffset: 0.468 },
+  '4.90': { target: 0.83, baselineOffset: 0.47 },
+  '4.55': { baselineOffset: -0.016 },
+};
 
-export function centerPillText(el: HTMLElement): void {
+export function centerPillText(el: HTMLElement, scale: number): void {
+  if (!(scale > 0)) return;
+  const root = (el.closest('[data-oz-card-root]') as HTMLElement | null) ?? el;
+  const rootTop = root.getBoundingClientRect().top;
   for (const pill of Array.from(el.querySelectorAll('[data-oz-pill]')) as HTMLElement[]) {
     const item = pill.firstElementChild as HTMLElement | null;
     if (!item) continue;
     const fill = (item.lastElementChild as HTMLElement | null) ?? item;
     const cs = getComputedStyle(pill);
     const fs = parseFloat(cs.fontSize);
-    const lh = parseFloat(cs.lineHeight);
-    const pt = parseFloat(cs.paddingTop) || 0;
-    const pb = parseFloat(cs.paddingBottom) || 0;
+    const lhOld = parseFloat(cs.lineHeight);
+    let pt = parseFloat(cs.paddingTop) || 0;
+    let pb = parseFloat(cs.paddingBottom) || 0;
     const bt = parseFloat(cs.borderTopWidth) || 0;
     const bb = parseFloat(cs.borderBottomWidth) || 0;
-    if (!(fs > 0) || !(lh > 0)) continue;
+    if (!(fs > 0) || !(lhOld > 0)) continue;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) continue;
+    ctx.font = `${cs.fontWeight} ${fs}px ${cs.fontFamily}`;
+    const m = ctx.measureText((pill.textContent || 'X').toUpperCase());
+    const ascF = Math.round(m.fontBoundingBoxAscent);
+    const descF = Math.round(m.fontBoundingBoxDescent);
+    if (!(ascF > 0)) continue;
+
+    const lh = ascF + descF - 2;
+    const dLh = lh - lhOld;
+    if (dLh > 0 && pt >= dLh) pt -= dLh;
+    else if (dLh > 0 && pb >= dLh) pb -= dLh;
+    else if (dLh < 0) pt -= dLh;
+    pill.style.lineHeight = `${lh}px`;
+    pill.style.paddingTop = `${pt}px`;
+    pill.style.paddingBottom = `${pb}px`;
+    pill.dataset.ozGridQLh = pill.style.lineHeight;
+    pill.dataset.ozGridQPt = pill.style.paddingTop;
+    pill.dataset.ozGridQPb = pill.style.paddingBottom;
+
+    item.style.transform = '';
     const marker = document.createElement('span');
     marker.style.cssText = 'display:inline-block;width:0;height:0;padding:0;margin:0;border:0';
     fill.appendChild(marker);
-    const itemRect = item.getBoundingClientRect();
-    const markerTop = marker.getBoundingClientRect().top;
+    const pillRect = pill.getBoundingClientRect();
+    const markerAbs = (marker.getBoundingClientRect().top - rootTop) / scale;
     marker.remove();
-    if (!(itemRect.height > 0)) continue;
-    const scale = itemRect.height / lh;
-    const baseline = (markerTop - itemRect.top) / scale;
-    const glyphCenter = bt + pt + baseline - (PILL_CAP_HEIGHT * fs) / 2;
-    const pillCenter = (bt + bb + pt + pb + lh) / 2;
-    const shift = Math.round((pillCenter - glyphCenter) * 2) / 2;
-    if (shift === 0) continue;
-    pill.style.paddingTop = `${Math.max(0, pt + shift)}px`;
-    pill.style.paddingBottom = `${Math.max(0, pb - shift)}px`;
-    pill.dataset.ozGridQPt = pill.style.paddingTop;
-    pill.dataset.ozGridQPb = pill.style.paddingBottom;
+    if (!(pillRect.height > 0)) continue;
+
+    const entry = PILL_PAINT[fs.toFixed(2)];
+    if (entry?.target !== undefined) {
+      const prevTop = parseFloat(pill.style.top) || 0;
+      let d = entry.target - (markerAbs - Math.floor(markerAbs));
+      d -= Math.round(d);
+      if (Math.abs(d) > 0.01) {
+        pill.style.position = 'relative';
+        pill.style.top = `${(prevTop + d).toFixed(3)}px`;
+      }
+    }
+
+    const paintedInkCenter = markerAbs + (entry?.baselineOffset ?? 0)
+      - (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+    const pillCenter = (pillRect.top - rootTop) / scale + (bt + pt + lh + pb + bb) / 2;
+    const shift = pillCenter - paintedInkCenter;
+    item.style.transform = Math.abs(shift) > 0.01 ? `translateY(${shift.toFixed(3)}px)` : '';
   }
 }
 

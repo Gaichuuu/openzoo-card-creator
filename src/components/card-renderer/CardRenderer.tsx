@@ -65,6 +65,7 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
       >
         <div
           ref={innerRef}
+          data-oz-card-root=""
           className={borderless ? 'card-borderless' : undefined}
           style={{
             width: `${CARD_W}px`,

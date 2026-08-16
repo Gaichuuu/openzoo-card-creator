@@ -447,7 +447,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         }
       }
 
-      centerPillText(el);
+      centerPillText(el, scale);
 
       el.style.height = `${baseHeight}px`;
       if (el.scrollHeight > baseHeight) {
