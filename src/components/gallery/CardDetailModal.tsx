@@ -343,6 +343,7 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
           scale={1}
           borderlessOverride={!!card.borderless}
           artNeededOverride={!!card.artNeeded}
+          fitOverrides={card}
         />
       </div>
     </div>

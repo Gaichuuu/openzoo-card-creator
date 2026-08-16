@@ -104,6 +104,18 @@ describe('resolveImagePath', () => {
       expect(resolveImagePath('CNGold.png')).toBe('/assets/SetSymbols/CNGold.png');
     });
 
+    it('detects WN set symbols', () => {
+      expect(resolveImagePath('WNBronze.png')).toBe('/assets/SetSymbols/WNBronze.png');
+      expect(resolveImagePath('WNSilver.png')).toBe('/assets/SetSymbols/WNSilver.png');
+      expect(resolveImagePath('WNGold.png')).toBe('/assets/SetSymbols/WNGold.png');
+    });
+
+    it('detects NF set symbols', () => {
+      expect(resolveImagePath('NFBronze.png')).toBe('/assets/SetSymbols/NFBronze.png');
+      expect(resolveImagePath('NFSilver.png')).toBe('/assets/SetSymbols/NFSilver.png');
+      expect(resolveImagePath('NFGold.png')).toBe('/assets/SetSymbols/NFGold.png');
+    });
+
     it('detects Promo set symbol', () => {
       expect(resolveImagePath('Promo.png')).toBe('/assets/SetSymbols/Promo.png');
     });
