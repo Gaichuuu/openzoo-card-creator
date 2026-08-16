@@ -184,10 +184,26 @@ const PILL_PAINT: Record<string, PillPaintEntry> = {
   '4.55': { baselineOffset: -0.016 },
 };
 
+let pillMeasureCtx: CanvasRenderingContext2D | null = null;
+
+interface PillPass {
+  pill: HTMLElement;
+  item: HTMLElement;
+  marker: HTMLElement;
+  fs: number;
+  inkOff: number;
+  markerAbs: number;
+  pillRect: DOMRect;
+}
+
 export function centerPillText(el: HTMLElement, scale: number): void {
   if (!(scale > 0)) return;
+  pillMeasureCtx ??= document.createElement('canvas').getContext('2d');
+  const ctx = pillMeasureCtx;
+  if (!ctx) return;
   const root = (el.closest('[data-oz-card-root]') as HTMLElement | null) ?? el;
-  const rootTop = root.getBoundingClientRect().top;
+
+  const passes: PillPass[] = [];
   for (const pill of Array.from(el.querySelectorAll('[data-oz-pill]')) as HTMLElement[]) {
     const item = pill.firstElementChild as HTMLElement | null;
     if (!item) continue;
@@ -197,56 +213,66 @@ export function centerPillText(el: HTMLElement, scale: number): void {
     const lhOld = parseFloat(cs.lineHeight);
     let pt = parseFloat(cs.paddingTop) || 0;
     let pb = parseFloat(cs.paddingBottom) || 0;
-    const bt = parseFloat(cs.borderTopWidth) || 0;
-    const bb = parseFloat(cs.borderBottomWidth) || 0;
     if (!(fs > 0) || !(lhOld > 0)) continue;
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) continue;
     ctx.font = `${cs.fontWeight} ${fs}px ${cs.fontFamily}`;
     const m = ctx.measureText((pill.textContent || 'X').toUpperCase());
-    const ascF = Math.round(m.fontBoundingBoxAscent);
-    const descF = Math.round(m.fontBoundingBoxDescent);
-    if (!(ascF > 0)) continue;
+    let ascF = Math.round(m.fontBoundingBoxAscent);
+    let descF = Math.round(m.fontBoundingBoxDescent);
+    if (!Number.isFinite(ascF) || !Number.isFinite(descF) || !(ascF > 0)) {
+      ascF = Math.round(fs * 0.95);
+      descF = Math.round(fs * 0.25);
+    }
 
     const lh = ascF + descF - 2;
     const dLh = lh - lhOld;
-    if (dLh > 0 && pt >= dLh) pt -= dLh;
-    else if (dLh > 0 && pb >= dLh) pb -= dLh;
-    else if (dLh < 0) pt -= dLh;
+    if (dLh > 0) {
+      const fromPt = Math.min(pt, dLh);
+      pt -= fromPt;
+      pb = Math.max(0, pb - (dLh - fromPt));
+    } else if (dLh < 0) {
+      pt -= dLh;
+    }
     pill.style.lineHeight = `${lh}px`;
     pill.style.paddingTop = `${pt}px`;
     pill.style.paddingBottom = `${pb}px`;
     pill.dataset.ozGridQLh = pill.style.lineHeight;
     pill.dataset.ozGridQPt = pill.style.paddingTop;
     pill.dataset.ozGridQPb = pill.style.paddingBottom;
-
+    pill.style.position = '';
+    pill.style.top = '';
     item.style.transform = '';
+
     const marker = document.createElement('span');
     marker.style.cssText = 'display:inline-block;width:0;height:0;padding:0;margin:0;border:0';
     fill.appendChild(marker);
-    const pillRect = pill.getBoundingClientRect();
-    const markerAbs = (marker.getBoundingClientRect().top - rootTop) / scale;
-    marker.remove();
-    if (!(pillRect.height > 0)) continue;
+    const inkOff = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+    passes.push({ pill, item, marker, fs, inkOff: Number.isFinite(inkOff) ? inkOff : (0.667 * fs) / 2, markerAbs: 0, pillRect: new DOMRect() });
+  }
+  if (!passes.length) return;
 
-    const entry = PILL_PAINT[fs.toFixed(2)];
+  const rootTop = root.getBoundingClientRect().top;
+  for (const p of passes) {
+    p.pillRect = p.pill.getBoundingClientRect();
+    p.markerAbs = (p.marker.getBoundingClientRect().top - rootTop) / scale;
+  }
+
+  for (const p of passes) {
+    p.marker.remove();
+    if (!(p.pillRect.height > 0)) continue;
+    const entry = PILL_PAINT[p.fs.toFixed(2)];
     if (entry?.target !== undefined) {
-      const prevTop = parseFloat(pill.style.top) || 0;
-      let d = entry.target - (markerAbs - Math.floor(markerAbs));
+      let d = entry.target - (p.markerAbs - Math.floor(p.markerAbs));
       d -= Math.round(d);
       if (Math.abs(d) > 0.01) {
-        pill.style.position = 'relative';
-        pill.style.top = `${(prevTop + d).toFixed(3)}px`;
+        p.pill.style.position = 'relative';
+        p.pill.style.top = `${d.toFixed(3)}px`;
       }
     }
-
-    const paintedInkCenter = markerAbs + (entry?.baselineOffset ?? 0)
-      - (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
-    const pillCenter = (pillRect.top - rootTop) / scale + (bt + pt + lh + pb + bb) / 2;
+    const paintedInkCenter = p.markerAbs + (entry?.baselineOffset ?? 0) - p.inkOff;
+    const pillCenter = (p.pillRect.top - rootTop + p.pillRect.height / 2) / scale;
     const shift = pillCenter - paintedInkCenter;
-    item.style.transform = Math.abs(shift) > 0.01 ? `translateY(${shift.toFixed(3)}px)` : '';
+    p.item.style.transform = Math.abs(shift) > 0.01 ? `translateY(${shift.toFixed(3)}px)` : '';
   }
 }
 
