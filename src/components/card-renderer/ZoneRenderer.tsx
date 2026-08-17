@@ -1,4 +1,4 @@
-import { type CSSProperties, useRef, useLayoutEffect, useState } from 'react';
+import { type CSSProperties, useRef, useEffect, useLayoutEffect, useState } from 'react';
 import type { Zone } from '@/types/layout';
 import type { CardData, CardFitSettings } from '@/types/card';
 import { resolveImagePath } from '@/lib/imagePathResolver';
@@ -273,6 +273,16 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   const fitMode = getFitMode();
   const needsTwoDiv = shouldAutoFit || shouldAutoFitTNL || shouldAutoFitMetadata || shouldAutoFitFlavor;
 
+  const [, setFontsTick] = useState(0);
+  useEffect(() => {
+    if (!needsTwoDiv || document.fonts.status === 'loaded') return;
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      if (!cancelled) setFontsTick((t) => t + 1);
+    });
+    return () => { cancelled = true; };
+  }, [needsTwoDiv]);
+
   useLayoutEffect(() => {
     if (!shouldAutoFit && !shouldAutoFitTNL && !shouldAutoFitMetadata && !shouldAutoFitFlavor) return;
     const el = zoneRef.current; 
@@ -447,7 +457,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         }
       }
 
-      centerPillText(el);
+      centerPillText(el, scale);
 
       el.style.height = `${baseHeight}px`;
       if (el.scrollHeight > baseHeight) {
