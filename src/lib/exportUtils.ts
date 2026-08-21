@@ -1,3 +1,4 @@
+import { computeArtDrawRect } from './cardArtFit';
 import { toSvg } from 'html-to-image';
 
 type SvgOptions = NonNullable<Parameters<typeof toSvg>[1]>;
@@ -163,17 +164,42 @@ export async function exportPrintReadyPng(
   borderless: boolean,
   cardArtUrl: string | null,
   crossOrigin?: boolean,
+  artFraming?: ArtFraming,
 ): Promise<string> {
   if (borderless) {
-    return exportPrintBorderless(el, cardArtUrl, crossOrigin);
+    return exportPrintBorderless(el, cardArtUrl, crossOrigin, artFraming);
   }
   return exportPrintBordered(el);
+}
+
+export interface ArtFraming {
+  positionX?: number;
+  positionY?: number;
+  zoom?: number;
+}
+
+function extendEdgesToBleed(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  canvasW: number, canvasH: number,
+): void {
+  const left = Math.max(0, Math.ceil(x));
+  const top = Math.max(0, Math.ceil(y));
+  const right = Math.min(canvasW, Math.floor(x + w));
+  const bottom = Math.min(canvasH, Math.floor(y + h));
+  if (right <= left || bottom <= top) return;
+  const src = ctx.canvas;
+  if (left > 0) ctx.drawImage(src, left, top, 1, bottom - top, 0, top, left, bottom - top);
+  if (right < canvasW) ctx.drawImage(src, right - 1, top, 1, bottom - top, right, top, canvasW - right, bottom - top);
+  if (top > 0) ctx.drawImage(src, 0, top, canvasW, 1, 0, 0, canvasW, top);
+  if (bottom < canvasH) ctx.drawImage(src, 0, bottom - 1, canvasW, 1, 0, bottom, canvasW, canvasH - bottom);
 }
 
 async function exportPrintBorderless(
   el: HTMLElement,
   cardArtUrl: string | null,
   crossOrigin?: boolean,
+  artFraming?: ArtFraming,
 ): Promise<string> {
   const pr = PIXEL_RATIO;
   const bPx = BLEED * pr;
@@ -187,10 +213,12 @@ async function exportPrintBorderless(
 
   if (cardArtUrl) {
     const artImg = await loadImage(cardArtUrl, crossOrigin);
-    const scale = Math.max(printW / artImg.naturalWidth, printH / artImg.naturalHeight);
-    const dw = artImg.naturalWidth * scale;
-    const dh = artImg.naturalHeight * scale;
-    ctx.drawImage(artImg, (printW - dw) / 2, (printH - dh) / 2, dw, dh);
+    const { dx, dy, dw, dh } = computeArtDrawRect(
+      artImg.naturalWidth, artImg.naturalHeight, CARD_W * pr, CARD_H * pr,
+      artFraming?.positionX ?? 0, artFraming?.positionY ?? 0, artFraming?.zoom ?? 0,
+    );
+    ctx.drawImage(artImg, bPx + dx, bPx + dy, dw, dh);
+    extendEdgesToBleed(ctx, bPx + dx, bPx + dy, dw, dh, printW, printH);
   } else {
     const grad = ctx.createLinearGradient(0, 0, 0, printH);
     grad.addColorStop(0, 'rgb(100,100,100)');

@@ -1,5 +1,5 @@
 import { useCardStore } from '@/lib/store';
-import { PRINT_READY_KEY, downloadDataUrl, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng } from '@/lib/exportUtils';
+import { PRINT_READY_KEY, downloadDataUrl, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng, type ArtFraming } from '@/lib/exportUtils';
 import { readLocalStorage } from '@/lib/safeStorage';
 import { useLocalStorageState } from '@/lib/useLocalStorageState';
 
@@ -13,6 +13,7 @@ interface ExportCardOptions {
   borderless?: boolean;
   cardArtUrl?: string | null;
   crossOrigin?: boolean;
+  artFraming?: ArtFraming;
 }
 
 export async function exportCardPng(card: HTMLDivElement | null, options: ExportCardOptions = {}) {
@@ -24,13 +25,18 @@ export async function exportCardPng(card: HTMLDivElement | null, options: Export
     borderless = store.borderless,
     cardArtUrl = store.cardArtUrl,
     crossOrigin,
+    artFraming = {
+      positionX: store.cardArtPositionX,
+      positionY: store.cardArtPositionY,
+      zoom: store.cardArtZoom,
+    },
   } = options;
   const filename = sanitizeCardNameForFilename(cardName);
 
   try {
     card.classList.add('card-exporting');
     if (printReady) {
-      const dataUrl = await exportPrintReadyPng(card, borderless, cardArtUrl, crossOrigin);
+      const dataUrl = await exportPrintReadyPng(card, borderless, cardArtUrl, crossOrigin, artFraming);
       downloadDataUrl(dataUrl, `${filename}-print.png`);
     } else {
       const dataUrl = await exportStandardPng(card, borderless);

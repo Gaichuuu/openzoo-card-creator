@@ -122,6 +122,7 @@ export interface CardSnapshot {
   attackEffectSpaced?: boolean;
   cardArtPositionX?: number;
   cardArtPositionY?: number;
+  cardArtZoom?: number;
   artNeeded?: boolean;
   customPrimary?: CustomElementDef | null;
   customSecondary?: CustomElementDef | null;
@@ -129,7 +130,8 @@ export interface CardSnapshot {
 
 export type CardFitSettings = Pick<CardSnapshot,
   'mainTextBoxNudge' | 'mainTextBoxExtraShrink' | 'mainTextBoxLineHeight' | 'mainTextBoxLetterSpacing'
-  | 'attackEffectGap' | 'attackNameSize' | 'cardArtPositionX' | 'cardArtPositionY'>;
+  | 'attackEffectGap' | 'attackNameSize' | 'cardArtPositionX' | 'cardArtPositionY'
+  | 'cardArtZoom'>;
 
 export interface SavedCard extends CardSnapshot {
   id: string;

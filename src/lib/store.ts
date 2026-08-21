@@ -14,6 +14,7 @@ import { resolveArtBorderStyle, resolveBgOverlayStyle, computeStrongAgainst } fr
 import { composeEffectBlocks } from './effectComposer';
 import type { Locale } from '@/data/locales';
 import { t, formatSpellbookLimitLocale, formatTypesTribesLocale } from '@/data/locales';
+import { clampArtPosition, clampArtZoom } from './cardArtFit';
 
 interface CardEditorState {
   cardType: CardType;
@@ -42,6 +43,7 @@ interface CardEditorState {
   _autoFitRatio: number;
   cardArtPositionX: number;
   cardArtPositionY: number;
+  cardArtZoom: number;
   artNeeded: boolean;
   sourceCard: SavedCard | null;
   _artNeededTouched: boolean;
@@ -72,6 +74,7 @@ interface CardEditorState {
   setAttackEffectGap: (v: number) => void;
   setAttackNameSize: (v: number) => void;
   setCardArtPosition: (x: number, y: number) => void;
+  setCardArtZoom: (v: number) => void;
   setArtNeeded: (v: boolean) => void;
   setSourceCard: (card: SavedCard | null) => void;
   _setAutoFitRatio: (ratio: number) => void;
@@ -248,6 +251,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   _autoFitRatio: 1,
   cardArtPositionX: 0,
   cardArtPositionY: 0,
+  cardArtZoom: 0,
   artNeeded: true,
   sourceCard: null,
   _artNeededTouched: false,
@@ -504,6 +508,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       cardData: newData,
       cardArtPositionX: 0,
       cardArtPositionY: 0,
+      cardArtZoom: 0,
       ...(get()._artNeededTouched || get()._isLoadingSnapshot ? {} : { artNeeded: !url }),
     });
   },
@@ -539,7 +544,11 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   },
 
   setCardArtPosition: (x, y) => {
-    set({ cardArtPositionX: Math.max(-50, Math.min(50, x)), cardArtPositionY: Math.max(-50, Math.min(50, y)) });
+    set({ cardArtPositionX: clampArtPosition(x), cardArtPositionY: clampArtPosition(y) });
+  },
+
+  setCardArtZoom: (v) => {
+    set({ cardArtZoom: clampArtZoom(v) });
   },
 
   setArtNeeded: (v) => set({ artNeeded: v, _artNeededTouched: true }),
@@ -625,6 +634,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       attackNameSize: 0,
       cardArtPositionX: 0,
       cardArtPositionY: 0,
+      cardArtZoom: 0,
       artNeeded: true,
       sourceCard: null,
       _artNeededTouched: false,
@@ -672,6 +682,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       attackNameSize: s.attackNameSize,
       cardArtPositionX: s.cardArtPositionX,
       cardArtPositionY: s.cardArtPositionY,
+      cardArtZoom: s.cardArtZoom,
       artNeeded: s.artNeeded,
     };
   },
@@ -726,8 +737,9 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxLetterSpacing: snapshot.mainTextBoxLetterSpacing ?? 0,
       attackEffectGap: snapshot.attackEffectGap ?? (snapshot.attackEffectSpaced ? 1 : 0),
       attackNameSize: snapshot.attackNameSize ?? 0,
-      cardArtPositionX: snapshot.cardArtPositionX ?? 0,
-      cardArtPositionY: snapshot.cardArtPositionY ?? 0,
+      cardArtPositionX: clampArtPosition(snapshot.cardArtPositionX ?? 0),
+      cardArtPositionY: clampArtPosition(snapshot.cardArtPositionY ?? 0),
+      cardArtZoom: clampArtZoom(snapshot.cardArtZoom ?? 0),
       artNeeded: snapshot.artNeeded ?? false,
       _artNeededTouched: false,
       _autoFitRatio: 1,
