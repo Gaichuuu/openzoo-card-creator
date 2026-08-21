@@ -110,6 +110,11 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
       borderless: !!card.borderless,
       cardArtUrl: card.cardArtUrl,
       crossOrigin: true,
+      artFraming: {
+        positionX: card.cardArtPositionX ?? 0,
+        positionY: card.cardArtPositionY ?? 0,
+        zoom: card.cardArtZoom ?? 0,
+      },
     });
     setExporting(false);
   }

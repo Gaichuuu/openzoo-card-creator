@@ -1,3 +1,4 @@
+import { computeArtDrawRect } from './cardArtFit';
 import { toSvg } from 'html-to-image';
 
 type SvgOptions = NonNullable<Parameters<typeof toSvg>[1]>;
@@ -163,17 +164,25 @@ export async function exportPrintReadyPng(
   borderless: boolean,
   cardArtUrl: string | null,
   crossOrigin?: boolean,
+  artFraming?: ArtFraming,
 ): Promise<string> {
   if (borderless) {
-    return exportPrintBorderless(el, cardArtUrl, crossOrigin);
+    return exportPrintBorderless(el, cardArtUrl, crossOrigin, artFraming);
   }
   return exportPrintBordered(el);
+}
+
+export interface ArtFraming {
+  positionX?: number;
+  positionY?: number;
+  zoom?: number;
 }
 
 async function exportPrintBorderless(
   el: HTMLElement,
   cardArtUrl: string | null,
   crossOrigin?: boolean,
+  artFraming?: ArtFraming,
 ): Promise<string> {
   const pr = PIXEL_RATIO;
   const bPx = BLEED * pr;
@@ -187,10 +196,11 @@ async function exportPrintBorderless(
 
   if (cardArtUrl) {
     const artImg = await loadImage(cardArtUrl, crossOrigin);
-    const scale = Math.max(printW / artImg.naturalWidth, printH / artImg.naturalHeight);
-    const dw = artImg.naturalWidth * scale;
-    const dh = artImg.naturalHeight * scale;
-    ctx.drawImage(artImg, (printW - dw) / 2, (printH - dh) / 2, dw, dh);
+    const { dx, dy, dw, dh } = computeArtDrawRect(
+      artImg.naturalWidth, artImg.naturalHeight, printW, printH,
+      artFraming?.positionX ?? 0, artFraming?.positionY ?? 0, artFraming?.zoom ?? 0,
+    );
+    ctx.drawImage(artImg, dx, dy, dw, dh);
   } else {
     const grad = ctx.createLinearGradient(0, 0, 0, printH);
     grad.addColorStop(0, 'rgb(100,100,100)');

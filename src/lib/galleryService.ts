@@ -172,6 +172,7 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     attackNameSize: (data.attackNameSize ?? 0) as number,
     cardArtPositionX: (data.cardArtPositionX ?? 0) as number,
     cardArtPositionY: (data.cardArtPositionY ?? 0) as number,
+    cardArtZoom: (data.cardArtZoom ?? 0) as number,
     artNeeded: (data.artNeeded ?? tags.includes('Art Needed')) as boolean,
     thumbnailUrl: (data.thumbnailUrl || '') as string,
     cardArtUrl: (data.cardArtUrl || '') as string,

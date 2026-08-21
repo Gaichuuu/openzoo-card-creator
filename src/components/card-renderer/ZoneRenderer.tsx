@@ -5,6 +5,7 @@ import { resolveImagePath } from '@/lib/imagePathResolver';
 import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
 import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
 import { useCardStore } from '@/lib/store';
+import { artZoomScale } from '@/lib/cardArtFit';
 import { ParsedText } from './TextParser';
 import { getFitMode } from '@/lib/fitMode';
 import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
@@ -267,6 +268,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     (isAttackSizedZone || shouldAutoFit) ? (ov ? ov.attackNameSize ?? 0 : s.attackNameSize) : 0);
   const cardArtPositionX = useCardStore((s) => isCardArtZone ? (ov ? ov.cardArtPositionX ?? 0 : s.cardArtPositionX) : 0);
   const cardArtPositionY = useCardStore((s) => isCardArtZone ? (ov ? ov.cardArtPositionY ?? 0 : s.cardArtPositionY) : 0);
+  const cardArtZoom = useCardStore((s) => isCardArtZone ? (ov ? ov.cardArtZoom ?? 0 : s.cardArtZoom) : 0);
   const shouldAutoFitTNL = zone.type === 'container' && zone.imageDataKey === 'TNL';
   const shouldAutoFitMetadata = zone.type === 'container' && zone.imageDataKey === 'CryptidInfoBar';
   const shouldAutoFitFlavor = zone.textDataKey === 'FlavorText';
@@ -823,6 +825,33 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
             <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (isCardArtZone && cardArtZoom > 0 && backgroundImage) {
+    const { backgroundImage: bgImage, backgroundSize: bgSize, backgroundPosition: bgPos,
+      backgroundRepeat: bgRepeat, ...outerArtStyle } = finalStyle;
+    const origin = `${50 + cardArtPositionX}% ${50 + cardArtPositionY}%`;
+    return (
+      <div
+        style={{ ...outerArtStyle, position: outerArtStyle.position ?? 'relative', overflow: 'hidden' }}
+        data-zone-id={zone.id}
+        data-zone-key={zoneKey}
+      >
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: bgImage,
+          backgroundSize: bgSize,
+          backgroundPosition: bgPos,
+          backgroundRepeat: bgRepeat,
+          transform: `scale(${artZoomScale(cardArtZoom)})`,
+          transformOrigin: origin,
+        }} />
+        {zone.childZones.map((child, idx) => (
+          <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
+        ))}
       </div>
     );
   }
