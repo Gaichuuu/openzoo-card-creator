@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { ELEMENTS, TERRAS, TRAITS } from './constants';
+import { ELEMENTS, TERRAS, TRAITS, STATUS_EFFECTS } from './constants';
 import type { Locale } from './locales';
 import { getPSBVariable } from './locales';
 import type { OutlineStyle } from '@/lib/outlineUtils';
@@ -101,6 +101,9 @@ for (const terra of TERRAS) {
 }
 for (const trait of TRAITS) {
   BASE_VARIABLES[trait] = `{OpenZoo Traits/${trait}.png, 0.9, 0.1}`;
+}
+for (const status of STATUS_EFFECTS) {
+  BASE_VARIABLES[status] = `{OpenZoo Status Effects/${status}.png, 0.9, 0.1}`;
 }
 
 const CACHED_VARIABLES: Partial<Record<Locale, Record<string, string>>> = {};
