@@ -5,7 +5,7 @@ import { resolveImagePath } from '@/lib/imagePathResolver';
 import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
 import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
 import { useCardStore } from '@/lib/store';
-import { artZoomScale } from '@/lib/cardArtFit';
+import { artPositionCss, artZoomScale } from '@/lib/cardArtFit';
 import { ParsedText } from './TextParser';
 import { getFitMode } from '@/lib/fitMode';
 import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
@@ -777,7 +777,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       backgroundSize: (zone.imageDataKey === 'SetSymbol' || zone.imageDataKey?.startsWith('Trait') || zone.imageDataKey?.startsWith('SAura') || zone.imageDataKey?.startsWith('Terra'))
         ? 'contain' : (style.backgroundSize || 'cover'),
       backgroundPosition: isCardArtZone
-        ? `${50 + cardArtPositionX}% ${50 + cardArtPositionY}%`
+        ? artPositionCss(cardArtPositionX, cardArtPositionY)
         : (style.backgroundPosition || 'center'),
       backgroundRepeat: 'no-repeat',
     } : {}),
@@ -795,6 +795,10 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       : {}),
     boxSizing: 'border-box',
   };
+
+  const renderChildren = () => zone.childZones.map((child, idx) => (
+    <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
+  ));
 
   const shouldShrink = textContent && zone.type === 'text' &&
     (zone.textDataKey === 'Boost 1' || zone.textDataKey === 'Boost 2' || zone.textDataKey === 'TypesTribes' || zone.textDataKey === 'CardName');
@@ -821,9 +825,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       <div style={outerStyle} data-zone-id={zone.id} data-zone-key={zoneKey}>
         <div ref={zoneRef} style={innerStyle}>
           {textContent && shouldAutoFitFlavor && wrapOutline(<ParsedText html={textContent} />, outline)}
-          {zone.childZones.map((child, idx) => (
-            <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
-          ))}
+          {renderChildren()}
         </div>
       </div>
     );
@@ -832,7 +834,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   if (isCardArtZone && cardArtZoom > 0 && backgroundImage) {
     const { backgroundImage: bgImage, backgroundSize: bgSize, backgroundPosition: bgPos,
       backgroundRepeat: bgRepeat, ...outerArtStyle } = finalStyle;
-    const origin = `${50 + cardArtPositionX}% ${50 + cardArtPositionY}%`;
+    const origin = artPositionCss(cardArtPositionX, cardArtPositionY);
     return (
       <div
         style={{ ...outerArtStyle, position: outerArtStyle.position ?? 'relative', overflow: 'hidden' }}
@@ -849,9 +851,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           transform: `scale(${artZoomScale(cardArtZoom)})`,
           transformOrigin: origin,
         }} />
-        {zone.childZones.map((child, idx) => (
-          <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
-        ))}
+        {renderChildren()}
       </div>
     );
   }
@@ -864,9 +864,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           : wrapOutline(<ParsedText html={textContent} />, outline)
       )}
 
-      {zone.childZones.map((child, idx) => (
-        <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
-      ))}
+      {renderChildren()}
     </div>
   );
 }

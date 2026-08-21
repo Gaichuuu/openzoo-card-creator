@@ -14,7 +14,7 @@ import { resolveArtBorderStyle, resolveBgOverlayStyle, computeStrongAgainst } fr
 import { composeEffectBlocks } from './effectComposer';
 import type { Locale } from '@/data/locales';
 import { t, formatSpellbookLimitLocale, formatTypesTribesLocale } from '@/data/locales';
-import { ART_ZOOM_MIN, ART_ZOOM_MAX } from './cardArtFit';
+import { clampArtPosition, clampArtZoom } from './cardArtFit';
 
 interface CardEditorState {
   cardType: CardType;
@@ -544,11 +544,11 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   },
 
   setCardArtPosition: (x, y) => {
-    set({ cardArtPositionX: Math.max(-50, Math.min(50, x)), cardArtPositionY: Math.max(-50, Math.min(50, y)) });
+    set({ cardArtPositionX: clampArtPosition(x), cardArtPositionY: clampArtPosition(y) });
   },
 
   setCardArtZoom: (v) => {
-    set({ cardArtZoom: Math.max(ART_ZOOM_MIN, Math.min(ART_ZOOM_MAX, v)) });
+    set({ cardArtZoom: clampArtZoom(v) });
   },
 
   setArtNeeded: (v) => set({ artNeeded: v, _artNeededTouched: true }),
@@ -737,9 +737,9 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       mainTextBoxLetterSpacing: snapshot.mainTextBoxLetterSpacing ?? 0,
       attackEffectGap: snapshot.attackEffectGap ?? (snapshot.attackEffectSpaced ? 1 : 0),
       attackNameSize: snapshot.attackNameSize ?? 0,
-      cardArtPositionX: snapshot.cardArtPositionX ?? 0,
-      cardArtPositionY: snapshot.cardArtPositionY ?? 0,
-      cardArtZoom: snapshot.cardArtZoom ?? 0,
+      cardArtPositionX: clampArtPosition(snapshot.cardArtPositionX ?? 0),
+      cardArtPositionY: clampArtPosition(snapshot.cardArtPositionY ?? 0),
+      cardArtZoom: clampArtZoom(snapshot.cardArtZoom ?? 0),
       artNeeded: snapshot.artNeeded ?? false,
       _artNeededTouched: false,
       _autoFitRatio: 1,

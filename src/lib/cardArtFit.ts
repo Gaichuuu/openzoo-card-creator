@@ -1,6 +1,8 @@
 export const ART_ZOOM_MIN = 0;
 export const ART_ZOOM_MAX = 100;
 export const ART_ZOOM_STEP = 5;
+export const ART_POS_MIN = -50;
+export const ART_POS_MAX = 50;
 
 export interface ArtDrawRect {
   dx: number;
@@ -34,4 +36,18 @@ export function computeArtDrawRect(
     dx: (boxW - dw) * (50 + posX) / 100,
     dy: (boxH - dh) * (50 + posY) / 100,
   };
+}
+
+export function clampArtZoom(zoom: number): number {
+  if (!Number.isFinite(zoom)) return ART_ZOOM_MIN;
+  return Math.max(ART_ZOOM_MIN, Math.min(ART_ZOOM_MAX, zoom));
+}
+
+export function clampArtPosition(pos: number): number {
+  if (!Number.isFinite(pos)) return 0;
+  return Math.max(ART_POS_MIN, Math.min(ART_POS_MAX, pos));
+}
+
+export function artPositionCss(posX: number, posY: number): string {
+  return `${50 + posX}% ${50 + posY}%`;
 }

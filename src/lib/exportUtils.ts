@@ -178,6 +178,23 @@ export interface ArtFraming {
   zoom?: number;
 }
 
+function extendEdgesToBleed(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  canvasW: number, canvasH: number,
+): void {
+  const left = Math.max(0, Math.ceil(x));
+  const top = Math.max(0, Math.ceil(y));
+  const right = Math.min(canvasW, Math.floor(x + w));
+  const bottom = Math.min(canvasH, Math.floor(y + h));
+  if (right <= left || bottom <= top) return;
+  const src = ctx.canvas;
+  if (left > 0) ctx.drawImage(src, left, top, 1, bottom - top, 0, top, left, bottom - top);
+  if (right < canvasW) ctx.drawImage(src, right - 1, top, 1, bottom - top, right, top, canvasW - right, bottom - top);
+  if (top > 0) ctx.drawImage(src, 0, top, canvasW, 1, 0, 0, canvasW, top);
+  if (bottom < canvasH) ctx.drawImage(src, 0, bottom - 1, canvasW, 1, 0, bottom, canvasW, canvasH - bottom);
+}
+
 async function exportPrintBorderless(
   el: HTMLElement,
   cardArtUrl: string | null,
@@ -197,10 +214,11 @@ async function exportPrintBorderless(
   if (cardArtUrl) {
     const artImg = await loadImage(cardArtUrl, crossOrigin);
     const { dx, dy, dw, dh } = computeArtDrawRect(
-      artImg.naturalWidth, artImg.naturalHeight, printW, printH,
+      artImg.naturalWidth, artImg.naturalHeight, CARD_W * pr, CARD_H * pr,
       artFraming?.positionX ?? 0, artFraming?.positionY ?? 0, artFraming?.zoom ?? 0,
     );
-    ctx.drawImage(artImg, dx, dy, dw, dh);
+    ctx.drawImage(artImg, bPx + dx, bPx + dy, dw, dh);
+    extendEdgesToBleed(ctx, bPx + dx, bPx + dy, dw, dh, printW, printH);
   } else {
     const grad = ctx.createLinearGradient(0, 0, 0, printH);
     grad.addColorStop(0, 'rgb(100,100,100)');

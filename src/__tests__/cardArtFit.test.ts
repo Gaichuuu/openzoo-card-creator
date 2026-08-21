@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeArtDrawRect, artZoomScale } from '@/lib/cardArtFit';
+import { computeArtDrawRect, artZoomScale, artPositionCss, clampArtPosition, clampArtZoom } from '@/lib/cardArtFit';
 
 const BOX_W = 238;
 const BOX_H = 333;
@@ -63,5 +63,38 @@ describe('computeArtDrawRect', () => {
     for (const v of [r.dx, r.dy, r.dw, r.dh]) expect(Number.isFinite(v)).toBe(true);
     expect(r.dw).toBe(BOX_W);
     expect(r.dh).toBe(BOX_H);
+  });
+});
+
+describe('clampArtZoom', () => {
+  it('clamps to the stepper range', () => {
+    expect(clampArtZoom(-10)).toBe(0);
+    expect(clampArtZoom(100000)).toBe(100);
+    expect(clampArtZoom(35)).toBe(35);
+  });
+
+  it('falls back to the minimum for non-finite values', () => {
+    expect(clampArtZoom(NaN)).toBe(0);
+    expect(clampArtZoom(Infinity)).toBe(0);
+  });
+});
+
+describe('clampArtPosition', () => {
+  it('clamps to -50..50', () => {
+    expect(clampArtPosition(-99)).toBe(-50);
+    expect(clampArtPosition(99)).toBe(50);
+    expect(clampArtPosition(12)).toBe(12);
+  });
+
+  it('falls back to 0 for non-finite values', () => {
+    expect(clampArtPosition(NaN)).toBe(0);
+  });
+});
+
+describe('artPositionCss', () => {
+  it('maps -50..50 onto 0%..100%', () => {
+    expect(artPositionCss(0, 0)).toBe('50% 50%');
+    expect(artPositionCss(-50, 50)).toBe('0% 100%');
+    expect(artPositionCss(10, -25)).toBe('60% 25%');
   });
 });

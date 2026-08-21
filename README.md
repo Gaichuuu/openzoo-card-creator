@@ -6,7 +6,7 @@ Web-based card creator for the OpenZoo trading card game. Design custom cards in
 
 ## Features
 
-- **Editor:** upload card art, live preview, inline text formatting
+- **Editor:** upload card art with position and zoom framing, live preview, inline text formatting
 - **Card Types:** Beastie, Artifact, Spell, Potion, Aura, Terra, Token (+ Special Aura, Special Terra)
 - **Elements:** dual-type support with auto-resolved colors, banners, and strengths
 - **Custom Icons:** upload your own set symbols, traits, terras, aura elements, and background patterns

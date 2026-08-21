@@ -29,14 +29,12 @@ for var in DEPLOY_USER DEPLOY_HOST DEPLOY_PATH; do
     exit 1
   fi
 done
-case "$DEPLOY_PATH" in
-  *"$EXPECTED_DOMAIN"*) ;;
-  *)
-    echo "Error: refusing to deploy, DEPLOY_PATH does not target ${EXPECTED_DOMAIN}"
-    echo "  DEPLOY_PATH = ${DEPLOY_PATH}"
-    exit 1
-    ;;
-esac
+DEPLOY_DIR="${DEPLOY_PATH%/}"
+if [ "${DEPLOY_DIR##*/}" != "$EXPECTED_DOMAIN" ]; then
+  echo "Error: refusing to deploy, DEPLOY_PATH must end in a directory named ${EXPECTED_DOMAIN}"
+  echo "  DEPLOY_PATH = ${DEPLOY_PATH}"
+  exit 1
+fi
 
 REMOTE="${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
 

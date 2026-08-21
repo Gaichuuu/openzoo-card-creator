@@ -4,7 +4,7 @@ import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
 import { MAX_UPLOAD_BYTES } from '@/lib/exportUtils';
 import { processImageFile } from '@/lib/imageUtils';
 import { Stepper } from './TextBoxBuilder';
-import { ART_ZOOM_MIN, ART_ZOOM_MAX, ART_ZOOM_STEP, artZoomScale } from '@/lib/cardArtFit';
+import { ART_ZOOM_MIN, ART_ZOOM_MAX, ART_ZOOM_STEP, ART_POS_MIN, ART_POS_MAX, artPositionCss, artZoomScale } from '@/lib/cardArtFit';
 
 const MAX_IMAGE_DIM = 1600;
 const MAX_UPLOAD_MB = MAX_UPLOAD_BYTES / (1024 * 1024);
@@ -114,9 +114,9 @@ export function ImageUploader() {
             alt="Card art"
             className="w-full h-full object-cover"
             style={{
-              objectPosition: `${50 + posX}% ${50 + posY}%`,
+              objectPosition: artPositionCss(posX, posY),
               transform: zoom > 0 ? `scale(${artZoomScale(zoom)})` : undefined,
-              transformOrigin: `${50 + posX}% ${50 + posY}%`,
+              transformOrigin: artPositionCss(posX, posY),
             }}
           />
         ) : (
@@ -162,8 +162,8 @@ export function ImageUploader() {
       )}
       {cardArtUrl && (
         <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 pt-1">
-          <Stepper label={<AxisLabel axis="X" />} value={posX} min={-50} max={50} onChange={(v) => setCardArtPosition(v, posY)} valueWidth="w-5" />
-          <Stepper label={<AxisLabel axis="Y" />} value={posY} min={-50} max={50} onChange={(v) => setCardArtPosition(posX, v)} valueWidth="w-5" />
+          <Stepper label={<AxisLabel axis="X" />} value={posX} min={ART_POS_MIN} max={ART_POS_MAX} onChange={(v) => setCardArtPosition(v, posY)} valueWidth="w-5" />
+          <Stepper label={<AxisLabel axis="Y" />} value={posY} min={ART_POS_MIN} max={ART_POS_MAX} onChange={(v) => setCardArtPosition(posX, v)} valueWidth="w-5" />
           <Stepper
             label="Zoom"
             value={zoom}
