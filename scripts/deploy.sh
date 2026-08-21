@@ -21,6 +21,23 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 source "$ENV_FILE"
+
+EXPECTED_DOMAIN="openzootcg.com"
+for var in DEPLOY_USER DEPLOY_HOST DEPLOY_PATH; do
+  if [ -z "${!var:-}" ]; then
+    echo "Error: $var is empty in .deploy.env"
+    exit 1
+  fi
+done
+case "$DEPLOY_PATH" in
+  *"$EXPECTED_DOMAIN"*) ;;
+  *)
+    echo "Error: refusing to deploy, DEPLOY_PATH does not target ${EXPECTED_DOMAIN}"
+    echo "  DEPLOY_PATH = ${DEPLOY_PATH}"
+    exit 1
+    ;;
+esac
+
 REMOTE="${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
 
 echo "==> Building project..."
