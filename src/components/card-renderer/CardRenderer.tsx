@@ -1,10 +1,13 @@
-import { forwardRef, useCallback, useLayoutEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { LayoutType } from '@/types/layout';
 import type { CardData, CardFitSettings } from '@/types/card';
 import { LAYOUTS } from '@/data/layouts';
 import { useCardStore } from '@/lib/store';
 import { CARD_W, CARD_H } from '@/lib/exportUtils';
 import { computeTextBoxReserve } from '@/lib/textBoxReserve';
+import { getTextStrokePx } from '@/lib/textWeightCalibration';
+import { getBaselineNudge } from '@/lib/baselineCalibration';
 import { ZoneRenderer } from './ZoneRenderer';
 
 interface CardRendererProps {
@@ -27,12 +30,22 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
     const layout = LAYOUTS[layoutType];
     const [artRect, setArtRect] = useState<ArtRect | null>(null);
     const [innerEl, setInnerEl] = useState<HTMLDivElement | null>(null);
+    const [textStrokePx, setTextStrokePx] = useState(0);
+    const [baselineNudge, setBaselineNudge] = useState(0);
 
     const innerRef = useCallback((node: HTMLDivElement | null) => {
       setInnerEl(node);
       if (typeof ref === 'function') ref(node);
       else if (ref) ref.current = node;
     }, [ref]);
+
+    useEffect(() => {
+      if (!innerEl) return;
+      let live = true;
+      getTextStrokePx(innerEl).then((px) => { if (live) setTextStrokePx(px); });
+      getBaselineNudge().then((px) => { if (live) setBaselineNudge(px); });
+      return () => { live = false; };
+    }, [innerEl]);
 
     useLayoutEffect(() => {
       if (!innerEl || !artNeeded) { setArtRect(null); return; }
@@ -75,6 +88,8 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
             position: 'relative',
             overflow: 'hidden',
             borderRadius: borderless ? '0' : '10px',
+            WebkitTextStrokeWidth: textStrokePx > 0 ? `${textStrokePx}px` : undefined,
+            ...(baselineNudge ? { '--oz-baseline-nudge': `${baselineNudge}px` } as CSSProperties : {}),
           }}
         >
           <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
