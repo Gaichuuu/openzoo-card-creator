@@ -6,6 +6,7 @@ import { useCardStore } from '@/lib/store';
 import { CARD_W, CARD_H } from '@/lib/exportUtils';
 import { computeTextBoxReserve } from '@/lib/textBoxReserve';
 import { getTextStrokePx } from '@/lib/textWeightCalibration';
+import { pinTextBaselines } from '@/lib/baselineMetrics';
 import { ZoneRenderer } from './ZoneRenderer';
 
 interface CardRendererProps {
@@ -42,6 +43,10 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
       getTextStrokePx(innerEl).then((px) => { if (live) setTextStrokePx(px); });
       return () => { live = false; };
     }, [innerEl]);
+
+    useLayoutEffect(() => {
+      if (innerEl) pinTextBaselines(innerEl);
+    });
 
     useLayoutEffect(() => {
       if (!innerEl || !artNeeded) { setArtRect(null); return; }
