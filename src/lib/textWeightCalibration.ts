@@ -9,7 +9,6 @@ const REFERENCE_INK = 6.8;
 const TOLERANCE = 0.1;
 const TRIAL_STROKE_PX = 0.12;
 const MAX_STROKE_PX = 0.3;
-const MIN_PLAUSIBLE_INK = 3;
 
 let cached: Promise<number> | null = null;
 
@@ -73,7 +72,6 @@ export async function measureProbe(strokePx: number, smoothing = ''): Promise<Pr
 
 export function solveStroke(plain: number, trial: number, trialPx = TRIAL_STROKE_PX): number {
   if (!Number.isFinite(plain) || !Number.isFinite(trial)) return 0;
-  if (plain < MIN_PLAUSIBLE_INK) return 0;
   if (plain >= REFERENCE_INK - TOLERANCE) return 0;
   const gainPerPx = (trial - plain) / trialPx;
   if (gainPerPx <= 0) return 0;
@@ -81,10 +79,24 @@ export function solveStroke(plain: number, trial: number, trialPx = TRIAL_STROKE
   return Math.min(MAX_STROKE_PX, Math.round(needed * 100) / 100);
 }
 
+function probeFontsReady(): boolean {
+  try {
+    return document.fonts.check('700 9px "EB Garamond"')
+      && document.fonts.check('italic 400 6px "EB Garamond"');
+  } catch {
+    return false;
+  }
+}
+
 async function calibrate(smoothing: string): Promise<number> {
+  await document.fonts.ready;
+  if (!probeFontsReady()) {
+    console.warn('[openzoo] text weight probe fonts unavailable; skipping compensation');
+    return 0;
+  }
   const plain = (await measureProbe(0, smoothing)).dark;
-  if (plain < MIN_PLAUSIBLE_INK) {
-    console.warn('[openzoo] text weight probe read no usable ink; skipping compensation');
+  if (plain <= 0) {
+    console.warn('[openzoo] text weight probe painted nothing; skipping compensation');
     return 0;
   }
   if (plain >= REFERENCE_INK - TOLERANCE) return 0;

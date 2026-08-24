@@ -45,8 +45,8 @@ describe('solveStroke', () => {
     expect(stroke * 100).toBe(Math.round(stroke * 100));
   });
 
-  it('refuses to compensate when the probe read almost no ink', () => {
-    expect(solveStroke(0, 0.4)).toBe(0);
-    expect(solveStroke(1.2, 3.0)).toBe(0);
+  it('still compensates a very light rasterizer, which an ink floor would have skipped', () => {
+    expect(solveStroke(2.5, 4.4)).toBeGreaterThan(0);
+    expect(solveStroke(1.2, 3.0)).toBeGreaterThan(0);
   });
 });

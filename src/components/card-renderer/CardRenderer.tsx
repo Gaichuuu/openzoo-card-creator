@@ -44,7 +44,16 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
       return () => { live = false; };
     }, [innerEl]);
 
+    const [fontsTick, setFontsTick] = useState(0);
+    useEffect(() => {
+      if (typeof document.fonts === 'undefined') return;
+      let cancelled = false;
+      document.fonts.ready.then(() => { if (!cancelled) setFontsTick((t) => t + 1); });
+      return () => { cancelled = true; };
+    }, []);
+
     useLayoutEffect(() => {
+      void fontsTick;
       if (innerEl) pinTextBaselines(innerEl);
     });
 
