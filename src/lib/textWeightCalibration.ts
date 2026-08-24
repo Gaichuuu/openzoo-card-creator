@@ -1,4 +1,4 @@
-import { getFontEmbedCSS } from './exportUtils';
+import { getFontEmbedCSS, loadImage } from './exportUtils';
 
 const PROBE_W = 130;
 const PROBE_H = 30;
@@ -9,6 +9,7 @@ const REFERENCE_INK = 6.8;
 const TOLERANCE = 0.1;
 const TRIAL_STROKE_PX = 0.12;
 const MAX_STROKE_PX = 0.3;
+const MIN_PLAUSIBLE_INK = 3;
 
 let cached: Promise<number> | null = null;
 
@@ -32,26 +33,17 @@ function buildProbeSvg(fontCss: string, strokePx: number, smoothing: string): st
     + `</div></foreignObject></svg>`;
 }
 
-function rasterize(svg: string): Promise<ImageData> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = PROBE_W * PROBE_SCALE;
-      canvas.height = PROBE_H * PROBE_SCALE;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) {
-        reject(new Error('no 2d context'));
-        return;
-      }
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    };
-    img.onerror = () => reject(new Error('probe failed to rasterize'));
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-  });
+async function rasterize(svg: string): Promise<ImageData> {
+  const img = await loadImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+  const canvas = document.createElement('canvas');
+  canvas.width = PROBE_W * PROBE_SCALE;
+  canvas.height = PROBE_H * PROBE_SCALE;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('no 2d context');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
 
 const DARK_CUTOFF = 110;
@@ -81,6 +73,7 @@ export async function measureProbe(strokePx: number, smoothing = ''): Promise<Pr
 
 export function solveStroke(plain: number, trial: number, trialPx = TRIAL_STROKE_PX): number {
   if (!Number.isFinite(plain) || !Number.isFinite(trial)) return 0;
+  if (plain < MIN_PLAUSIBLE_INK) return 0;
   if (plain >= REFERENCE_INK - TOLERANCE) return 0;
   const gainPerPx = (trial - plain) / trialPx;
   if (gainPerPx <= 0) return 0;
@@ -90,9 +83,18 @@ export function solveStroke(plain: number, trial: number, trialPx = TRIAL_STROKE
 
 async function calibrate(smoothing: string): Promise<number> {
   const plain = (await measureProbe(0, smoothing)).dark;
+  if (plain < MIN_PLAUSIBLE_INK) {
+    console.warn('[openzoo] text weight probe read no usable ink; skipping compensation');
+    return 0;
+  }
   if (plain >= REFERENCE_INK - TOLERANCE) return 0;
   const trial = (await measureProbe(TRIAL_STROKE_PX, smoothing)).dark;
   return solveStroke(plain, trial);
+}
+
+export async function applyTextStroke(el: HTMLElement): Promise<void> {
+  const px = await getTextStrokePx(el);
+  el.style.webkitTextStrokeWidth = px > 0 ? `${px}px` : '';
 }
 
 export function getTextStrokePx(sample?: HTMLElement | null): Promise<number> {
@@ -103,8 +105,4 @@ export function getTextStrokePx(sample?: HTMLElement | null): Promise<number> {
     cached = calibrate(smoothing).catch(() => 0);
   }
   return cached;
-}
-
-export function resetTextStrokeCalibration(): void {
-  cached = null;
 }

@@ -129,7 +129,7 @@ export function ParsedText({ html }: ParsedTextProps) {
   const segments = parseSegments(plain);
 
   return (
-    <span data-oz-text="">
+    <span>
       {renderSegments(segments, '')}
     </span>
   );

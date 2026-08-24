@@ -195,10 +195,6 @@ select.input-plain:focus {
   z-index: 1 !important;
 }
 
-[data-oz-card-root] [data-oz-text] {
-  translate: 0 var(--oz-baseline-nudge, 0px);
-}
-
 .card-exporting [data-zone-key="StrongAgainst"] > span {
   transform: translateY(1px) !important;
 }

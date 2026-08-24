@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { FIT_CANDIDATES, pickCandidate, TIERS_PER_CELL, type FitCandidate } from '@/lib/textBoxLadder';
 
 describe('FIT_CANDIDATES', () => {
-  it('starts at the layout base metrics', () => {
+  it('starts at the largest rung (attack effect steps down from the layout 9px)', () => {
     expect(FIT_CANDIDATES[0]).toEqual({
       main: { font: 9, pitch: 8 },
       effect: { font: 8, pitch: 7 },
