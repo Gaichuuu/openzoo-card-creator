@@ -40,7 +40,10 @@ function buildCandidates(): FitCandidate[] {
       for (const attack of ATTACK_TIERS) {
         out.push({
           main: { font, pitch },
-          effect: { font: Math.max(5.5, font - 1), pitch: Math.min(9, pitch + 1) },
+          effect: {
+            font: Math.max(5.5, font - 1),
+            pitch: Math.max(PITCH_MIN, pitch - 1),
+          },
           attack,
         });
       }
@@ -70,6 +73,10 @@ const EFFECT_SELECTOR = '[data-zone-key="AttackEffect"],[data-zone-key="AttackEf
 const ATTACK_SELECTOR = '[data-zone-key="Attack"],[data-zone-key="Attack 1"]';
 const ATTACK_NAME_SELECTOR = '[data-zone-key="Attack Name"],[data-zone-key="Attack Name 1"]';
 const ATKDMG_SELECTOR = '[data-zone-key="ATKDMG"],[data-zone-key="ATKDMG 1"]';
+const ADV_SELECTOR = '[data-zone-key^="AuraAdvantage"]';
+
+const ADV_BASE_DMG = ATTACK_TIERS[0].dmg;
+const ADV_TRIM = 0.8;
 
 function each(el: HTMLElement, selector: string, fn: (node: HTMLElement) => void): void {
   for (const node of Array.from(el.querySelectorAll(selector)) as HTMLElement[]) fn(node);
@@ -101,6 +108,18 @@ export function applyRung(el: HTMLElement, rung: FitCandidate, adjust: RungAdjus
   });
   each(el, ATKDMG_SELECTOR, (node) => {
     node.style.fontSize = `${rung.attack.dmg + adjust.attackName * 0.5}px`;
+  });
+  const advScale = ((rung.attack.dmg + adjust.attackName * 0.5) / ADV_BASE_DMG) * ADV_TRIM;
+  each(el, ADV_SELECTOR, (node) => {
+    if (node.dataset.ozAdvW === undefined) {
+      node.dataset.ozAdvW = String(parseFloat(node.style.width) || node.offsetWidth);
+      node.dataset.ozAdvH = String(parseFloat(node.style.height) || node.offsetHeight);
+    }
+    const w = Number(node.dataset.ozAdvW) * advScale;
+    const h = Number(node.dataset.ozAdvH) * advScale;
+    node.style.width = `${Math.round(w * 2) / 2}px`;
+    node.style.height = `${Math.round(h * 2) / 2}px`;
+    node.style.flexShrink = '0';
   });
 }
 

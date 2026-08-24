@@ -82,7 +82,7 @@ export async function fetchAsDataUrl(url: string): Promise<string> {
   });
 }
 
-function getFontEmbedCSS(): Promise<string> {
+export function getFontEmbedCSS(): Promise<string> {
   if (fontEmbedCSSCache) return Promise.resolve(fontEmbedCSSCache);
   if (fontEmbedCSSPending) return fontEmbedCSSPending;
   fontEmbedCSSPending = Promise.all(FONT_FACES.map(async (f) => {

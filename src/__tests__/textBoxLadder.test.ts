@@ -2,12 +2,22 @@ import { describe, it, expect } from 'vitest';
 import { FIT_CANDIDATES, pickCandidate, TIERS_PER_CELL, type FitCandidate } from '@/lib/textBoxLadder';
 
 describe('FIT_CANDIDATES', () => {
-  it('starts at the layout base metrics', () => {
+  it('starts at the largest rung (attack effect steps down from the layout 9px)', () => {
     expect(FIT_CANDIDATES[0]).toEqual({
       main: { font: 9, pitch: 8 },
-      effect: { font: 8, pitch: 9 },
+      effect: { font: 8, pitch: 7 },
       attack: { name: 10, dmg: 12, pitch: 13 },
     });
+  });
+
+  it('sets the attack effect no looser than the main text', () => {
+    for (const c of FIT_CANDIDATES) {
+      expect(c.effect.pitch).toBeLessThanOrEqual(c.main.pitch);
+      if (c.effect.pitch > 5) {
+        expect(c.effect.pitch / c.effect.font)
+          .toBeLessThanOrEqual(c.main.pitch / c.main.font + 0.001);
+      }
+    }
   });
 
   it('has every value on the half-pixel grid', () => {
