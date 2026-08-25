@@ -49,8 +49,7 @@ export function usesCeilDescent(): boolean {
       if (verdict === 'ceil') ceilVotes++;
       else if (verdict === 'round') roundVotes++;
     }
-    if (ceilVotes + roundVotes < 3) return false;
-    cached = ceilVotes > roundVotes;
+    cached = ceilVotes + roundVotes >= 3 && ceilVotes > roundVotes;
     return cached;
   } catch {
     return false;
