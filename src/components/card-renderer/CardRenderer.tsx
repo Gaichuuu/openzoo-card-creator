@@ -6,6 +6,7 @@ import { useCardStore } from '@/lib/store';
 import { CARD_W, CARD_H } from '@/lib/exportUtils';
 import { computeTextBoxReserve } from '@/lib/textBoxReserve';
 import { pinTextBaselines } from '@/lib/baselineMetrics';
+import { dumpBaselines, dumpEnabled } from '@/lib/baselineDump';
 import { ZoneRenderer } from './ZoneRenderer';
 
 interface CardRendererProps {
@@ -45,7 +46,9 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
 
     useLayoutEffect(() => {
       void fontsTick;
-      if (innerEl) pinTextBaselines(innerEl);
+      if (!innerEl) return;
+      pinTextBaselines(innerEl);
+      if (dumpEnabled()) dumpBaselines(innerEl, scale);
     });
 
     useLayoutEffect(() => {
