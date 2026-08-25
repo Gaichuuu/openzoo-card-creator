@@ -66,6 +66,17 @@ async function fontCss() {
   return parts.join('');
 }
 
+function svgPhase(css, family, weight, style, size, lh, phase) {
+  const run = `<span style="font-family:'${family}';font-weight:${weight};font-style:${style};`
+    + `font-size:${size}px;line-height:${lh}px;color:#000">Hxg</span>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">`
+    + `<rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>`
+    + `<foreignObject x="0" y="0" width="${W}" height="${H}">`
+    + `<div xmlns="http://www.w3.org/1999/xhtml"><style>${css}</style>`
+    + `<div style="padding-top:${(FO_Y + phase).toFixed(4)}px;margin:0">${run}</div>`
+    + `</div></foreignObject></svg>`;
+}
+
 function svgFor(css, family, weight, style, size, lh, flex) {
   const run = `<span style="font-family:'${family}';font-weight:${weight};font-style:${style};`
     + `font-size:${size}px;line-height:${lh}px;color:#000">Hxg</span>`;
@@ -189,6 +200,30 @@ function domTop(family, weight, style, size, lh) {
         + String(ras.width).padStart(7) + String(dm.w).padStart(7)
         + String(moved).padStart(7));
     }
+    const SPECS = [];
+    const seenSpec = new Set();
+    for (const [family, weight, style, size, lh] of PROBES) {
+      const k = `${family}|${weight}|${style}|${size}`;
+      if (seenSpec.has(k)) continue;
+      seenSpec.add(k);
+      SPECS.push([family, weight, style, size, lh]);
+    }
+    const PHASES = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+    lines.push('');
+    lines.push('phase sweep: inkTop at baseline offsets 0 .. 7/8 px (4x raster rows)');
+    lines.push('spec                  ' + PHASES.map((p) => String(p).padStart(7)).join(''));
+    for (const [family, weight, style, size, lh] of SPECS) {
+      const fam = family === 'Archivo Black' ? 'AB' : 'EBG';
+      const cells = [];
+      for (const phase of PHASES) {
+        const r = await rasterRows(svgPhase(css, family, weight, style, size, lh, phase));
+        cells.push(firstInk(r.rows, 0));
+      }
+      lines.push((`${fam} ${weight}${style === 'italic' ? 'i' : ''} ${size}px`).padEnd(22)
+        + cells.map((c) => String(c).padStart(7)).join(''));
+      out.textContent = lines.join('\n');
+    }
+    lines.push('DONE');
     out.textContent = lines.join('\n');
   } catch (err) {
     out.textContent = 'probe failed: ' + (err && err.message ? err.message : String(err));
