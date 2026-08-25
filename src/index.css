@@ -195,6 +195,12 @@ select.input-plain:focus {
   z-index: 1 !important;
 }
 
+[data-oz-card-root] {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-stroke-width: 0.07px;
+}
+
 .card-exporting [data-zone-key="StrongAgainst"] > span {
   transform: translateY(1px) !important;
 }
