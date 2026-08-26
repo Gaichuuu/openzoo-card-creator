@@ -209,7 +209,6 @@ select.input-plain:focus {
 }
 
 .card-exporting.oz-ceil-descent [data-zone-key="DOB/Discovered:"] > span,
-.card-exporting.oz-ceil-descent [data-zone-key="Discovered:"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="GPS"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="Weight"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="Height/Length"] > span,
@@ -218,15 +217,13 @@ select.input-plain:focus {
 .card-exporting.oz-ceil-descent [data-zone-key="Copyright"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="Terra1ATK"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="Terra2ATK"] > span,
+.card-exporting.oz-ceil-descent [data-zone-key="Terra1LP"] > span,
+.card-exporting.oz-ceil-descent [data-zone-key="Terra2LP"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="AttackEffect"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="AttackEffect 1"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="ATKDMG"] > span,
-.card-exporting.oz-ceil-descent [data-zone-key="ATKDMG 1"] > span {
-  transform: translateY(1px) !important;
-}
-.card-exporting.oz-ceil-descent [data-zone-key="StrongAgainst"] > span {
-  transform: translateY(2px) !important;
-}
+.card-exporting.oz-ceil-descent [data-zone-key="ATKDMG 1"] > span,
+.card-exporting.oz-ceil-descent [data-zone-key="StrongAgainst"] > span,
 .card-exporting.oz-ceil-descent [data-zone-key="FlavorText"] > * {
-  transform: translateY(1.5px) !important;
+  translate: 0 calc(1px / var(--oz-zoom, 1));
 }

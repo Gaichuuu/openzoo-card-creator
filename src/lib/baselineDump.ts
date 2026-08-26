@@ -1,13 +1,4 @@
-const FLAG = 'ozdump';
 const PANEL_ID = 'oz-baseline-dump';
-
-export function dumpEnabled(): boolean {
-  try {
-    return new URLSearchParams(window.location.search).has(FLAG);
-  } catch {
-    return false;
-  }
-}
 
 interface RunRow {
   zone: string;
@@ -26,8 +17,9 @@ function measureBaseline(el: HTMLElement, rootTop: number, scale: number): numbe
   strut.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
   el.appendChild(strut);
   const r = strut.getBoundingClientRect();
+  const measurable = strut.isConnected || r.width !== 0 || r.height !== 0 || r.top !== 0;
   strut.remove();
-  return r.height || r.top ? (r.top - rootTop) / scale : null;
+  return measurable ? (r.top - rootTop) / scale : null;
 }
 
 function collect(root: HTMLElement, scale: number): RunRow[] {

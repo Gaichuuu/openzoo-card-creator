@@ -1,5 +1,7 @@
 const EBG_DESCENT_EM = 0.298;
 
+export const CEIL_DESCENT_CLASS = 'oz-ceil-descent';
+
 const PROBE_SIZES = [6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 19];
 
 function measureDescent(size: number): number | null {
@@ -31,13 +33,14 @@ export function idealDescentPx(size: number, dpr: number): number {
 }
 
 let cached: boolean | null = null;
+let cachedDpr = 0;
 
 export function usesCeilDescent(): boolean {
-  if (cached !== null) return cached;
+  const dpr = (typeof window === 'undefined' ? 1 : window.devicePixelRatio) || 1;
+  if (cached !== null && cachedDpr === dpr) return cached;
   try {
     if (typeof document === 'undefined' || !document.body) return false;
     if (!document.fonts?.check('400 9px "EB Garamond"')) return false;
-    const dpr = window.devicePixelRatio || 1;
     let ceilVotes = 0;
     let roundVotes = 0;
     for (const size of PROBE_SIZES) {
@@ -50,8 +53,13 @@ export function usesCeilDescent(): boolean {
       else if (verdict === 'round') roundVotes++;
     }
     cached = ceilVotes + roundVotes >= 3 && ceilVotes > roundVotes;
+    cachedDpr = dpr;
     return cached;
   } catch {
     return false;
   }
+}
+
+export function applyBackendClass(el: HTMLElement): void {
+  el.classList.toggle(CEIL_DESCENT_CLASS, usesCeilDescent());
 }
