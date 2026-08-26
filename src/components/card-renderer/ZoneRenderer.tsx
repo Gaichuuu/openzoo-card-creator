@@ -296,6 +296,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
     if (shouldAutoFitTNL) {
       el.style.zoom = '1';
+      el.style.setProperty('--oz-zoom', '1');
       el.style.height = 'auto';
       el.style.width = '100%';
 
@@ -305,6 +306,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       if (contentHeight > baseHeight) {
         const ratio = baseHeight / contentHeight;
         el.style.zoom = String(ratio);
+        el.style.setProperty('--oz-zoom', String(ratio));
         el.style.height = `${contentHeight}px`;
         el.style.width = `${currentWidth / ratio}px`;
       } else {
@@ -317,6 +319,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       const baseWidth = parseFloat(zone.style.width as string) || el.offsetWidth;
 
       el.style.zoom = '1';
+
+      el.style.setProperty('--oz-zoom', '1');
       el.style.height = 'auto';
       el.style.width = `${baseWidth}px`;
       const nativeHeight = el.offsetHeight;
@@ -341,6 +345,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       for (let i = 0; i < 12; i++) {
         const mid = (lo + hi) / 2;
         el.style.zoom = '1';
+        el.style.setProperty('--oz-zoom', '1');
         el.style.height = 'auto';
         el.style.width = `${baseWidth / mid}px`;
         const contentH = el.offsetHeight;
@@ -355,6 +360,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       }
 
       el.style.zoom = String(bestRatio);
+
+      el.style.setProperty('--oz-zoom', String(bestRatio));
       el.style.width = `${baseWidth / bestRatio}px`;
       el.style.height = 'auto';
       el.style.marginTop = '0px';
@@ -374,6 +381,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       const baseHeight = parseFloat(zone.style.height as string) || 0;
 
       el.style.zoom = '1';
+
+      el.style.setProperty('--oz-zoom', '1');
       el.style.width = 'max-content';
       el.style.height = `${baseHeight}px`;
 
@@ -385,6 +394,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       if (naturalWidth > baseWidth) {
         const ratio = baseWidth / naturalWidth;
         el.style.zoom = String(ratio);
+        el.style.setProperty('--oz-zoom', String(ratio));
         el.style.width = `${naturalWidth}px`;
         el.style.height = `${baseHeight / ratio}px`;
         for (const child of children) {
@@ -408,6 +418,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
     const runLadderFit = () => {
       el.style.zoom = '1';
+      el.style.setProperty('--oz-zoom', '1');
       el.style.width = `${baseWidth}px`;
       el.style.height = 'auto';
 
@@ -474,6 +485,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
     const runAutoFit = () => {
       el.style.zoom = '1';
+      el.style.setProperty('--oz-zoom', '1');
       el.style.height = 'auto';
       el.style.width = `${baseWidth}px`;
 
@@ -677,6 +689,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
         el.style.zoom = String(ratio);
 
+        el.style.setProperty('--oz-zoom', String(ratio));
+
         el.style.height = `${baseHeight / ratio}px`;
         if (boostPaddingEl) {
           boostPaddingEl.style.paddingTop = `${boostPaddingValue / ratio}px`;
@@ -709,6 +723,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       } else {
         measureAt(1);
         el.style.zoom = '1';
+        el.style.setProperty('--oz-zoom', '1');
         el.style.height = `${baseHeight}px`;
         if (boostPaddingEl) {
           boostPaddingEl.style.paddingTop = `${boostPaddingValue}px`;

@@ -2,7 +2,7 @@ import { useCardStore } from '@/lib/store';
 import { PRINT_READY_KEY, downloadDataUrl, sanitizeCardNameForFilename, exportStandardPng, exportPrintReadyPng, type ArtFraming } from '@/lib/exportUtils';
 import { readLocalStorage } from '@/lib/safeStorage';
 import { useLocalStorageState } from '@/lib/useLocalStorageState';
-import { applyTextStroke } from './textWeightCalibration';
+import { applyBackendClass } from './fontBackend';
 
 export function usePrintReady(): [boolean, (v: boolean) => void] {
   return useLocalStorageState(PRINT_READY_KEY, (raw) => raw === '1', (v) => (v ? '1' : '0'));
@@ -36,7 +36,7 @@ export async function exportCardPng(card: HTMLDivElement | null, options: Export
 
   try {
     card.classList.add('card-exporting');
-    await applyTextStroke(card);
+    applyBackendClass(card);
     if (printReady) {
       const dataUrl = await exportPrintReadyPng(card, borderless, cardArtUrl, crossOrigin, artFraming);
       downloadDataUrl(dataUrl, `${filename}-print.png`);

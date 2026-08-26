@@ -6,7 +6,7 @@ import { exportStandardPng, displayCardName } from '@/lib/exportUtils';
 import { CARD_TAGS, TAG_COLORS } from '@/types/card';
 import type { CardTag, SavedCard } from '@/types/card';
 import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
-import { applyTextStroke } from '@/lib/textWeightCalibration';
+import { applyBackendClass } from '@/lib/fontBackend';
 
 interface PublishDialogProps {
   cardRef: React.RefObject<HTMLDivElement | null>;
@@ -46,7 +46,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
 
     try {
       cardRef.current.classList.add('card-exporting');
-      await applyTextStroke(cardRef.current);
+      applyBackendClass(cardRef.current);
       const rawDataUrl = await exportStandardPng(cardRef.current, false);
       const thumbnailDataUrl = await new Promise<string>((resolve, reject) => {
         const img = new Image();

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>OpenZoo font probe</title>
+<style>
+  body { background: #0b1220; color: #e8eef8; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; margin: 0; padding: 12px; }
+  h1 { font-size: 15px; margin: 0 0 8px; }
+  button { font: inherit; padding: 8px 14px; margin-bottom: 10px; background: #1e2b45; color: #e8eef8; border: 1px solid #3c527d; border-radius: 6px; }
+  pre { white-space: pre; overflow-x: auto; background: #101a2e; padding: 10px; border-radius: 6px; margin: 0; }
+  .note { color: #93a4c4; margin: 10px 0 0; font-size: 12px; }
+  @font-face { font-family: 'EB Garamond'; font-weight: 400; font-style: normal; src: url('/fonts/EBGaramond-Medium.ttf') format('truetype'); }
+  @font-face { font-family: 'EB Garamond'; font-weight: 700; font-style: normal; src: url('/fonts/EBGaramond-Bold.ttf') format('truetype'); }
+  @font-face { font-family: 'EB Garamond'; font-weight: 400; font-style: italic; src: url('/fonts/EBGaramond-MediumItalic.ttf') format('truetype'); }
+  @font-face { font-family: 'EB Garamond'; font-weight: 700; font-style: italic; src: url('/fonts/EBGaramond-BoldItalic.ttf') format('truetype'); }
+  @font-face { font-family: 'Archivo Black'; font-weight: 400; font-style: normal; src: url('/fonts/ArchivoBlack-Regular.ttf') format('truetype'); }
+</style>
+</head>
+<body>
+<h1>OpenZoo font probe</h1>
+<button id="copy">Copy results</button>
+<pre id="out">measuring...</pre>
+<p class="note">This page renders text through the same SVG raster the PNG export uses, then reports where the ink actually lands. Nothing is uploaded.</p>
+
+<script>
+const FONTS = [
+  ['EB Garamond', 400, 'normal', '/fonts/EBGaramond-Medium.ttf'],
+  ['EB Garamond', 700, 'normal', '/fonts/EBGaramond-Bold.ttf'],
+  ['EB Garamond', 400, 'italic', '/fonts/EBGaramond-MediumItalic.ttf'],
+  ['EB Garamond', 700, 'italic', '/fonts/EBGaramond-BoldItalic.ttf'],
+  ['Archivo Black', 400, 'normal', '/fonts/ArchivoBlack-Regular.ttf'],
+];
+
+const PROBES = [
+  ['Archivo Black', 400, 'normal', 5, 5.5, 'StrongAgainst', 1],
+  ['EB Garamond', 400, 'italic', 6, 5.7, 'FlavorText', 1],
+  ['EB Garamond', 400, 'normal', 7, 8, 'metadata', 0],
+  ['EB Garamond', 400, 'normal', 8, 7.5, 'AttackEffect', 1],
+  ['EB Garamond', 700, 'normal', 8, 8.8, 'Terra1ATK', 1],
+  ['EB Garamond', 400, 'normal', 8, 8.8, 'Copyright', 1],
+  ['EB Garamond', 400, 'normal', 9, 8.5, 'MainText', 0],
+  ['EB Garamond', 700, 'normal', 9, 9.9, 'TypesTribes', 0],
+  ['Archivo Black', 400, 'normal', 10.5, 9.45, 'CardName', 1],
+  ['EB Garamond', 700, 'normal', 12, 13, 'AttackName', 0],
+  ['EB Garamond', 700, 'normal', 13, 14.3, 'Cost1', 0],
+  ['EB Garamond', 700, 'normal', 14, 15.5, 'ATKDMG', 1],
+  ['EB Garamond', 700, 'normal', 19, 20.9, 'LP', 0],
+];
+
+const W = 240, H = 40, SCALE = 4, MARKER_Y = 2, FO_Y = 8;
+
+async function fontCss() {
+  const parts = [];
+  for (const [family, weight, style, url] of FONTS) {
+    const buf = await (await fetch(url)).arrayBuffer();
+    let bin = '';
+    const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.length; i += 8192) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    }
+    parts.push(`@font-face{font-family:'${family}';font-weight:${weight};font-style:${style};`
+      + `src:url(data:font/truetype;base64,${btoa(bin)}) format('truetype');}`);
+  }
+  return parts.join('');
+}
+
+function svgPhase(css, family, weight, style, size, lh, phase) {
+  const run = `<span style="font-family:'${family}';font-weight:${weight};font-style:${style};`
+    + `font-size:${size}px;line-height:${lh}px;color:#000">Hxg</span>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">`
+    + `<rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>`
+    + `<foreignObject x="0" y="0" width="${W}" height="${H}">`
+    + `<div xmlns="http://www.w3.org/1999/xhtml"><style>${css}</style>`
+    + `<div style="padding-top:${(FO_Y + phase).toFixed(4)}px;margin:0">${run}</div>`
+    + `</div></foreignObject></svg>`;
+}
+
+function svgFor(css, family, weight, style, size, lh, flex) {
+  const run = `<span style="font-family:'${family}';font-weight:${weight};font-style:${style};`
+    + `font-size:${size}px;line-height:${lh}px;color:#000">Hxg</span>`;
+  const body = flex
+    ? `<div style="height:${Math.ceil(lh) + 3}px;display:flex;align-items:center;margin:0;padding:0">${run}</div>`
+    : `<div style="line-height:${lh}px;margin:0;padding:0">${run}</div>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">`
+    + `<rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>`
+    + `<rect x="0" y="${MARKER_Y}" width="${W}" height="1" fill="#000"/>`
+    + `<foreignObject x="0" y="${FO_Y}" width="${W}" height="${H - FO_Y}">`
+    + `<div xmlns="http://www.w3.org/1999/xhtml">`
+    + `<style>${css}</style>${body}</div></foreignObject></svg>`;
+}
+
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = src;
+  });
+}
+
+async function rasterRows(svg) {
+  const img = await loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
+  const c = document.createElement('canvas');
+  c.width = W * SCALE; c.height = H * SCALE;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  const d = ctx.getImageData(0, 0, c.width, c.height).data;
+  const rows = [];
+  let minX = c.width, maxX = -1;
+  for (let y = 0; y < c.height; y++) {
+    let dark = 0;
+    for (let x = 0; x < c.width; x++) {
+      if (d[(y * c.width + x) * 4] < 128) {
+        dark++;
+        if (y >= (FO_Y - 1) * SCALE) { if (x < minX) minX = x; if (x > maxX) maxX = x; }
+      }
+    }
+    rows.push(dark);
+  }
+  return { rows, width: maxX < 0 ? -1 : maxX - minX + 1 };
+}
+
+function firstInk(rows, from) {
+  for (let y = from; y < rows.length; y++) if (rows[y] > 0) return y;
+  return -1;
+}
+function lastInk(rows, from) {
+  for (let y = rows.length - 1; y >= from; y--) if (rows[y] > 0) return y;
+  return -1;
+}
+
+function strutBox(family, weight, style, size) {
+  const o = document.createElement('span');
+  o.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;'
+    + `font-family:'${family}';font-weight:${weight};font-style:${style};font-size:${size}px;line-height:normal`;
+  o.textContent = 'Hxg';
+  const strut = document.createElement('span');
+  strut.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+  o.appendChild(strut);
+  document.body.appendChild(o);
+  const ob = o.getBoundingClientRect(), sb = strut.getBoundingClientRect();
+  const r = { a: +(sb.top - ob.top).toFixed(3), d: +(ob.bottom - sb.top).toFixed(3) };
+  o.remove();
+  return r;
+}
+
+function domTop(family, weight, style, size, lh) {
+  const box = document.createElement('div');
+  box.style.cssText = 'position:absolute;left:-9999px;top:0;width:240px;visibility:hidden';
+  const line = document.createElement('div');
+  line.style.cssText = `font-family:'${family}';font-weight:${weight};font-style:${style};`
+    + `font-size:${size}px;line-height:${lh}px;margin:0;padding:0`;
+  line.textContent = 'Hxg';
+  box.appendChild(line);
+  document.body.appendChild(box);
+  line.style.display = 'inline-block';
+  const r = line.getBoundingClientRect();
+  const out = { h: +r.height.toFixed(3), w: +r.width.toFixed(3) };
+  box.remove();
+  return out;
+}
+
+(async () => {
+  const out = document.getElementById('out');
+  try {
+    const specs = new Set();
+    for (const [family, weight, style, size] of PROBES) {
+      specs.add(`${style} ${weight} ${size}px "${family}"`);
+    }
+    await Promise.all([...specs].map((s) => document.fonts.load(s, 'Hxg').catch(() => {})));
+    await document.fonts.ready;
+    const missing = [...specs].filter((s) => !document.fonts.check(s));
+    const css = await fontCss();
+    const lines = [];
+    if (missing.length) lines.push('WARNING unloaded faces: ' + missing.join(' | '));
+    lines.push('ua      ' + navigator.userAgent);
+    lines.push('dpr     ' + window.devicePixelRatio + '   screen ' + screen.width + 'x' + screen.height);
+    lines.push('');
+    lines.push('label          fam wt sty  size    lh   strutA strutD   lineH  marker  inkTop  inkBot  flexTop   inkW   domW  moved');
+    for (const [family, weight, style, size, lh, label, moved] of PROBES) {
+      const ras = await rasterRows(svgFor(css, family, weight, style, size, lh, false));
+      const flexRas = await rasterRows(svgFor(css, family, weight, style, size, lh, true));
+      const marker = firstInk(ras.rows, 0);
+      const top = firstInk(ras.rows, (FO_Y - 1) * SCALE);
+      const bot = lastInk(ras.rows, (FO_Y - 1) * SCALE);
+      const sb = strutBox(family, weight, style, size);
+      const dm = domTop(family, weight, style, size, lh);
+      const fam = family === 'Archivo Black' ? 'AB' : 'EBG';
+      lines.push(
+        label.padEnd(14) + fam.padStart(4) + String(weight).padStart(3) + style.slice(0, 3).padStart(4)
+        + String(size).padStart(6) + String(lh).padStart(6)
+        + String(sb.a).padStart(9) + String(sb.d).padStart(7)
+        + String(dm.h).padStart(8)
+        + String(marker).padStart(8) + String(top).padStart(8) + String(bot).padStart(8)
+        + String(firstInk(flexRas.rows, (FO_Y - 1) * SCALE)).padStart(9)
+        + String(ras.width).padStart(7) + String(dm.w).padStart(7)
+        + String(moved).padStart(7));
+    }
+    const SPECS = [];
+    const seenSpec = new Set();
+    for (const [family, weight, style, size, lh] of PROBES) {
+      const k = `${family}|${weight}|${style}|${size}`;
+      if (seenSpec.has(k)) continue;
+      seenSpec.add(k);
+      SPECS.push([family, weight, style, size, lh]);
+    }
+    const PHASES = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+    lines.push('');
+    lines.push('phase sweep: inkTop at baseline offsets 0 .. 7/8 px (4x raster rows)');
+    lines.push('spec                  ' + PHASES.map((p) => String(p).padStart(7)).join(''));
+    for (const [family, weight, style, size, lh] of SPECS) {
+      const fam = family === 'Archivo Black' ? 'AB' : 'EBG';
+      const cells = [];
+      for (const phase of PHASES) {
+        const r = await rasterRows(svgPhase(css, family, weight, style, size, lh, phase));
+        cells.push(firstInk(r.rows, 0));
+      }
+      lines.push((`${fam} ${weight}${style === 'italic' ? 'i' : ''} ${size}px`).padEnd(22)
+        + cells.map((c) => String(c).padStart(7)).join(''));
+      out.textContent = lines.join('\n');
+    }
+    lines.push('DONE');
+    out.textContent = lines.join('\n');
+  } catch (err) {
+    out.textContent = 'probe failed: ' + (err && err.message ? err.message : String(err));
+  }
+})();
+
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = document.getElementById('out').textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    document.getElementById('copy').textContent = 'Copied';
+  } catch {
+    const r = document.createRange();
+    r.selectNodeContents(document.getElementById('out'));
+    const s = getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+  }
+});
+</script>
+</body>
+</html>
