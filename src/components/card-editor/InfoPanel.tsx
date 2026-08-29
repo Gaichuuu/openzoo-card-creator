@@ -58,7 +58,7 @@ function TokenTable({ query = '' }: { query?: string }) {
   if (tokens.length === 0) return null;
   return (
     <div>
-      <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Formatting</h4>
+      <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Text Tokens</h4>
       <div className="space-y-0.5">
         {tokens.map(([token, desc]) => (
           <div key={token} className="flex items-center gap-2">
@@ -102,6 +102,92 @@ function ClassesCheatSheet({ query = '' }: { query?: string }) {
             scale = height in em (0.9), offset = vertical shift (0.1)
           </p>
         </div>
+      )}
+    </>
+  );
+}
+
+const FORMATTING_RULES: [string, string, string][] = [
+  ['Page name', '{BI:}', '{BI:Bigfoot} gains {Invisible}.'],
+  ['Name fragment, in quotes', '{BI:}', 'Pages with {BI:"UFO"} in their name'],
+  ['Token or Set name', '{BI:}', 'Create a {BI:BBQ Token}'],
+  ['Attack name', '{B:}', '{B:Splinter Spear} gains {B:+15 Damage}.'],
+  ['Power name', '{B:}', 'a Power named {B:"Mini Sun"}'],
+  ['Effect amount', '{B:}', 'loses {B:25 LP}, Bookmark {B:2}'],
+  ['Phrase the Caster must say', '{BI:}', 'If you say {BI:"Gee-geeze!"}'],
+];
+
+const LEAVE_PLAIN: string[] = [
+  'Token stat lines: (25 LP {Flame} Beastie with a 10 Damage Attack)',
+  'Status durations: is inflicted with {Frozen}(2)',
+  'Flavor amounts: a 75% chance of rain, within 5 miles',
+];
+
+function FormattingRules({ query = '' }: { query?: string }) {
+  const rules = FORMATTING_RULES.filter(([what, cls, ex]) => matches(query, what, cls, ex));
+  const plain = LEAVE_PLAIN.filter((line) => matches(query, line, 'plain'));
+  const showNotes = matches(query, 'nesting markdown 4th wall star bold italic');
+
+  return (
+    <>
+      {rules.length > 0 && (
+        <div>
+          <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">When to use</h4>
+          <div className="space-y-1.5">
+            {rules.map(([what, cls, ex]) => (
+              <div key={what}>
+                <div className="flex items-center gap-2">
+                  <CopyChip text={cls} />
+                  <span className="text-[10px] text-gray-300">{what}</span>
+                </div>
+                <p className="text-[10px] text-gray-400 font-mono mt-0.5 pl-1">{ex}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {plain.length > 0 && (
+        <div>
+          <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Plain text</h4>
+          <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
+            {plain.map((line) => <li key={line}>{line}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {showNotes && (
+        <>
+          <div>
+            <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Effect amounts</h4>
+            <p className="text-[10px] text-gray-400">
+              Bold the numbers the Effect operates on: Damage, LP, ATK/LP grants, Aura Costs, and counts of Pages
+              targeted, Bookmarked, or Counters placed.
+            </p>
+          </div>
+          <div>
+            <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Nesting</h4>
+            <p className="text-[10px] text-gray-400">
+              <span className="text-gray-300">{'{B:}'}</span> inside{' '}
+              <span className="text-gray-300">{'{I:}'}</span> already renders bold <em>and</em> italic, so always pick
+              the class by what the token is.
+            </p>
+          </div>
+          <div>
+            <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">4th Wall</h4>
+            <p className="text-[10px] text-gray-400">
+              Use the effect block's 4th wall checkbox, not a <span className="text-gray-300">{'{Star}'}</span> or an inner{' '}
+              <span className="text-gray-300">{'{I:...}'}</span>. The star italicizes the whole block.
+            </p>
+          </div>
+          <div>
+            <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">No markdown</h4>
+            <p className="text-[10px] text-gray-400">
+              <span className="text-gray-300">**bold**</span> is reserved for keyword labels: ARENA, CONTRACT, etc. Use{' '}
+              <span className="text-gray-300">{'{B:}'}</span> in your own text.
+            </p>
+          </div>
+        </>
       )}
     </>
   );
@@ -151,7 +237,7 @@ function DesignBible() {
         <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">4th Wall Rules</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li>Keywords are NOT italicized in 4th Wall</li>
-          <li>Italicize the singular effect sentence</li>
+          <li>The star italicizes the whole block; extra sentences are fine</li>
           <li>4th Wall goes at the beginning, near the star</li>
           <li>Contract restrictions: bold + italic (or star + italic, no bold)</li>
         </ul>
@@ -166,6 +252,7 @@ function DesignBible() {
           <li>"...is dealt 25 Damage and is inflicted with Burn."</li>
           <li><span className="text-gray-300">"gains +X Damage"</span> = stacking / temporary</li>
           <li><span className="text-gray-300">"deals X Damage"</span> = one-time</li>
+          <li>Never "takes" or "receives" Damage</li>
           <li>"This Attack gains +X Damage while..." for temp increases</li>
         </ul>
       </div>
@@ -177,8 +264,8 @@ function DesignBible() {
           <li><span className="text-gray-300">In Arena</span> = reference by Page Type ("This Beastie...")</li>
           <li><span className="text-gray-300">In Chapter</span> = reference as "Page"</li>
           <li><span className="text-gray-300">Owner</span> = "you"; others = "Caster"</li>
-          <li>Specific Page name = {'{I:italics}'}</li>
-          <li>Part of a name = double quotes ("Cat" in its name)</li>
+          <li>Specific Page name = {'{BI:name}'}</li>
+          <li>Part of a name = {'{BI:"Cat"}'} (quotes inside the span)</li>
           <li>Tribe search: [Page Type][Tribe]; all types: [Tribe][Page]</li>
         </ul>
       </div>
@@ -249,7 +336,7 @@ function DesignBible() {
           Create [#] Name Token(s) (## LP [Aura] [Type] [Tribe] with [## Damage Attack] [Aura Advantage] [Traits] [Terra Bonuses] and the Effect "...").
         </p>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0 mt-1">
-          <li>Token name = {'{I:italics}'} (unless in 4th Wall)</li>
+          <li>Token name = {'{BI:}'} ({'{R:}'} inside a 4th Wall)</li>
           <li>Period outside closing parenthesis</li>
         </ul>
       </div>
@@ -357,7 +444,7 @@ function DesignBible() {
           <li>"Until the end of this turn" at end of sentence</li>
           <li>"Without paying its Aura Cost"</li>
           <li>"With the Effect" (not "with the text")</li>
-          <li>Self-reference = italics; another Page = "quotes"</li>
+          <li>Page names = {'{BI:}'}, self or other (see Formatting)</li>
         </ul>
       </div>
     </>
@@ -421,6 +508,9 @@ export function InfoPanel({ collapsible = false, searchable = false }: InfoPanel
         </Accordion>
         <Accordion title="Design Tips" defaultOpen={false}>
           <DesignBible />
+        </Accordion>
+        <Accordion title="Formatting" defaultOpen={false}>
+          <FormattingRules query={query} />
         </Accordion>
       </div>
     </div>
