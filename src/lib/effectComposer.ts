@@ -40,7 +40,7 @@ export function composeKeywordBlock(block: EffectBlock, locale: Locale = 'en'): 
     if (keyword) {
       return `${starPrefix}**${keyword}${colon}**${sp}{I:${text}}`;
     }
-    return `${starPrefix}**${colon}**${sp}{I:${text}}`;
+    return `${starPrefix}{I:${text}}`;
   }
 
   if (keyword) {
@@ -249,10 +249,8 @@ export function composeEffectBlocks(
 
   if (atkEffectKey) {
     if (attack?.attackEffect) {
-      const atkColon = localeColon(locale);
-      const atkSp = localeSp(locale);
       const effectText = attack.attackHasStar
-        ? `{Star}**${atkColon}**${atkSp}{I:${attack.attackEffect}}`
+        ? `{Star}{I:${attack.attackEffect}}`
         : attack.attackEffect;
       patch[atkEffectKey] = `<p>${effectText}</p>`;
     } else {

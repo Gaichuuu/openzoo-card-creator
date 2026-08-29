@@ -69,7 +69,7 @@ describe('composeKeywordBlock', () => {
 
   it('composes static block with star', () => {
     const result = composeKeywordBlock(makeBlock({ type: 'static', text: 'Effect', hasStar: true }));
-    expect(result).toBe('{Star}**:** {I:Effect}');
+    expect(result).toBe('{Star}{I:Effect}');
   });
 
   it('composes DISCARD keyword', () => {
