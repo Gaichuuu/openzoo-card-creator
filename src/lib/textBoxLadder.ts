@@ -15,8 +15,10 @@ export interface FitCandidate {
   attack: AttackMetrics;
 }
 
-const FONTS = [9, 8.5, 8, 7.5, 7, 6.5] as const;
-const PITCH_MAX = 8;
+const FONTS = [11, 10.5, 10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5] as const;
+const PITCH_MAX = 10;
+
+export const BASE_FONT_INDEX = FONTS.indexOf(9);
 const PITCH_MIN = 5;
 
 const ATTACK_TIERS: readonly AttackMetrics[] = [
@@ -33,9 +35,11 @@ function pitchRange(font: number): number[] {
   return out;
 }
 
-function buildCandidates(): FitCandidate[] {
+function buildCandidates(): { list: FitCandidate[]; starts: number[] } {
   const out: FitCandidate[] = [];
+  const starts: number[] = [];
   for (const font of FONTS) {
+    starts.push(out.length);
     for (const pitch of pitchRange(font)) {
       for (const attack of ATTACK_TIERS) {
         out.push({
@@ -49,15 +53,24 @@ function buildCandidates(): FitCandidate[] {
       }
     }
   }
-  return out;
+  return { list: out, starts };
 }
 
-export const FIT_CANDIDATES: readonly FitCandidate[] = buildCandidates();
+const BUILT = buildCandidates();
+
+export const FIT_CANDIDATES: readonly FitCandidate[] = BUILT.list;
+
+export const FONT_STARTS: readonly number[] = BUILT.starts;
+
+export const BASE_INDEX = BUILT.starts[BASE_FONT_INDEX];
 
 export const TIERS_PER_CELL = ATTACK_TIERS.length;
 
-export function pickCandidate(fits: (candidate: FitCandidate, index: number) => boolean): number {
-  for (let first = 0; first < FIT_CANDIDATES.length; first += TIERS_PER_CELL) {
+export function pickCandidate(
+  fits: (candidate: FitCandidate, index: number) => boolean,
+  start: number = BASE_INDEX,
+): number {
+  for (let first = start; first < FIT_CANDIDATES.length; first += TIERS_PER_CELL) {
     const last = first + TIERS_PER_CELL - 1;
     if (!fits(FIT_CANDIDATES[last], last)) continue;
     for (let i = first; i < last; i++) {

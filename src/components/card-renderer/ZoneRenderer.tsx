@@ -8,7 +8,7 @@ import { useCardStore } from '@/lib/store';
 import { artPositionCss, artZoomScale } from '@/lib/cardArtFit';
 import { ParsedText } from './TextParser';
 import { getFitMode } from '@/lib/fitMode';
-import { FIT_CANDIDATES, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
+import { FIT_CANDIDATES, FONT_STARTS, BASE_FONT_INDEX, BASE_INDEX, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
 
 function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null }) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
@@ -452,8 +452,10 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         return el.offsetHeight <= budget;
       };
 
-      const autoIndex = pickCandidate(fits);
-      const offset = Math.round(mainTextBoxExtraShrink / 5) * TIERS_PER_CELL;
+      const shrinkSteps = Math.round(mainTextBoxExtraShrink / 5);
+      const startFont = Math.max(0, BASE_FONT_INDEX + Math.min(0, shrinkSteps));
+      const autoIndex = pickCandidate(fits, FONT_STARTS[startFont]);
+      const offset = Math.max(0, shrinkSteps) * TIERS_PER_CELL;
       const index = Math.min(FIT_CANDIDATES.length - 1, Math.max(0, autoIndex + offset));
       if (index !== applied) {
         applyRung(el, FIT_CANDIDATES[index], { pitch: mainTextLineHeightAdj, spacing: mainTextLetterSpacingAdj, attackName: attackNameSizeAdj });
@@ -480,7 +482,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
         ? `translateY(${mainTextBoxNudge}px)`
         : '';
 
-      useCardStore.getState()._setAutoFitRatio(FIT_CANDIDATES[index].main.pitch / FIT_CANDIDATES[0].main.pitch);
+      useCardStore.getState()._setAutoFitRatio(FIT_CANDIDATES[index].main.pitch / FIT_CANDIDATES[BASE_INDEX].main.pitch);
     };
 
     const runAutoFit = () => {

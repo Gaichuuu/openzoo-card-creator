@@ -1,13 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { FIT_CANDIDATES, pickCandidate, TIERS_PER_CELL, type FitCandidate } from '@/lib/textBoxLadder';
+import {
+  FIT_CANDIDATES,
+  FONT_STARTS,
+  BASE_INDEX,
+  BASE_FONT_INDEX,
+  pickCandidate,
+  TIERS_PER_CELL,
+  type FitCandidate,
+} from '@/lib/textBoxLadder';
+
 
 describe('FIT_CANDIDATES', () => {
-  it('starts at the largest rung (attack effect steps down from the layout 9px)', () => {
-    expect(FIT_CANDIDATES[0]).toEqual({
+  it('starts the auto-fit at the largest rung (attack effect steps down from the layout 9px)', () => {
+    expect(FIT_CANDIDATES[BASE_INDEX]).toEqual({
       main: { font: 9, pitch: 8 },
       effect: { font: 8, pitch: 7 },
       attack: { name: 10, dmg: 12, pitch: 13 },
     });
+  });
+
+  it('keeps oversize rungs above the auto-fit ceiling', () => {
+    expect(BASE_INDEX).toBeGreaterThan(0);
+    expect(FIT_CANDIDATES[0].main).toEqual({ font: 11, pitch: 10 });
   });
 
   it('sets the attack effect no looser than the main text', () => {
@@ -60,12 +74,16 @@ describe('FIT_CANDIDATES', () => {
 });
 
 describe('pickCandidate', () => {
-  it('returns 0 when the first candidate fits', () => {
-    expect(pickCandidate(() => true)).toBe(0);
+  const cellsFromBase = (FIT_CANDIDATES.length - BASE_INDEX) / TIERS_PER_CELL;
+
+  it('returns BASE_INDEX when the first candidate fits', () => {
+    // The regression guard for existing cards: with no Shrink applied the ladder must
+    // still top out at 9px/8, never reaching into the oversize rungs above it.
+    expect(pickCandidate(() => true)).toBe(BASE_INDEX);
   });
 
   it('returns the first index that fits', () => {
-    expect(pickCandidate((_candidate, i) => i >= 5)).toBe(5);
+    expect(pickCandidate((_candidate, i) => i >= BASE_INDEX + 5)).toBe(BASE_INDEX + 5);
   });
 
   it('returns the last index when nothing fits', () => {
@@ -74,10 +92,10 @@ describe('pickCandidate', () => {
 
   it('probes each cell top-down but only its last index until the winning cell', () => {
     const seen: number[] = [];
-    const result = pickCandidate((_candidate, i) => { seen.push(i); return i === 3; });
+    const result = pickCandidate((_candidate, i) => { seen.push(i); return i === BASE_INDEX + 3; });
     const lastOfEachCell = Array.from(
-      { length: FIT_CANDIDATES.length / TIERS_PER_CELL },
-      (_, cell) => cell * TIERS_PER_CELL + TIERS_PER_CELL - 1,
+      { length: cellsFromBase },
+      (_, cell) => BASE_INDEX + cell * TIERS_PER_CELL + TIERS_PER_CELL - 1,
     );
     expect(seen).toEqual(lastOfEachCell);
     expect(result).toBe(FIT_CANDIDATES.length - 1);
@@ -86,12 +104,12 @@ describe('pickCandidate', () => {
   it('probes each font/pitch cell at most once when the cell cannot fit', () => {
     let probes = 0;
     pickCandidate(() => { probes++; return false; });
-    expect(probes).toBe(FIT_CANDIDATES.length / TIERS_PER_CELL);
+    expect(probes).toBe(cellsFromBase);
   });
 
   it('returns the same index as a naive first-fit scan for any attack-monotone predicate', () => {
     const naive = (fits: (c: FitCandidate, i: number) => boolean) => {
-      for (let i = 0; i < FIT_CANDIDATES.length; i++) {
+      for (let i = BASE_INDEX; i < FIT_CANDIDATES.length; i++) {
         if (fits(FIT_CANDIDATES[i], i)) return i;
       }
       return FIT_CANDIDATES.length - 1;
@@ -113,5 +131,19 @@ describe('pickCandidate', () => {
       const fits = (c: FitCandidate, i: number) => height(c, i) <= budget;
       expect(pickCandidate(fits)).toBe(naive(fits));
     }
+  });
+
+  it('reaches the larger fonts when started above the base', () => {
+    const sizes = [1, 2, 3, 4].map((step) =>
+      FIT_CANDIDATES[pickCandidate(() => true, FONT_STARTS[BASE_FONT_INDEX - step])].main.font
+    );
+    expect(sizes).toEqual([9.5, 10, 10.5, 11]);
+  });
+
+  it('falls back past the oversize rungs when nothing large fits', () => {
+    const onlySmall = (_c: FitCandidate, i: number) => i >= BASE_INDEX + TIERS_PER_CELL;
+    const picked = pickCandidate(onlySmall, FONT_STARTS[0]);
+    expect(picked).toBe(BASE_INDEX + TIERS_PER_CELL);
+    expect(FIT_CANDIDATES[picked].main).toEqual({ font: 9, pitch: 7.5 });
   });
 });
