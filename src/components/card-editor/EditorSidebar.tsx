@@ -22,7 +22,7 @@ import { AuraElementSelector } from './AuraElementSelector';
 import { TerraCardSelector } from './TerraCardSelector';
 import { SetSymbolSelector } from './SetSymbolSelector';
 import { TextBoxBuilder } from './TextBoxBuilder';
-import { FormattedTextarea } from './FormattedTextarea';
+import { SpecialEffectText } from './SpecialEffectText';
 import { ExportButton } from './ExportButton';
 import { JsonExportButton } from './JsonExportButton';
 import { JsonImportButton } from './JsonImportButton';
@@ -263,6 +263,9 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
       setTextField('Aura/Terra Text Box', '{I:You may Fatigue this Aura Page at any time to generate 1 Aura of any type.}');
       setStyleField('Aura1', '{display:none}');
       setStyleField('Aura2', '{border:1px solid rgba(0,0,0,1)}');
+      setStyleField('TypesTribes', STYLE_TYPES_TRIBES);
+      setStyleField('SpellbookLimit', STYLE_SPELLBOOK_LIMIT);
+      setStyleField('TNL', STYLE_TNL);
       setImageField('SetSymbol', 'OZLegacyGold.png');
       setFlavorText('');
       if (borderless) {
@@ -548,16 +551,11 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
             {isSpecialTerra && (
               <>
                 <SectionDivider />
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-                    Effect Text
-                  </label>
-                  <FormattedTextarea
-                    value={terraEffectText}
-                    onChange={(v) => { setTerraEffectText(v); setTextField('Aura/Terra Text Box 1', v); }}
-                    placeholder="Effect text..."
-                  />
-                </div>
+                <SpecialEffectText
+                  value={terraEffectText}
+                  onChange={(v) => { setTerraEffectText(v); setTextField('Aura/Terra Text Box 1', v); }}
+                  italicize
+                />
               </>
             )}
 
@@ -565,16 +563,11 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
             {isSpecialAura && (
               <>
                 <SectionDivider />
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-                    Effect Text
-                  </label>
-                  <FormattedTextarea
-                    value={auraEffectText}
-                    onChange={(v) => { setAuraEffectText(v); setTextField('Aura/Terra Text Box', v); }}
-                    placeholder="Effect text..."
-                  />
-                </div>
+                <SpecialEffectText
+                  value={auraEffectText}
+                  onChange={(v) => { setAuraEffectText(v); setTextField('Aura/Terra Text Box', v); }}
+                  italicize={false}
+                />
               </>
             )}
           </EditorSection>

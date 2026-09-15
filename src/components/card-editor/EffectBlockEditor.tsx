@@ -58,7 +58,7 @@ export function EffectBlockEditor({ block, onUpdate, onRemove }: EffectBlockEdit
   );
 }
 
-function StarToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+export function StarToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex items-center gap-1.5 cursor-pointer">
       <input

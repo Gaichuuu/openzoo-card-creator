@@ -36,6 +36,25 @@ export function Stepper({ label, value, min, max, onChange, valueWidth = 'w-4', 
   );
 }
 
+export function SpecialTextFitControls() {
+  const extraShrink = useCardStore((s) => s.mainTextBoxExtraShrink);
+  const setExtraShrink = useCardStore((s) => s.setMainTextBoxExtraShrink);
+  const lineHeightAdj = useCardStore((s) => s.mainTextBoxLineHeight);
+  const setLineHeightAdj = useCardStore((s) => s.setMainTextBoxLineHeight);
+  const letterSpacingAdj = useCardStore((s) => s.mainTextBoxLetterSpacing);
+  const setLetterSpacingAdj = useCardStore((s) => s.setMainTextBoxLetterSpacing);
+  const nudge = useCardStore((s) => s.mainTextBoxNudge);
+  const setNudge = useCardStore((s) => s.setMainTextBoxNudge);
+  return (
+    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+      <Stepper label="Height" value={lineHeightAdj} min={-6} max={6} onChange={setLineHeightAdj} />
+      <Stepper label="Spacing" value={letterSpacingAdj} min={-6} max={6} onChange={setLetterSpacingAdj} />
+      <Stepper label="Shrink" value={extraShrink} min={-20} max={20} step={5} onChange={setExtraShrink} />
+      <Stepper label="Nudge" value={nudge} min={-10} max={10} onChange={setNudge} />
+    </div>
+  );
+}
+
 const AVAILABLE_BLOCKS: Partial<Record<LayoutType, EffectBlockType[]>> = {
   BasicNoAttack: [
     'tribal-boost', 'static', 'discard',
