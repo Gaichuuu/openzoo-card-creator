@@ -8,6 +8,7 @@ import { useCardStore } from '@/lib/store';
 import { artPositionCss, artZoomScale } from '@/lib/cardArtFit';
 import { ParsedText } from './TextParser';
 import { getFitMode } from '@/lib/fitMode';
+import { fitSpecialTextBox } from '@/lib/specialTextFit';
 import { FIT_CANDIDATES, FONT_STARTS, BASE_FONT_INDEX, BASE_INDEX, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
 
 function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null }) {
@@ -254,15 +255,17 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     && (zone.textDataKey === 'MainTextBox' || zone.textDataKey === 'MainText');
   const isAttackEffectZone = zone.type === 'text'
     && (zone.textDataKey === 'AttackEffect' || zone.textDataKey === 'AttackEffect 1');
+  const isSpecialTextBox = zone.type === 'text'
+    && (zone.textDataKey === 'Aura/Terra Text Box' || zone.textDataKey === 'Aura/Terra Text Box 1');
   const isAttackSizedZone = zone.textDataKey === 'Attack Name' || zone.textDataKey === 'Attack Name 1'
     || zone.textDataKey === 'ATKDMG' || zone.textDataKey === 'ATKDMG 1';
   const ov = fitOverrides;
-  const mainTextBoxNudge = useCardStore((s) => shouldAutoFit ? (ov ? ov.mainTextBoxNudge ?? 0 : s.mainTextBoxNudge) : 0);
-  const mainTextBoxExtraShrink = useCardStore((s) => shouldAutoFit ? (ov ? ov.mainTextBoxExtraShrink ?? 0 : s.mainTextBoxExtraShrink) : 0);
+  const mainTextBoxNudge = useCardStore((s) => (shouldAutoFit || isSpecialTextBox) ? (ov ? ov.mainTextBoxNudge ?? 0 : s.mainTextBoxNudge) : 0);
+  const mainTextBoxExtraShrink = useCardStore((s) => (shouldAutoFit || isSpecialTextBox) ? (ov ? ov.mainTextBoxExtraShrink ?? 0 : s.mainTextBoxExtraShrink) : 0);
   const mainTextLineHeightAdj = useCardStore((s) =>
-    (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? (ov ? ov.mainTextBoxLineHeight ?? 0 : s.mainTextBoxLineHeight) : 0);
+    (isMainTextZone || isAttackEffectZone || shouldAutoFit || isSpecialTextBox) ? (ov ? ov.mainTextBoxLineHeight ?? 0 : s.mainTextBoxLineHeight) : 0);
   const mainTextLetterSpacingAdj = useCardStore((s) =>
-    (isMainTextZone || isAttackEffectZone || shouldAutoFit) ? (ov ? ov.mainTextBoxLetterSpacing ?? 0 : s.mainTextBoxLetterSpacing) : 0);
+    (isMainTextZone || isAttackEffectZone || shouldAutoFit || isSpecialTextBox) ? (ov ? ov.mainTextBoxLetterSpacing ?? 0 : s.mainTextBoxLetterSpacing) : 0);
   const attackEffectGap = useCardStore((s) => isAttackEffectZone ? (ov ? ov.attackEffectGap ?? 0 : s.attackEffectGap) : 0);
   const attackNameSizeAdj = useCardStore((s) =>
     (isAttackSizedZone || shouldAutoFit) ? (ov ? ov.attackNameSize ?? 0 : s.attackNameSize) : 0);
@@ -277,13 +280,38 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
   const [, setFontsTick] = useState(0);
   useEffect(() => {
-    if (!needsTwoDiv || document.fonts.status === 'loaded') return;
+    if ((!needsTwoDiv && !isSpecialTextBox) || document.fonts.status === 'loaded') return;
     let cancelled = false;
     document.fonts.ready.then(() => {
       if (!cancelled) setFontsTick((t) => t + 1);
     });
     return () => { cancelled = true; };
-  }, [needsTwoDiv]);
+  }, [needsTwoDiv, isSpecialTextBox]);
+
+  useLayoutEffect(() => {
+    if (!isSpecialTextBox) return;
+    const el = zoneRef.current;
+    if (!el) return;
+    const merged = { ...zone.style, ...parseStyleString(cardData[`s${zone.id}`] || '') } as Record<string, unknown>;
+    const base = {
+      top: parseFloat(String(merged.top)) || 0,
+      height: parseFloat(String(merged.height)) || 0,
+      font: parseFloat(String(merged.fontSize)) || 8,
+    };
+    if (!base.height) return;
+    const run = () => fitSpecialTextBox(el, base, {
+      shrink: mainTextBoxExtraShrink,
+      pitch: mainTextLineHeightAdj,
+      spacing: mainTextLetterSpacingAdj,
+      nudge: mainTextBoxNudge,
+    });
+    run();
+    const images = Array.from(el.querySelectorAll('img')).filter((img) => !img.complete);
+    for (const img of images) img.addEventListener('load', run, { once: true });
+    return () => {
+      for (const img of images) img.removeEventListener('load', run);
+    };
+  });
 
   useLayoutEffect(() => {
     if (!shouldAutoFit && !shouldAutoFitTNL && !shouldAutoFitMetadata && !shouldAutoFitFlavor) return;
@@ -874,7 +902,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   }
 
   return (
-    <div style={finalStyle} data-zone-id={zone.id} data-zone-key={zoneKey}>
+    <div ref={isSpecialTextBox ? zoneRef : undefined} style={finalStyle} data-zone-id={zone.id} data-zone-key={zoneKey}>
       {textContent && (zone.type === 'text' || zone.textDataKey) && (
         shouldShrink
           ? <AutoShrinkText html={textContent} origin={zone.textDataKey === 'TypesTribes' || zone.textDataKey === 'CardName' ? 'left center' : 'center center'} marginRight={zone.textDataKey === 'CardName' ? 2 : 0} outline={outline} />

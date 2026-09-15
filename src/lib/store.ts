@@ -611,8 +611,12 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   resetCard: () => {
     const { cardType, layoutType, _snapshotVersion, _snapshotTimer } = get();
     if (_snapshotTimer) clearTimeout(_snapshotTimer);
+    const cardData = buildInitialCardData(layoutType, cardType, get().locale);
+    if (cardType === 'Special Aura') {
+      applyAuraColors(cardData, layoutType, 'Neutral', null, cardType);
+    }
     set({
-      cardData: buildInitialCardData(layoutType, cardType, get().locale),
+      cardData,
       cardName: DEFAULT_CARD_NAME,
       tribe: DEFAULT_TRIBE,
       spellbookLimit: DEFAULT_SPELLBOOK_LIMIT,

@@ -1,0 +1,29 @@
+const STAR = '{Star}';
+const KEYWORD_PREFIX = /^\*\*[^*]+\*\*\s*/;
+
+export function hasFourthWall(text: string): boolean {
+  return text.trimStart().startsWith(STAR);
+}
+
+function isWholeItalic(text: string): boolean {
+  if (!text.startsWith('{I:') || !text.endsWith('}')) return false;
+  let depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}' && --depth === 0) return i === text.length - 1;
+  }
+  return false;
+}
+
+export function setFourthWall(text: string, on: boolean, italicize: boolean): string {
+  const trimmed = text.trimStart();
+  if (on === hasFourthWall(trimmed)) return text;
+  const unstarred = on ? trimmed : trimmed.slice(STAR.length);
+  const keyword = unstarred.match(KEYWORD_PREFIX)?.[0] ?? '';
+  let body = unstarred.slice(keyword.length);
+  if (italicize && body) {
+    if (on && !isWholeItalic(body) && !isWholeItalic(unstarred)) body = `{I:${body}}`;
+    if (!on && isWholeItalic(body)) body = body.slice(3, -1);
+  }
+  return on ? `${STAR}${keyword}${body}` : `${keyword}${body}`;
+}

@@ -116,6 +116,18 @@ describe('resolveImagePath', () => {
       expect(resolveImagePath('NFGold.png')).toBe('/assets/SetSymbols/NFGold.png');
     });
 
+    it('detects UFO set symbols', () => {
+      expect(resolveImagePath('UFOBronze.png')).toBe('/assets/SetSymbols/UFOBronze.png');
+      expect(resolveImagePath('UFOSilver.png')).toBe('/assets/SetSymbols/UFOSilver.png');
+      expect(resolveImagePath('UFOGold.png')).toBe('/assets/SetSymbols/UFOGold.png');
+    });
+
+    it('detects Seance set symbols', () => {
+      expect(resolveImagePath('SeanceBronze.png')).toBe('/assets/SetSymbols/SeanceBronze.png');
+      expect(resolveImagePath('SeanceSilver.png')).toBe('/assets/SetSymbols/SeanceSilver.png');
+      expect(resolveImagePath('SeanceGold.png')).toBe('/assets/SetSymbols/SeanceGold.png');
+    });
+
     it('detects Promo set symbol', () => {
       expect(resolveImagePath('Promo.png')).toBe('/assets/SetSymbols/Promo.png');
     });
