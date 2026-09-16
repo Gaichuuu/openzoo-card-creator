@@ -6,6 +6,9 @@ import {
   BASE_FONT_INDEX,
   pickCandidate,
   TIERS_PER_CELL,
+  PILL_PAINT,
+  PILL_SIZES,
+  PILL_EM,
   type FitCandidate,
 } from '@/lib/textBoxLadder';
 
@@ -77,8 +80,6 @@ describe('pickCandidate', () => {
   const cellsFromBase = (FIT_CANDIDATES.length - BASE_INDEX) / TIERS_PER_CELL;
 
   it('returns BASE_INDEX when the first candidate fits', () => {
-    // The regression guard for existing cards: with no Shrink applied the ladder must
-    // still top out at 9px/8, never reaching into the oversize rungs above it.
     expect(pickCandidate(() => true)).toBe(BASE_INDEX);
   });
 
@@ -145,5 +146,23 @@ describe('pickCandidate', () => {
     const picked = pickCandidate(onlySmall, FONT_STARTS[0]);
     expect(picked).toBe(BASE_INDEX + TIERS_PER_CELL);
     expect(FIT_CANDIDATES[picked].main).toEqual({ font: 9, pitch: 7.5 });
+  });
+});
+
+describe('PILL_PAINT coverage', () => {
+  it('covers the pill size of every ladder rung', () => {
+    const missing = PILL_SIZES.filter((size) => !(size in PILL_PAINT));
+    expect(missing).toEqual([]);
+  });
+
+  it('derives every key from a real rung, so none go stale', () => {
+    const extra = Object.keys(PILL_PAINT).filter((k) => !PILL_SIZES.includes(k));
+    expect(extra).toEqual([]);
+  });
+
+  it('keys match the main font scaled by the pill em', () => {
+    for (const candidate of FIT_CANDIDATES) {
+      expect(PILL_PAINT).toHaveProperty((candidate.main.font * PILL_EM).toFixed(2));
+    }
   });
 });

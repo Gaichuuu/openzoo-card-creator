@@ -1,6 +1,26 @@
 import { describe, it, expect } from 'vitest'
 import { fixEffectText, findEffectTextViolations } from '../lib/effectTextRules'
 
+describe('status-duration', () => {
+  it('tightens a spaced Status duration and leaves the value plain', () => {
+    expect(fixEffectText('inflicted with {Frozen} (X) where')).toBe('inflicted with {Frozen}(X) where')
+    expect(fixEffectText('inflicted with {Frozen} (2)')).toBe('inflicted with {Frozen}(2)')
+  })
+
+  it('tightens the bracket form and an already bolded value', () => {
+    expect(fixEffectText('inflicted with [Frozen] (2)')).toBe('inflicted with [Frozen](2)')
+    expect(fixEffectText('inflicted with {Frozen} ({B:X}) where')).toBe('inflicted with {Frozen}(X) where')
+  })
+
+  it('attaches X to the number it multiplies', () => {
+    expect(fixEffectText('maximum LP is equal to 10 {B:X} the number')).toBe('maximum LP is equal to 10{B:X} the number')
+  })
+
+  it('leaves an already tight duration alone', () => {
+    expect(fixEffectText('{Frozen}(2) ends')).toBe('{Frozen}(2) ends')
+  })
+})
+
 describe('fixEffectText', () => {
   it('bolds Damage and LP amounts, including inside Token stat lines', () => {
     expect(fixEffectText('a Beastie Token with 10 LP and a 10 Damage Attack')).toBe(

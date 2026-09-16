@@ -62,6 +62,18 @@ function nearDamageClause(text: string, index: number): boolean {
 
 const RULES: Rule[] = [
   {
+    name: 'status-duration',
+    operatesOnBold: true,
+    pattern: /((?:\{[^{}]+\}|\[[^\][]+\]))\s+\(\{B:(\d+|X)\}\)|((?:\{[^{}]+\}|\[[^\][]+\]))\s+\((\d+|X)\)/g,
+    replace: (m) => (m[1] ? `${m[1]}(${m[2]})` : `${m[3]}(${m[4]})`),
+  },
+  {
+    name: 'variable-x-attached',
+    operatesOnBold: true,
+    pattern: /(?<=\d)\s+\{B:X\}/g,
+    replace: () => '{B:X}',
+  },
+  {
     name: 'bold-extent-attack',
     operatesOnBold: true,
     pattern: new RegExp(String.raw`\{B:(${AMOUNT}\s+Damage)\s+Attack\}`, 'g'),
@@ -121,6 +133,16 @@ const RULES: Rule[] = [
       'g',
     ),
     replace: (m) => `{B:${m[1]}}${m[2]}`,
+  },
+  {
+    name: 'select-count',
+    pattern: new RegExp(String.raw`\b(up to\s+)(${AMOUNT})(\s+(?:\{[^{}]+\}\s+)?[A-Za-z])`, 'g'),
+    replace: (m) => `${m[1]}{B:${m[2]}}${m[3]}`,
+  },
+  {
+    name: 'pay-count',
+    pattern: new RegExp(String.raw`\b(Pay\s+)(${AMOUNT})(\s+(?:additional\s+)?\{)`, 'g'),
+    replace: (m) => `${m[1]}{B:${m[2]}}${m[3]}`,
   },
   {
     name: 'aura-cost-of',
