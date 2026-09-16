@@ -36,7 +36,11 @@ export function Stepper({ label, value, min, max, onChange, valueWidth = 'w-4', 
   );
 }
 
-export function SpecialTextFitControls() {
+function FitSteppers({ shrinkLabel, shrinkStep = 5, children }: {
+  shrinkLabel?: ReactNode;
+  shrinkStep?: number;
+  children?: ReactNode;
+}) {
   const extraShrink = useCardStore((s) => s.mainTextBoxExtraShrink);
   const setExtraShrink = useCardStore((s) => s.setMainTextBoxExtraShrink);
   const lineHeightAdj = useCardStore((s) => s.mainTextBoxLineHeight);
@@ -49,10 +53,18 @@ export function SpecialTextFitControls() {
     <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
       <Stepper label="Height" value={lineHeightAdj} min={-6} max={6} onChange={setLineHeightAdj} />
       <Stepper label="Spacing" value={letterSpacingAdj} min={-6} max={6} onChange={setLetterSpacingAdj} />
-      <Stepper label="Shrink" value={extraShrink} min={-20} max={20} step={5} onChange={setExtraShrink} />
+      <Stepper
+        label={shrinkLabel ?? 'Shrink'}
+        value={extraShrink} min={-20} max={20} step={shrinkStep} onChange={setExtraShrink}
+      />
       <Stepper label="Nudge" value={nudge} min={-10} max={10} onChange={setNudge} />
+      {children}
     </div>
   );
+}
+
+export function SpecialTextFitControls() {
+  return <FitSteppers />;
 }
 
 const AVAILABLE_BLOCKS: Partial<Record<LayoutType, EffectBlockType[]>> = {
@@ -74,13 +86,6 @@ export function TextBoxBuilder() {
   const removeEffectBlock = useCardStore((s) => s.removeEffectBlock);
   const updateEffectBlock = useCardStore((s) => s.updateEffectBlock);
   const extraShrink = useCardStore((s) => s.mainTextBoxExtraShrink);
-  const setExtraShrink = useCardStore((s) => s.setMainTextBoxExtraShrink);
-  const lineHeightAdj = useCardStore((s) => s.mainTextBoxLineHeight);
-  const setLineHeightAdj = useCardStore((s) => s.setMainTextBoxLineHeight);
-  const letterSpacingAdj = useCardStore((s) => s.mainTextBoxLetterSpacing);
-  const setLetterSpacingAdj = useCardStore((s) => s.setMainTextBoxLetterSpacing);
-  const nudge = useCardStore((s) => s.mainTextBoxNudge);
-  const setNudge = useCardStore((s) => s.setMainTextBoxNudge);
   const attackEffectGap = useCardStore((s) => s.attackEffectGap);
   const setAttackEffectGap = useCardStore((s) => s.setAttackEffectGap);
   const attackNameSize = useCardStore((s) => s.attackNameSize);
@@ -128,21 +133,19 @@ export function TextBoxBuilder() {
         </div>
       </div>
 
-      {sorted.length > 0 && <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-        <Stepper label="Height" value={lineHeightAdj} min={-6} max={6} onChange={setLineHeightAdj} />
-        <Stepper label="Spacing" value={letterSpacingAdj} min={-6} max={6} onChange={setLetterSpacingAdj} />
-        <Stepper
-          label={<>Shrink{totalShrinkPct > 0 && <span className="text-gray-500 ml-0.5">({totalShrinkPct}%)</span>}</>}
-          value={extraShrink} min={-20} max={20} step={ladder ? 5 : 1} onChange={setExtraShrink}
-        />
-        <Stepper label="Nudge" value={nudge} min={-10} max={10} onChange={setNudge} />
-        {sorted.some((b) => b.type === 'attack') && (
-          <>
-            <Stepper label="Gap" value={attackEffectGap} min={-1} max={3} onChange={setAttackEffectGap} />
-            <Stepper label="Atk Size" value={attackNameSize} min={-4} max={4} onChange={setAttackNameSize} />
-          </>
-        )}
-      </div>}
+      {sorted.length > 0 && (
+        <FitSteppers
+          shrinkLabel={<>Shrink{totalShrinkPct > 0 && <span className="text-gray-500 ml-0.5">({totalShrinkPct}%)</span>}</>}
+          shrinkStep={ladder ? 5 : 1}
+        >
+          {sorted.some((b) => b.type === 'attack') && (
+            <>
+              <Stepper label="Gap" value={attackEffectGap} min={-1} max={3} onChange={setAttackEffectGap} />
+              <Stepper label="Atk Size" value={attackNameSize} min={-4} max={4} onChange={setAttackNameSize} />
+            </>
+          )}
+        </FitSteppers>
+      )}
 
       {sorted.length === 0 && (
         <p className="text-xs text-gray-400 text-center py-2">

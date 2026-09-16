@@ -1,3 +1,5 @@
+import { POWER_PILL_EM } from '@/data/constants';
+
 export interface RungMetrics {
   font: number;
   pitch: number;
@@ -17,8 +19,7 @@ export interface FitCandidate {
 
 const FONTS = [11, 10.5, 10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5] as const;
 
-export const PILL_EM = 0.7;
-export const PILL_SIZES: readonly string[] = FONTS.map((f) => (f * PILL_EM).toFixed(2));
+export const PILL_SIZES: readonly string[] = FONTS.map((f) => (f * POWER_PILL_EM).toFixed(2));
 const PITCH_MAX = 10;
 
 export const BASE_FONT_INDEX = FONTS.indexOf(9);

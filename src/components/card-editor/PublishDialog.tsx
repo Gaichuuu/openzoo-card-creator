@@ -79,13 +79,8 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         img.src = rawDataUrl;
       });
 
-      let client;
-      try {
-        client = collectClientDiagnostics(cardEl);
-        if (health) client.health = health;
-      } catch {
-        client = undefined; // never let diagnostics block a publish
-      }
+      const client = collectClientDiagnostics(cardEl);
+      if (health) client.health = health;
 
       const snapshot = getSnapshot();
 

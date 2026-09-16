@@ -47,7 +47,7 @@ export function fitSpecialTextBox(el: HTMLElement, base: SpecialTextBase, adj: S
   });
   apply(font);
 
-  const height = Math.max(base.height, measure());
+  const height = Math.min(maxHeight, Math.max(base.height, measure()));
   el.style.height = `${height}px`;
   el.style.top = `${bottom - height}px`;
   el.style.transform = adj.nudge !== 0 ? `translateY(${adj.nudge}px)` : '';

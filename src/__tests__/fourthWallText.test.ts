@@ -13,9 +13,22 @@ describe('setFourthWall', () => {
     expect(setFourthWall('**ARENA:** Draw a Page.', true, true)).toBe('{Star}**ARENA:** {I:Draw a Page.}');
   });
 
-  it('round-trips back to the original text', () => {
-    const original = '**ARENA:** Draw a Page.';
-    expect(setFourthWall(setFourthWall(original, true, true), false, true)).toBe(original);
+  it('removes the star without touching italics', () => {
+    const starred = setFourthWall('**ARENA:** Draw a Page.', true, true);
+    expect(starred).toBe('{Star}**ARENA:** {I:Draw a Page.}');
+    expect(setFourthWall(starred, false, true)).toBe('**ARENA:** {I:Draw a Page.}');
+  });
+
+  it('never strips the italics Special Terra seeds', () => {
+    const seeded = '{I:You may Fatigue this Terra Page at any time.}';
+    const starred = setFourthWall(seeded, true, true);
+    expect(starred).toBe(`{Star}${seeded}`);
+    expect(setFourthWall(starred, false, true)).toBe(seeded);
+  });
+
+  it('keeps the author\'s leading whitespace', () => {
+    expect(setFourthWall('\n  Draw a Page.', true, false)).toBe('\n  {Star}Draw a Page.');
+    expect(setFourthWall('\n  {Star}Draw a Page.', false, false)).toBe('\n  Draw a Page.');
   });
 
   it('italicizes text without a keyword', () => {

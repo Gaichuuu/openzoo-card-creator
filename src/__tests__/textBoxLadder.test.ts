@@ -8,9 +8,10 @@ import {
   TIERS_PER_CELL,
   PILL_PAINT,
   PILL_SIZES,
-  PILL_EM,
   type FitCandidate,
 } from '@/lib/textBoxLadder';
+import { POWER_PILL_EM } from '@/data/constants';
+import { INLINE_CLASSES } from '@/data/inlineClasses';
 
 
 describe('FIT_CANDIDATES', () => {
@@ -162,7 +163,11 @@ describe('PILL_PAINT coverage', () => {
 
   it('keys match the main font scaled by the pill em', () => {
     for (const candidate of FIT_CANDIDATES) {
-      expect(PILL_PAINT).toHaveProperty((candidate.main.font * PILL_EM).toFixed(2));
+      expect(PILL_PAINT).toHaveProperty((candidate.main.font * POWER_PILL_EM).toFixed(2));
     }
+  });
+
+  it('is the size the Power pill actually renders at', () => {
+    expect(INLINE_CLASSES.Power.fontSize).toBe(`${POWER_PILL_EM}em`);
   });
 });

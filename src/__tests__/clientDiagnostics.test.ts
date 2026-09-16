@@ -10,6 +10,9 @@ const UA = {
   samsung: 'Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/23.0 Chrome/115.0.0.0 Mobile Safari/537.36',
   firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
   edge: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0',
+  edgeAndroid: 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 EdgA/120.0.0.0',
+  edgeIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 EdgiOS/121.0.0.0 Mobile/15E148 Safari/604.1',
+  edgeLegacy: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/18.19041',
 };
 
 describe('parseBrowser', () => {
@@ -49,6 +52,16 @@ describe('parseBrowser', () => {
   it('picks the fork over Chrome', () => {
     expect(parseBrowser(UA.samsung)).toMatchObject({ browser: 'Samsung', version: '23' });
     expect(parseBrowser(UA.edge)).toMatchObject({ browser: 'Edge', version: '151' });
+  });
+
+  it('recognises every Edge token, not just desktop Edg/', () => {
+    expect(parseBrowser(UA.edgeAndroid)).toMatchObject({
+      browser: 'Edge', version: '120', platform: 'Android', engine: 'Blink',
+    });
+    expect(parseBrowser(UA.edgeIos)).toMatchObject({
+      browser: 'Edge', version: '121', platform: 'iOS', engine: 'WebKit',
+    });
+    expect(parseBrowser(UA.edgeLegacy)).toMatchObject({ browser: 'Edge', version: '18' });
   });
 
   it('reads Firefox as Gecko', () => {

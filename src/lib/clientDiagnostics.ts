@@ -10,7 +10,7 @@ export interface BrowserInfo {
 }
 
 const BROWSERS: [string, RegExp][] = [
-  ['Edge', /\bEdgi?O?S?\/(\d+)/],
+  ['Edge', /\bEdge?(?:A|iOS|OS)?\/(\d+)/],
   ['Opera', /\bOPR\/(\d+)/],
   ['Samsung', /\bSamsungBrowser\/(\d+)/],
   ['Firefox', /\b(?:Firefox|FxiOS)\/(\d+)/],
@@ -115,17 +115,16 @@ export function measureZoneHealth(bmp: Bitmap): ZoneHealth | null {
   };
 }
 
-const FONT_CHECKS: [string, string, boolean][] = [
-  ['garamond', '9px "EB Garamond"', true],
-  ['archivo', '9px "Archivo Black"', true],
-  ['garamond-i?', 'italic 9px "EB Garamond"', false],
-  ['garamond-b?', 'bold 9px "EB Garamond"', false],
+const FONT_CHECKS: [string, string][] = [
+  ['garamond', '9px "EB Garamond"'],
+  ['archivo', '9px "Archivo Black"'],
+  ['garamond-i?', 'italic 9px "EB Garamond"'],
+  ['garamond-b?', 'bold 9px "EB Garamond"'],
 ];
 
 export interface ClientDiagnostics extends BrowserInfo {
   appVersion: string;
   dpr: number;
-  viewport: string;
   fit: string;
   ceilDescent: boolean;
   fontsMissing: string[];
@@ -158,34 +157,40 @@ export function exportZoneRect(
   };
 }
 
+const attempt = <T>(fn: () => T, fallback: T): T => {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+};
+
 export function collectClientDiagnostics(cardEl: HTMLElement | null): ClientDiagnostics {
   const out: ClientDiagnostics = {
-    ...parseBrowser(navigator.userAgent),
-    appVersion: typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '',
-    dpr: Math.round((window.devicePixelRatio || 1) * 100) / 100,
-    viewport: `${window.innerWidth}x${window.innerHeight}`,
-    fit: getFitMode(),
-    ceilDescent: usesCeilDescent(),
-    fontsMissing: [],
+    ...attempt(() => parseBrowser(navigator.userAgent), {
+      engine: 'Other' as const, browser: 'Other', version: '', platform: 'Other', mobile: false,
+    }),
+    appVersion: attempt(() => (typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : ''), ''),
+    dpr: attempt(() => Math.round((window.devicePixelRatio || 1) * 100) / 100, 0),
+    fit: attempt(() => getFitMode(), ''),
+    ceilDescent: attempt(() => usesCeilDescent(), false),
+    fontsMissing: attempt(
+      () => FONT_CHECKS.filter(([, spec]) => !document.fonts.check(spec)).map(([name]) => name),
+      ['unknown'],
+    ),
   };
 
-  try {
-    out.fontsMissing = FONT_CHECKS
-      .filter(([, spec]) => !document.fonts.check(spec))
-      .map(([name]) => name);
-  } catch {
-    out.fontsMissing = ['unknown'];
-  }
-
   if (cardEl) {
-    const main = cardEl.querySelector(MAIN_SELECTOR) as HTMLElement | null;
-    if (main) {
-      const cs = getComputedStyle(main);
-      out.mainFont = parseFloat(cs.fontSize);
-      out.mainPitch = parseFloat(cs.lineHeight);
-    }
-    const pill = cardEl.querySelector('[data-oz-pill]') as HTMLElement | null;
-    if (pill) out.pillFont = parseFloat(getComputedStyle(pill).fontSize);
+    attempt(() => {
+      const main = cardEl.querySelector(MAIN_SELECTOR) as HTMLElement | null;
+      if (main) {
+        const cs = getComputedStyle(main);
+        out.mainFont = parseFloat(cs.fontSize);
+        out.mainPitch = parseFloat(cs.lineHeight);
+      }
+      const pill = cardEl.querySelector('[data-oz-pill]') as HTMLElement | null;
+      if (pill) out.pillFont = parseFloat(getComputedStyle(pill).fontSize);
+    }, undefined);
   }
 
   return out;
