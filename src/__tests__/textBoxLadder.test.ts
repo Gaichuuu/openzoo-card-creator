@@ -8,6 +8,7 @@ import {
   TIERS_PER_CELL,
   PILL_PAINT,
   PILL_SIZES,
+  wholePillPadding,
   type FitCandidate,
 } from '@/lib/textBoxLadder';
 import { POWER_PILL_EM } from '@/data/constants';
@@ -169,5 +170,22 @@ describe('PILL_PAINT coverage', () => {
 
   it('is the size the Power pill actually renders at', () => {
     expect(INLINE_CLASSES.Power.fontSize).toBe(`${POWER_PILL_EM}em`);
+  });
+});
+
+describe('wholePillPadding', () => {
+  it.each([
+    [6, 1.5, 1, { top: 2, bottom: 1 }],
+    [7, 0.5, 1, { top: 1, bottom: 1 }],
+    [8, 0.5, 1, { top: 1, bottom: 1 }],
+    [4, 1, 0.5, { top: 1, bottom: 1 }],
+    [7, 1, 1, { top: 1, bottom: 1 }],
+    [8, 0, 0.4, { top: 0, bottom: 0 }],
+  ])('lh %s, pt %s, pb %s', (lh, pt, pb, want) => {
+    expect(wholePillPadding(lh, pt, pb)).toEqual(want);
+  });
+
+  it('never returns a negative padding when rounding the total down', () => {
+    expect(wholePillPadding(5, 0.2, 0.2)).toEqual({ top: 0, bottom: 0 });
   });
 });

@@ -224,6 +224,12 @@ export const PILL_PAINT: Record<string, PillPaintEntry> = {
   '4.55': { target: 0.25, baselineOffset: -0.172 },
 };
 
+export function wholePillPadding(lh: number, pt: number, pb: number): { top: number; bottom: number } {
+  const total = Math.max(lh, Math.round(lh + pt + pb));
+  const bottom = Math.min(Math.round(pb), total - lh);
+  return { top: total - lh - bottom, bottom };
+}
+
 let pillMeasureCtx: CanvasRenderingContext2D | null = null;
 
 interface PillPass {
@@ -273,9 +279,10 @@ export function centerPillText(el: HTMLElement, scale: number): void {
     } else if (dLh < 0) {
       pt -= dLh;
     }
+    const pad = wholePillPadding(lh, pt, pb);
     pill.style.lineHeight = `${lh}px`;
-    pill.style.paddingTop = `${pt}px`;
-    pill.style.paddingBottom = `${pb}px`;
+    pill.style.paddingTop = `${pad.top}px`;
+    pill.style.paddingBottom = `${pad.bottom}px`;
     pill.dataset.ozGridQLh = pill.style.lineHeight;
     pill.dataset.ozGridQPt = pill.style.paddingTop;
     pill.dataset.ozGridQPb = pill.style.paddingBottom;

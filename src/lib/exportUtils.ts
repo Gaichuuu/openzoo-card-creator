@@ -1,5 +1,6 @@
 import { computeArtDrawRect } from './cardArtFit';
 import { toSvg } from 'html-to-image';
+import { correctPillsForExport } from './pillExport';
 
 type SvgOptions = NonNullable<Parameters<typeof toSvg>[1]>;
 interface CardPngOptions extends SvgOptions {
@@ -8,7 +9,7 @@ interface CardPngOptions extends SvgOptions {
   height: number;
 }
 
-async function cardToPng(el: HTMLElement, opts: CardPngOptions): Promise<string> {
+async function cardToCanvas(el: HTMLElement, opts: CardPngOptions): Promise<HTMLCanvasElement> {
   const marked: HTMLElement[] = [];
   for (const node of Array.from(el.querySelectorAll('div, span')) as HTMLElement[]) {
     const inlineW = node.style.width;
@@ -38,7 +39,22 @@ async function cardToPng(el: HTMLElement, opts: CardPngOptions): Promise<string>
   canvas.height = opts.height * opts.pixelRatio;
   const ctx = canvas.getContext('2d')!;
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/png');
+  return canvas;
+}
+
+async function renderCard(el: HTMLElement, opts: CardPngOptions): Promise<string> {
+  const warm = await cardToCanvas(el, opts);
+  let undo = () => {};
+  try {
+    const ctx = warm.getContext('2d');
+    if (ctx) undo = correctPillsForExport(el, ctx.getImageData(0, 0, warm.width, warm.height), opts.pixelRatio);
+  } catch {
+  }
+  try {
+    return (await cardToCanvas(el, opts)).toDataURL('image/png');
+  } finally {
+    undo();
+  }
 }
 
 export const CARD_W = 238;
@@ -155,8 +171,7 @@ export async function exportStandardPng(
     fontEmbedCSS,
     style: { transform: 'none', borderRadius: borderless ? '0' : undefined },
   };
-  await cardToPng(el, opts);
-  return cardToPng(el, opts);
+  return renderCard(el, opts);
 }
 
 export async function exportPrintReadyPng(
@@ -244,8 +259,7 @@ async function exportPrintBorderless(
       return true;
     },
   };
-  await cardToPng(el, overlayOpts);
-  const overlayUrl = await cardToPng(el, overlayOpts);
+  const overlayUrl = await renderCard(el, overlayOpts);
   const overlayImg = await loadImage(overlayUrl);
   ctx.drawImage(overlayImg, bPx, bPx);
 
@@ -269,8 +283,7 @@ async function exportPrintBordered(el: HTMLElement): Promise<string> {
     filter: (node: Node) =>
       !(node instanceof HTMLElement && node.classList.contains('art-needed-overlay')),
   };
-  await cardToPng(el, borderedOpts);
-  const cardDataUrl = await cardToPng(el, borderedOpts);
+  const cardDataUrl = await renderCard(el, borderedOpts);
 
   const pr = PIXEL_RATIO;
   const canvas = document.createElement('canvas');
