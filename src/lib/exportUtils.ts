@@ -49,6 +49,7 @@ async function renderCard(el: HTMLElement, opts: CardPngOptions): Promise<string
     const ctx = warm.getContext('2d');
     if (ctx) undo = correctPillsForExport(el, ctx.getImageData(0, 0, warm.width, warm.height), opts.pixelRatio);
   } catch {
+    // best-effort: never fail an export over the pill correction
   }
   try {
     return (await cardToCanvas(el, opts)).toDataURL('image/png');
