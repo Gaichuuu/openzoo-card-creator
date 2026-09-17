@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { ELEMENTS, TERRAS, TRAITS, STATUS_EFFECTS } from './constants';
+import { ELEMENTS, TERRAS, TRAITS, STATUS_EFFECTS, POWER_PILL_EM } from './constants';
 import type { Locale } from './locales';
 import { getPSBVariable } from './locales';
 import type { OutlineStyle } from '@/lib/outlineUtils';
@@ -75,7 +75,7 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
     paddingTop: '0.15em',
     paddingBottom: '0.15em',
     textTransform: 'uppercase' as const,
-    fontSize: '0.7em',
+    fontSize: `${POWER_PILL_EM}em`,
     boxShadow: '0px 0.5px 1px rgba(0, 0, 0, 0.25)',
   },
 };

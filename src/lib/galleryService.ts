@@ -25,6 +25,7 @@ import { readSessionStorage, writeSessionStorage, removeSessionStorage } from '.
 import { dataUrlToBlob, MAX_UPLOAD_BYTES } from './exportUtils';
 import { ensureAnonymousUser } from './auth';
 import { generateId, versionedName } from './publishUtils';
+import type { ClientDiagnostics } from './clientDiagnostics';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element, ElementOrCustom } from '@/types/card';
 import type { CustomElementDef } from '@/types/customIcons';
@@ -38,6 +39,7 @@ interface PublishOptions {
   remixedFrom: string | null;
   remixedFromName: string;
   existingCard?: SavedCard;
+  client?: ClientDiagnostics;
 }
 
 async function uploadBlob(blob: Blob, storageRef: ReturnType<typeof ref>): Promise<void> {
@@ -124,6 +126,7 @@ export async function publishCard(
     remixedFrom: existing ? existing.remixedFrom : options.remixedFrom,
     remixedFromName: existing ? existing.remixedFromName : options.remixedFromName,
     ...(ownerUid ? { ownerUid } : {}),
+    ...(options.client ? { client: options.client } : {}),
     createdAt: existing ? Timestamp.fromDate(existing.createdAt) : now,
     updatedAt: now,
   };

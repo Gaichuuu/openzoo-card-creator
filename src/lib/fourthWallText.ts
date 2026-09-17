@@ -16,14 +16,12 @@ function isWholeItalic(text: string): boolean {
 }
 
 export function setFourthWall(text: string, on: boolean, italicize: boolean): string {
-  const trimmed = text.trimStart();
+  const lead = text.slice(0, text.length - text.trimStart().length);
+  const trimmed = text.slice(lead.length);
   if (on === hasFourthWall(trimmed)) return text;
   const unstarred = on ? trimmed : trimmed.slice(STAR.length);
   const keyword = unstarred.match(KEYWORD_PREFIX)?.[0] ?? '';
   let body = unstarred.slice(keyword.length);
-  if (italicize && body) {
-    if (on && !isWholeItalic(body) && !isWholeItalic(unstarred)) body = `{I:${body}}`;
-    if (!on && isWholeItalic(body)) body = body.slice(3, -1);
-  }
-  return on ? `${STAR}${keyword}${body}` : `${keyword}${body}`;
+  if (on && italicize && body && !isWholeItalic(body)) body = `{I:${body}}`;
+  return lead + (on ? `${STAR}${keyword}${body}` : `${keyword}${body}`);
 }

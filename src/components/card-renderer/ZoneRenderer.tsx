@@ -255,8 +255,11 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     && (zone.textDataKey === 'MainTextBox' || zone.textDataKey === 'MainText');
   const isAttackEffectZone = zone.type === 'text'
     && (zone.textDataKey === 'AttackEffect' || zone.textDataKey === 'AttackEffect 1');
+  const storeCardType = useCardStore((s) => s.cardType);
+  const fitCardType = fitOverrides ? fitOverrides.cardType : storeCardType;
   const isSpecialTextBox = zone.type === 'text'
-    && (zone.textDataKey === 'Aura/Terra Text Box' || zone.textDataKey === 'Aura/Terra Text Box 1');
+    && (zone.textDataKey === 'Aura/Terra Text Box' || zone.textDataKey === 'Aura/Terra Text Box 1')
+    && (fitCardType === 'Special Aura' || fitCardType === 'Special Terra');
   const isAttackSizedZone = zone.textDataKey === 'Attack Name' || zone.textDataKey === 'Attack Name 1'
     || zone.textDataKey === 'ATKDMG' || zone.textDataKey === 'ATKDMG 1';
   const ov = fitOverrides;

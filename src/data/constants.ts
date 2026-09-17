@@ -39,6 +39,10 @@ export const TYPES_WITHOUT_TRAITS = new Set<CardType>([
   'Aura', 'Special Aura', 'Terra', 'Special Terra', 'Token',
 ]);
 
+export const SPECIAL_FIT_TYPES = new Set<CardType>(['Special Aura', 'Special Terra']);
+
+export const POWER_PILL_EM = 0.7;
+
 export const CARD_TYPE_TO_LAYOUT: Record<CardType, LayoutType> = {
   Artifact: 'BasicAttackMain',
   Aura: 'Aura',

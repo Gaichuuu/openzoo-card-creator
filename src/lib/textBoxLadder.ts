@@ -1,3 +1,5 @@
+import { POWER_PILL_EM } from '@/data/constants';
+
 export interface RungMetrics {
   font: number;
   pitch: number;
@@ -16,6 +18,8 @@ export interface FitCandidate {
 }
 
 const FONTS = [11, 10.5, 10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5] as const;
+
+export const PILL_SIZES: readonly string[] = FONTS.map((f) => (f * POWER_PILL_EM).toFixed(2));
 const PITCH_MAX = 10;
 
 export const BASE_FONT_INDEX = FONTS.indexOf(9);
@@ -207,13 +211,17 @@ export function snapChildHeights(el: HTMLElement, scale: number): void {
 }
 
 interface PillPaintEntry { target?: number; baselineOffset: number }
-const PILL_PAINT: Record<string, PillPaintEntry> = {
-  '6.30': { target: 0.53, baselineOffset: 0.47 },
+export const PILL_PAINT: Record<string, PillPaintEntry> = {
+  '7.70': { target: 0.25, baselineOffset: -0.109 },
+  '7.35': { target: 0.25, baselineOffset: -0.125 },
+  '7.00': { baselineOffset: 0.125 },
+  '6.65': { target: 0.25, baselineOffset: -0.125 },
+  '6.30': { target: 0.25, baselineOffset: -0.141 },
   '5.95': { baselineOffset: -0.031 },
   '5.60': { target: 0.81, baselineOffset: 0.484 },
   '5.25': { target: 0.70, baselineOffset: 0.468 },
   '4.90': { target: 0.83, baselineOffset: 0.47 },
-  '4.55': { baselineOffset: -0.016 },
+  '4.55': { target: 0.25, baselineOffset: -0.172 },
 };
 
 let pillMeasureCtx: CanvasRenderingContext2D | null = null;
@@ -278,7 +286,7 @@ export function centerPillText(el: HTMLElement, scale: number): void {
     const marker = document.createElement('span');
     marker.style.cssText = 'display:inline-block;width:0;height:0;padding:0;margin:0;border:0';
     fill.appendChild(marker);
-    const inkOff = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+    const inkOff = m.actualBoundingBoxAscent / 2;
     passes.push({ pill, item, marker, fs, inkOff: Number.isFinite(inkOff) ? inkOff : (0.667 * fs) / 2, markerAbs: 0, pillRect: new DOMRect() });
   }
   if (!passes.length) return;

@@ -131,7 +131,7 @@ export interface CardSnapshot {
 export type CardFitSettings = Pick<CardSnapshot,
   'mainTextBoxNudge' | 'mainTextBoxExtraShrink' | 'mainTextBoxLineHeight' | 'mainTextBoxLetterSpacing'
   | 'attackEffectGap' | 'attackNameSize' | 'cardArtPositionX' | 'cardArtPositionY'
-  | 'cardArtZoom'>;
+  | 'cardArtZoom' | 'cardType'>;
 
 export interface SavedCard extends CardSnapshot {
   id: string;

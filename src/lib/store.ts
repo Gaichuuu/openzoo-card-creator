@@ -3,7 +3,7 @@ import type { LayoutType } from '@/types/layout';
 import type { CardData, CardSnapshot, CardType, Element, ElementOrCustom, SavedCard } from '@/types/card';
 import type { CustomElementDef } from '@/types/customIcons';
 import {
-  CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA, TYPES_WITHOUT_TRAITS,
+  CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA, TYPES_WITHOUT_TRAITS, SPECIAL_FIT_TYPES,
   STYLE_TYPES_TRIBES, STYLE_SPELLBOOK_LIMIT, STYLE_CARD_NAME, STYLE_TNL, STYLE_LP, STYLE_FLAVOR_TEXT, FONT_BODY,
 } from '@/data/constants';
 import type { EffectBlock, EffectBlockType } from '@/types/effects';
@@ -261,6 +261,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
 
   setCardType: (type) => {
     const layout = CARD_TYPE_TO_LAYOUT[type];
+    const prevType = get().cardType;
     set({ cardType: type });
     get().setLayoutType(layout);
 
@@ -330,12 +331,19 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     const noTerra = TYPES_WITHOUT_TERRA.has(type);
     const noTraits = TYPES_WITHOUT_TRAITS.has(type);
     const clearElements = type === 'Special Aura' || type === 'Terra' || type === 'Special Terra';
+    const clearFit = SPECIAL_FIT_TYPES.has(prevType) !== SPECIAL_FIT_TYPES.has(type);
     set({
       effectBlocks,
       cardData: newData,
       ...(noTerra ? { terras: [null, null] as [null, null] } : {}),
       ...(noTraits ? { traits: [null, null, null] as [null, null, null] } : {}),
       ...(clearElements ? { primaryElement: null, secondaryElement: null, customPrimary: null, customSecondary: null } : {}),
+      ...(clearFit ? {
+        mainTextBoxNudge: 0,
+        mainTextBoxExtraShrink: 0,
+        mainTextBoxLineHeight: 0,
+        mainTextBoxLetterSpacing: 0,
+      } : {}),
     });
   },
 

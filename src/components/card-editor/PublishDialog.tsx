@@ -3,6 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { publishCard } from '@/lib/galleryService';
 import { exportStandardPng, displayCardName } from '@/lib/exportUtils';
+import {
+  collectClientDiagnostics, exportZoneRect, measureZoneHealth,
+  COPYRIGHT_SELECTOR, type ZoneHealth,
+} from '@/lib/clientDiagnostics';
 import { CARD_TAGS, TAG_COLORS } from '@/types/card';
 import type { CardTag, SavedCard } from '@/types/card';
 import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
@@ -48,7 +52,10 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       cardRef.current.classList.add('card-exporting');
       applyBackendClass(cardRef.current);
       const rawDataUrl = await exportStandardPng(cardRef.current, false);
-      const thumbnailDataUrl = await new Promise<string>((resolve, reject) => {
+      const cardEl = cardRef.current;
+      const { thumbnailDataUrl, health } = await new Promise<{
+        thumbnailDataUrl: string; health: ZoneHealth | null;
+      }>((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
           const c = document.createElement('canvas');
@@ -57,11 +64,23 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
           const ctx = c.getContext('2d');
           if (!ctx) { reject(new Error('canvas context')); return; }
           ctx.drawImage(img, 0, 0);
-          resolve(c.toDataURL('image/jpeg', 0.85));
+          let health: ZoneHealth | null = null;
+          try {
+            const rect = exportZoneRect(cardEl, COPYRIGHT_SELECTOR, img.naturalWidth);
+            if (rect && rect.w > 1 && rect.h > 1) {
+              health = measureZoneHealth(ctx.getImageData(rect.x, rect.y, rect.w, rect.h));
+            }
+          } catch {
+            health = null; // never let diagnostics fail a publish
+          }
+          resolve({ thumbnailDataUrl: c.toDataURL('image/jpeg', 0.85), health });
         };
         img.onerror = reject;
         img.src = rawDataUrl;
       });
+
+      const client = collectClientDiagnostics(cardEl);
+      if (health) client.health = health;
 
       const snapshot = getSnapshot();
 
@@ -71,6 +90,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         remixedFrom: remixedFrom || null,
         remixedFromName: remixedFromName || '',
         existingCard: editCard ?? undefined,
+        client,
       });
 
       const prevSource = useCardStore.getState().sourceCard;

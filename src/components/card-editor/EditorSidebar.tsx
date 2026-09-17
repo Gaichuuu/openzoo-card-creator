@@ -286,6 +286,9 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
       setSpellbookLimit('2');
       setTerraEffectText('{I:You may Fatigue this Terra Page at any time to generate 1 Terra of any type.}');
       setTextField('Aura/Terra Text Box 1', '{I:You may Fatigue this Terra Page at any time to generate 1 Terra of any type.}');
+      setStyleField('TypesTribes', STYLE_TYPES_TRIBES);
+      setStyleField('SpellbookLimit', STYLE_SPELLBOOK_LIMIT);
+      setStyleField('TNL', STYLE_TNL);
       setImageField('SetSymbol', 'OZLegacyGold.png');
       setFlavorText('');
       if (borderless) {
