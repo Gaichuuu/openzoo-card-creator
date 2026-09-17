@@ -61,7 +61,7 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
     paddingRight: '0.3em',
     borderStyle: 'solid',
     borderColor: 'rgba(0, 0, 0, 1)',
-    borderWidth: '0.2em',
+    borderWidth: '1px',
     borderRadius: '2em',
     backgroundColor: 'rgba(155, 180, 216, 1)',
     color: 'rgba(255, 255, 255, 1)',
