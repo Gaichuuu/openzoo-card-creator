@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { measurePillBias } from '@/lib/pillExport';
+import { measurePillBias, pillExportShift } from '@/lib/pillExport';
 
 const CREAM = [250, 244, 228];
 const FILL = [155, 180, 216];
@@ -76,5 +76,18 @@ describe('measurePillBias', () => {
       }
     }
     expect(measurePillBias(bmp, BOX, 4)).toBeNull();
+  });
+});
+
+describe('pillExportShift', () => {
+  it.each([
+    // [bias in export px, pixel ratio, correction in card px]
+    [0, 4, 0],
+    [0.5, 4, -0.125],
+    [-0.5, 4, 0.125],
+    [2, 4, -0.5],
+    [-3, 4, 0.75],
+  ])('bias %s at %sx -> %s', (bias, ratio, want) => {
+    expect(pillExportShift(bias, ratio)).toBe(want);
   });
 });
