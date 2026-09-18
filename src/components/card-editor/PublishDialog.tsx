@@ -7,10 +7,13 @@ import {
   collectClientDiagnostics, exportZoneRect, measureZoneHealth,
   COPYRIGHT_SELECTOR, type ZoneHealth,
 } from '@/lib/clientDiagnostics';
-import { CARD_TAGS, TAG_COLORS } from '@/types/card';
+import { CARD_TAGS } from '@/types/card';
+import { CardBackBackdrop } from '@/components/CardBackBackdrop';
 import type { CardTag, SavedCard } from '@/types/card';
 import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
 import { applyBackendClass } from '@/lib/fontBackend';
+
+const DIALOG_CLASS = 'relative bg-navy-900 bg-panel-v max-w-140 w-full mx-4 border border-gold-600 shadow-[0_28px_70px_rgba(0,0,0,.65)] font-body';
 
 interface PublishDialogProps {
   cardRef: React.RefObject<HTMLDivElement | null>;
@@ -147,14 +150,15 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
   if (success) {
     return (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+        className="fixed inset-0 z-50 flex items-center justify-center"
         onClick={(e) => { if (e.target === e.currentTarget) closeAfterSuccess(); }}
       >
-        <div className="relative bg-navy-900 max-w-140 w-full mx-4 border-gold">
+        <CardBackBackdrop opacity={0.09} />
+        <div className={DIALOG_CLASS}>
           <div className="flex items-center justify-end pt-3 px-3.5">
             <button
               onClick={closeAfterSuccess}
-              className="w-7.5 h-7.5 flex items-center justify-center text-gold-400 hover:text-white transition-colors text-[22px] leading-none"
+              className="w-7.5 h-7.5 flex items-center justify-center text-gold-400 hover:text-gold-100 transition-colors text-[22px] leading-none"
               aria-label="Close"
             >
               &times;
@@ -162,19 +166,19 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
           </div>
           <div className="px-8.5 pt-1.5 pb-8.5 text-center">
             <h3 className="text-gold-gradient font-title font-normal text-[28px] m-0 mb-3">{isUpdate ? 'Updated' : 'Published'}</h3>
-            <p className="text-sm text-gray-400 m-0 mb-6">
+            <p className="text-[15px] text-gray-400 m-0 mb-6">
               {displayCardName(cardName) || 'Your card'} {isUpdate ? 'has been updated in the gallery.' : 'has been published to the gallery.'}
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <button
                 onClick={() => navigate(publishedId ? `/gallery/${publishedId}` : '/gallery')}
-                className="px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-colors border-gold"
+                className="btn-primary px-6 py-3 text-[13px]"
               >
                 View in Gallery
               </button>
               <button
                 onClick={closeAfterSuccess}
-                className="px-6 py-2.5 bg-navy-800 hover:bg-navy-700 text-gold-300 text-sm font-semibold transition-colors border-gold"
+                className="btn-tertiary font-title uppercase tracking-[.07em] px-6 py-3 text-[13px]"
               >
                 Make another
               </button>
@@ -187,13 +191,14 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={(e) => { if (e.target === e.currentTarget && !publishing) onClose(); }}
     >
-      <div className="relative bg-navy-900 max-w-140 w-full mx-4 border-gold">
+      <CardBackBackdrop opacity={0.09} />
+      <div className={DIALOG_CLASS}>
         <button
           onClick={() => { if (!publishing) onClose(); }}
-          className="absolute top-2 right-2.5 w-7.5 h-7.5 flex items-center justify-center text-gold-400 hover:text-white transition-colors text-[22px] leading-none"
+          className="absolute top-2 right-2.5 w-7.5 h-7.5 flex items-center justify-center text-gold-400 hover:text-gold-100 transition-colors text-[22px] leading-none"
           aria-label="Close"
         >
           &times;
@@ -205,7 +210,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
 
         <div className="pt-5.5 px-6.5 pb-6 flex flex-col gap-5.5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-semibold text-gold-400 uppercase tracking-widest">
+            <label className="font-title text-[11px] text-gold-400 uppercase tracking-[.16em]">
               Created by (optional)
             </label>
             <input
@@ -216,17 +221,16 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
               maxLength={40}
               className="w-full bg-navy-950 text-white text-[15px] px-3 py-2.5"
             />
-            <p className="text-[11px] text-gray-500 m-0">Username shown on the published card.</p>
+            <p className="text-xs text-gray-500 m-0">Username shown on the published card.</p>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[11px] font-semibold text-gold-400 uppercase tracking-widest">
+            <label className="font-title text-[11px] text-gold-400 uppercase tracking-[.16em]">
               Tags (optional)
             </label>
             <div className="flex flex-wrap gap-1.75">
               {CARD_TAGS.map((tag) => {
                 const active = selectedTags.includes(tag);
-                const colors = TAG_COLORS[tag];
                 return (
                   <button
                     key={tag}
@@ -234,10 +238,10 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
                     onClick={() => setSelectedTags((prev) =>
                       active ? prev.filter((t) => t !== tag) : [...prev, tag]
                     )}
-                    className={`text-xs px-3 py-1.25 border transition-colors ${
+                    className={`text-[13px] px-3 py-1.25 cursor-pointer ${
                       active
-                        ? `${colors.bg} ${colors.text} border-transparent`
-                        : 'bg-transparent text-gray-400 border-navy-600 hover:border-gold-500 hover:text-gray-300'
+                        ? 'chip-selected'
+                        : 'border border-navy-600 text-gray-400 hover:border-gold-500 hover:text-white transition-colors'
                     }`}
                   >
                     {tag}
@@ -256,7 +260,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
           <button
             onClick={handlePublish}
             disabled={publishing}
-            className="px-7.5 py-2.75 bg-green-600 hover:bg-green-500 disabled:bg-navy-600 disabled:cursor-not-allowed text-white font-semibold transition-colors text-sm border-gold"
+            className="btn-primary px-7.5 py-3 text-[13px]"
           >
             {publishing ? (
               <>

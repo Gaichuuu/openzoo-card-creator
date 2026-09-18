@@ -63,7 +63,7 @@ export function JsonImportButton({ onImport }: JsonImportButtonProps) {
     <>
       <button
         onClick={() => inputRef.current?.click()}
-        className="flex-1 bg-navy-700 hover:bg-navy-600 text-white text-sm font-semibold py-2 px-3 transition-colors border-gold"
+        className="btn-tertiary flex-1 text-[13px] py-2.25 px-3"
       >
         Import JSON
       </button>

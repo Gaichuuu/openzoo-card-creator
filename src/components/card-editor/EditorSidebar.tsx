@@ -371,7 +371,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
   const showEffectSection = showTraits || isSpecialTerra || isSpecialAura;
 
   return (
-    <div className="w-full md:w-82 bg-navy-900 md:border-r border-navy-600 flex flex-col min-h-0 flex-1">
+    <div className="w-full md:w-82 bg-navy-900 bg-panel-v md:border-r border-navy-600 flex flex-col min-h-0 flex-1">
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         {/* Panel header */}
         <div className="flex items-center justify-between">
@@ -620,7 +620,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
           <button
             onClick={() => setShowPublish(true)}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 transition-colors border-gold"
+            className="btn-primary w-full py-3 px-4 text-[13px] tracking-[.06em]"
           >
             {editCard ? 'Update in Gallery' : 'Publish to Gallery'}
           </button>

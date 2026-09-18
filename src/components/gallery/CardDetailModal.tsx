@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
-import { TAG_COLORS } from '@/types/card';
+import type { SavedCard, CardSnapshot } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
+import { CardBackBackdrop } from '@/components/CardBackBackdrop';
 import { displayCardName, downloadBlob, sanitizeCardNameForFilename } from '@/lib/exportUtils';
 import { exportCardPng, usePrintReady } from '@/lib/useCardExport';
 import { useAuthUid } from '@/lib/auth';
 import { deleteCard } from '@/lib/galleryService';
 import { isMeaningfullyUpdated } from '@/lib/publishUtils';
 
-export const MODAL_CONTAINER_CLASS = 'flex flex-col md:flex-row gap-4 md:gap-7 items-center mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
+export const MODAL_CONTAINER_CLASS = 'relative flex flex-col md:flex-row gap-4 md:gap-7 items-center mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
 export const MODAL_CARD_CLASS = 'h-[60vh] md:h-[80vh]';
-export const MODAL_DETAILS_CLASS = 'bg-navy-900 w-full md:w-80 pointer-events-auto border-gold flex flex-col';
+export const MODAL_DETAILS_CLASS = 'bg-navy-900 bg-panel-v w-full md:w-82.5 pointer-events-auto border border-gold-600 shadow-[0_26px_60px_rgba(0,0,0,.6)] flex flex-col';
 
 interface CardDetailModalProps {
   card: SavedCard;
@@ -128,9 +128,10 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={onClose}
     >
+      <CardBackBackdrop />
       {/* Modal */}
       <div className={MODAL_CONTAINER_CLASS}>
         {/* Card */}
@@ -201,16 +202,16 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
           <div className="relative px-5 pt-4.5 pb-4 border-b border-navy-600">
             <button
               onClick={onClose}
-              className="absolute top-2.5 right-3 text-gold-400 hover:text-white transition-colors text-xl leading-none"
+              className="absolute top-2.5 right-3 text-gold-400 hover:text-gold-100 transition-colors text-[22px] leading-none"
               aria-label="Close"
             >
               &times;
             </button>
-            <span className="block text-[10px] uppercase tracking-[.18em] text-gold-500 mb-1.75 mr-6.5">
+            <span className="block font-title text-[10px] uppercase tracking-[.18em] text-gold-500 mb-1.75 mr-6.5">
               {card.cardType}
             </span>
             <h2
-              className="font-title font-normal text-[22px] leading-[1.1] m-0 mr-5"
+              className="font-title font-normal text-[23px] leading-[1.1] m-0 mr-5"
               style={{
                 backgroundImage: 'linear-gradient(180deg, #ffffff 20%, #d8d3c2 100%)',
                 WebkitBackgroundClip: 'text',
@@ -226,17 +227,14 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
           <div className="px-5 py-4 flex flex-col gap-3">
             {card.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.25">
-                {card.tags.map((tag) => {
-                  const colors = TAG_COLORS[tag as CardTag];
-                  return (
-                    <span key={tag} className={`text-[11px] px-2 py-0.75 ${colors.bg} ${colors.text}`}>
-                      {tag}
-                    </span>
-                  );
-                })}
+                {card.tags.map((tag) => (
+                  <span key={tag} className="chip-selected text-xs px-2.25 py-0.75">
+                    {tag}
+                  </span>
+                ))}
               </div>
             )}
-            <span className="text-[13px] text-gray-400 leading-normal">
+            <span className="text-sm text-gray-400 leading-normal">
               {card.creatorName ? (
                 <>Created by <span className="text-white font-semibold">{card.creatorName}</span> on </>
               ) : 'Created on '}
@@ -246,7 +244,7 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
               )}
             </span>
             {card.remixedFrom && (
-              <span className="text-[13px] text-gray-400 leading-normal">
+              <span className="text-sm text-gray-400 leading-normal">
                 Remixed from{' '}
                 <button
                   onClick={handleViewParent}
@@ -257,7 +255,7 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
               </span>
             )}
             {isOwner && (
-              <span className="text-[13px] leading-normal">
+              <span className="text-sm leading-normal">
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
@@ -280,18 +278,14 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
             {isOwner && (
               <button
                 onClick={handleEdit}
-                className="w-full mb-2.5 py-3 bg-green-600 hover:bg-green-500 text-white text-[15px] font-bold transition-colors border-gold"
+                className="btn-primary w-full mb-3 py-3.25 text-[13px] tracking-[.06em]"
               >
                 Edit this Card
               </button>
             )}
             <button
               onClick={handleRemix}
-              className="w-full py-3 text-navy-990 text-[15px] font-bold transition-[filter] hover:brightness-110"
-              style={{
-                background: 'linear-gradient(180deg, var(--color-gold-300), var(--color-gold-500) 55%, var(--color-gold-600)) padding-box, linear-gradient(180deg, var(--color-gold-100), var(--color-gold-600)) border-box',
-                border: '1px solid transparent',
-              }}
+              className="btn-gold w-full py-3.25 text-[13px] tracking-[.06em]"
             >
               Remix this Card
             </button>
@@ -300,9 +294,9 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
           {/* Download bar */}
           <div className="mt-auto px-5 pt-3.5 pb-4 border-t border-navy-600 bg-navy-950 flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-[.14em] text-gold-500">Download</span>
+              <span className="font-title text-[10px] uppercase tracking-[.14em] text-gold-500">Download</span>
               <span className="inline-flex items-center gap-2">
-                <span className="text-xs text-gray-400">Print Ready</span>
+                <span className="text-[13px] text-gray-400">Print Ready</span>
                 <button
                   type="button"
                   role="switch"
@@ -310,7 +304,7 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
                   aria-label="Print Ready"
                   onClick={() => setPrintReady(!printReady)}
                   className={`relative inline-flex h-4.75 w-8.5 items-center rounded-full transition-colors ${
-                    printReady ? 'bg-green-500' : 'bg-navy-600'
+                    printReady ? 'bg-linear-to-b from-success-500 to-success-700' : 'bg-navy-600'
                   }`}
                 >
                   <span
@@ -325,13 +319,13 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
               <button
                 onClick={handleExportPng}
                 disabled={exporting}
-                className="flex-1 py-2.25 bg-green-600 hover:bg-green-500 disabled:bg-navy-800 disabled:text-gold-500 text-white font-semibold transition-colors text-[13px] border-gold"
+                className="btn-primary [--btn-bg:linear-gradient(180deg,#ff3a52,#a80a1c)] [--btn-drop:0px] flex-1 py-2.5 text-xs tracking-[.06em]"
               >
                 {exporting ? 'Exporting...' : 'PNG'}
               </button>
               <button
                 onClick={handleExportJson}
-                className="flex-1 py-2.25 bg-navy-700 hover:bg-navy-600 text-white transition-colors text-[13px] border-gold"
+                className="btn-tertiary font-title uppercase flex-1 py-2.5 text-xs tracking-[.06em]"
               >
                 JSON
               </button>

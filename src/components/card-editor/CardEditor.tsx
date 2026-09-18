@@ -167,7 +167,7 @@ export function CardEditor() {
             ref={stageRef}
             className={isMobile
               ? 'w-full shrink-0 h-full flex items-center justify-center bg-navy-990 overflow-auto px-2 py-4'
-              : 'relative flex flex-1 items-center justify-center bg-navy-990 overflow-auto p-7'}
+              : 'relative flex flex-1 items-center justify-center bg-navy-990 bg-[radial-gradient(70%_60%_at_50%_40%,#0b1024,#05060f)] overflow-auto p-7'}
           >
             <CardRenderer
               ref={cardRef}

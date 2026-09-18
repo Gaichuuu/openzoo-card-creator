@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { PageTitle } from '@/components/PageTitle';
-import { AURA_COLORS, FONT_BODY } from '@/data/constants';
+import { AURA_COLORS } from '@/data/constants';
 import type { Element, Terra, Trait } from '@/types/card';
 
 interface Attribution<S extends string = string> {
@@ -157,7 +157,7 @@ const ANCHOR_TO_TAB: Record<string, TabKey> = {
   'scp-cards': 'scp',
 };
 
-const TH_CLASS = 'py-2.75 px-3 border-b border-navy-600 text-gray-500 text-[11px] uppercase tracking-[.1em]';
+const TH_CLASS = 'py-2.75 px-3 border-b border-navy-600 text-gray-400 font-title font-normal text-[11px] uppercase tracking-[.1em]';
 const TD_CLASS = 'py-2.5 px-3 border-b border-navy-800';
 
 function SymbolCell({ symbol, folder }: { symbol: string; folder?: string }) {
@@ -194,7 +194,7 @@ function SourceLink({ url }: { url: string }) {
 
 function AttributionTable({ data, iconFolder }: { data: Attribution[]; iconFolder?: string }) {
   return (
-    <table className="w-full table-fixed md:table-auto text-sm text-left border-collapse">
+    <table className="w-full table-fixed md:table-auto text-[15px] text-left border-collapse">
       <thead>
         <tr>
           <th className={`${TH_CLASS} pl-0 w-[26%]`}>Symbol</th>
@@ -221,7 +221,7 @@ function AttributionTable({ data, iconFolder }: { data: Attribution[]; iconFolde
 
 function ScpTable({ data }: { data: ScpAttribution[] }) {
   return (
-    <table className="w-full table-fixed md:table-auto text-sm text-left border-collapse">
+    <table className="w-full table-fixed md:table-auto text-[15px] text-left border-collapse">
       <thead>
         <tr>
           <th className={`${TH_CLASS} pl-0 w-[26%]`}>Card</th>
@@ -259,17 +259,17 @@ export function AboutPage() {
   }, []);
 
   return (
-    <div className="min-h-dvh bg-navy-950 text-white">
+    <div className="min-h-dvh bg-navy-950 text-white font-body">
       <SiteHeader sticky />
       <div className="max-w-5xl mx-auto px-6 md:px-10 pt-13 pb-18">
         <PageTitle className="mb-3.5">About OpenZoo</PageTitle>
 
-        <p className="text-[18px] leading-normal text-gray-300 m-0 mb-4" style={{ fontFamily: FONT_BODY }}>
+        <p className="text-[18px] leading-[1.7] text-gray-300 m-0 mb-4 max-w-180" style={{ textWrap: 'pretty' }}>
           OpenZoo is the unofficial continuation of <strong className="text-white">vintage MetaZoo</strong>, made
           by MetaZoo fans, <em className="text-white">for</em> MetaZoo fans. Exclusively using assets within
           Creative Commons or made in-house, we plan on adding more cards to the MetaZoo card pool ad infinitum.
         </p>
-        <p className="text-[18px] leading-normal text-gray-300 m-0 mb-4" style={{ fontFamily: FONT_BODY }}>
+        <p className="text-[18px] leading-[1.7] text-gray-300 m-0 mb-4 max-w-180" style={{ textWrap: 'pretty' }}>
           OpenZoo assets are provided free of charge to anyone who wants them under{' '}
           <strong className="text-white">Creative Commons 3.0</strong>, specifically{' '}
           <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className={PROSE_LINK_CLASS}>
@@ -285,7 +285,7 @@ export function AboutPage() {
 
           <div className="grid md:grid-cols-2 gap-x-10 gap-y-6 max-w-4xl mb-6">
             <div>
-              <h3 className="text-xs font-semibold text-white uppercase tracking-wider m-0 mb-2.5">OpenZoo TCG</h3>
+              <h3 className="font-title font-normal text-[11px] text-white uppercase tracking-[.14em] m-0 mb-2.5">OpenZoo TCG</h3>
               <ul className="list-disc pl-5 text-[15px] leading-[1.7] text-gray-400 m-0 space-y-1.5">
                 <li>
                   Create a card with the OpenZoo <Link to="/create" className={PROSE_LINK_CLASS}>Card Editor</Link>.
@@ -304,7 +304,7 @@ export function AboutPage() {
               </ul>
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-white uppercase tracking-wider m-0 mb-2.5">OpenZoo codebase</h3>
+              <h3 className="font-title font-normal text-[11px] text-white uppercase tracking-[.14em] m-0 mb-2.5">OpenZoo codebase</h3>
               <ul className="list-disc pl-5 text-[15px] leading-[1.7] text-gray-400 m-0 space-y-1.5">
                 <li>
                   The project is open source on <a href="https://github.com/Gaichuuu/openzoo-card-creator" target="_blank" rel="noopener noreferrer" className={PROSE_LINK_CLASS}>GitHub</a>.
@@ -325,13 +325,13 @@ export function AboutPage() {
               href="https://discord.gg/2jQPtQceqT"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-5.5 py-2.75 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-colors border-gold"
+              className="btn-primary px-5.5 py-3 text-xs"
             >
               Join the Discord
             </a>
             <Link
               to="/gallery?tag=Art+Needed"
-              className="px-5.5 py-2.75 bg-navy-800 hover:bg-navy-700 text-gold-300 text-sm font-semibold transition-colors border-gold"
+              className="btn-tertiary font-title uppercase tracking-[.07em] px-5.5 py-3 text-xs"
             >
               Art Needed
             </Link>
@@ -345,7 +345,7 @@ export function AboutPage() {
             everything else lives in your browser.
           </p>
 
-          <table className="w-full table-fixed md:table-auto text-sm text-left border-collapse">
+          <table className="w-full table-fixed md:table-auto text-[15px] text-left border-collapse">
             <thead>
               <tr>
                 <th className={`${TH_CLASS} pl-0 w-[42%]`}>What</th>
@@ -408,8 +408,8 @@ export function AboutPage() {
                 role="tab"
                 aria-selected={activeTab === key}
                 onClick={() => setActiveTab(key)}
-                className={`px-2.75 py-1 text-[13px] bg-navy-800 border border-navy-600 rounded transition-colors cursor-pointer ${
-                  activeTab === key ? 'text-gold-300' : 'text-gray-500 hover:text-white'
+                className={`px-3 py-1.25 text-[13px] rounded-[3px] cursor-pointer ${
+                  activeTab === key ? 'chip-selected' : 'chip-idle'
                 }`}
               >
                 {label}
