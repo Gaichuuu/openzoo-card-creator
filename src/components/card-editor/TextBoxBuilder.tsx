@@ -110,7 +110,7 @@ export function TextBoxBuilder() {
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 transition-colors border-gold"
+            className="text-xs bg-linear-to-b from-select-top to-select-bot border border-gold-500 hover:border-gold-400 text-white px-2.25 py-1 transition-colors"
           >
             + Add Component
           </button>

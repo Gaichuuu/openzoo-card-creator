@@ -49,7 +49,7 @@ function IconGrid({ items, folder, iconMap }: { items: readonly string[]; folder
             <div className="flex items-center justify-center bg-navy-800 rounded border border-navy-600 p-1.5" style={{ width: 52, height: 52 }}>
               <img src={`/assets/${folder}/${encodeURIComponent(file)}.png`} alt={name} className="w-full h-full object-contain" />
             </div>
-            <span className="text-[10px] text-gray-300 text-center leading-tight">{name}</span>
+            <span className="text-xs text-gray-300 text-center leading-tight">{name}</span>
           </div>
         );
       })}
@@ -148,7 +148,7 @@ function CardLayoutDiagram() {
 
   return (
     <div className="my-6 overflow-x-auto">
-      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-2xl mx-auto">
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-2xl mx-auto font-sans">
         <defs>
           <clipPath id="card-clip">
             <rect x={cx} y={cy} width={cw} height={ch} rx={10} />
@@ -210,9 +210,9 @@ function AuraWheel() {
 
   return (
     <div className="my-4">
-      <h3 className="text-lg font-bold text-gold-300 mb-3">Aura Wheel</h3>
+      <h3 className="text-lg font-bold text-gold-400 mb-3">Aura Wheel</h3>
       <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-2xl mx-auto">
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-2xl mx-auto font-sans">
         <defs>
           <marker id="arrowhead" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
             <polygon points="0 0, 6 2.5, 0 5" fill="#6b7280" />
@@ -430,7 +430,7 @@ function renderInline(text: string, kwRegex: RegExp | null): ReactNode {
       boldMatch && { idx: boldMatch.index!, len: boldMatch[0].length, node: <strong key={key++} className="text-white"><GameIcon name={boldMatch[1]} />{renderInline(boldMatch[1], null)}</strong> },
       emMatch && emMatch.index !== boldMatch?.index && { idx: emMatch.index!, len: emMatch[0].length, node: <em key={key++}>{emMatch[1]}</em> },
       codeMatch && { idx: codeMatch.index!, len: codeMatch[0].length, node: <code key={key++} className="bg-navy-800 px-1 rounded text-gray-200 text-xs">{codeMatch[1]}</code> },
-      linkMatch && { idx: linkMatch.index!, len: linkMatch[0].length, node: <a key={key++} href={`#${linkMatch[2]}`} className="text-blue-400 hover:text-blue-300">{linkMatch[1]}</a> },
+      linkMatch && { idx: linkMatch.index!, len: linkMatch[0].length, node: <a key={key++} href={`#${linkMatch[2]}`} className="text-gold-400 hover:text-gold-100">{linkMatch[1]}</a> },
     ].filter(Boolean) as { idx: number; len: number; node: ReactNode }[];
 
     if (matches.length === 0) {
@@ -794,28 +794,28 @@ export function RulebookPage() {
   const sectionHeader = (section: Section) =>
     section.level === 2 ? (
       <div className="flex items-baseline gap-3.5 mb-4">
-        <span className="font-mono text-[13px] text-gold-600">{sectionNumbers[section.id]}</span>
-        <h2 className="font-title font-normal text-[24px] md:text-[28px] text-gold-400 m-0">{section.title}</h2>
+        <span className="font-mono text-[15px] text-gold-600">{sectionNumbers[section.id]}</span>
+        <h2 className="font-title font-normal text-[22px] text-gold-100 m-0">{section.title}</h2>
       </div>
     ) : (
-      <h3 className="text-[19px] font-bold text-gold-300 mt-7 mb-2.5">{section.title}</h3>
+      <h3 className="text-[19px] font-bold text-gold-400 mt-7 mb-2.5">{section.title}</h3>
     );
 
   return (
-    <div className="min-h-dvh bg-navy-950 text-white">
+    <div className="min-h-dvh bg-navy-950 text-white font-body">
       <SiteHeader sticky />
-      <nav className="hidden lg:block fixed top-(--site-header-h) left-0 w-68 h-[calc(100dvh-var(--site-header-h))] overflow-y-auto border-r border-navy-600 bg-navy-900 py-6.5 px-5 z-10">
-        <span className="block text-[10px] uppercase tracking-[.18em] text-gold-500 mb-4">Contents</span>
+      <nav className="hidden lg:block fixed top-(--site-header-h) left-0 w-68 h-[calc(100dvh-var(--site-header-h))] overflow-y-auto border-r border-navy-600 bg-panel-deep py-5.5 px-5 z-10">
+        <span className="block font-title text-[10px] uppercase tracking-[.18em] text-gold-500 mb-4">Contents</span>
         <div className="flex flex-col gap-0.5">
           {tocTree.map(({ section, number, children }) => (
             <Fragment key={section.id}>
               <a
                 href={`#${section.id}`}
-                className={`flex gap-2.5 py-1 text-[13px] transition-colors ${
+                className={`flex gap-2.5 py-1 text-sm transition-colors ${
                   activeBranchId === section.id ? 'text-gold-400 font-semibold' : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
-                <span className={`font-mono text-[11px] pt-0.5 w-4.5 shrink-0 ${activeBranchId === section.id ? 'text-gold-600' : 'text-gray-600'}`}>
+                <span className={`font-mono text-xs pt-0.5 w-4.5 shrink-0 ${activeBranchId === section.id ? 'text-gold-600' : 'text-gray-600'}`}>
                   {number}
                 </span>
                 {section.title}
@@ -826,8 +826,8 @@ export function RulebookPage() {
                     <a
                       key={c.id}
                       href={`#${c.id}`}
-                      className={`text-xs py-0.75 transition-colors ${
-                        activeId === c.id ? 'text-gold-300' : 'text-gray-500 hover:text-gray-300'
+                      className={`text-[13px] py-0.75 transition-colors ${
+                        activeId === c.id ? 'text-gold-400' : 'text-gray-500 hover:text-gray-300'
                       }`}
                     >
                       {c.title}
@@ -849,7 +849,7 @@ export function RulebookPage() {
         <div className="max-w-4xl">
         {/* Masthead */}
         <div>
-          <span className="block text-[11px] uppercase tracking-[.2em] text-gold-500 mb-3">
+          <span className="block font-title text-[11px] uppercase tracking-[.2em] text-gold-500 mb-3">
             Version {versionInfo.version}{versionInfo.updated ? ` · Updated ${versionInfo.updated}` : ''}
           </span>
           <PageTitle className="mb-8">OpenZoo Rulebook</PageTitle>
@@ -886,16 +886,16 @@ export function RulebookPage() {
             {renderContent(howToUseContent, kwRegex)}
             {/* Entry-point callouts */}
             <div className="flex flex-col sm:flex-row gap-3 mt-5">
-              <div className="flex-1 px-4.5 py-4 bg-navy-900 border-gold">
-                <span className="block text-[10px] uppercase tracking-[.16em] text-gold-500 mb-1.75">New player</span>
-                <p className="text-sm leading-relaxed text-gray-300 m-0">
+              <div className="flex-1 px-4.5 py-4 bg-panel-v border border-gold-600">
+                <span className="block font-title text-[10px] uppercase tracking-[.16em] text-gold-500 mb-1.75">New player</span>
+                <p className="text-[15px] leading-relaxed text-gray-300 m-0">
                   Start with <a href="#basic-openzoo-language" className="text-gold-400 hover:text-gold-300">Basic OpenZoo Language</a>,
                   then read straight through to <a href="#playing-openzoo" className="text-gold-400 hover:text-gold-300">Playing OpenZoo</a>.
                 </p>
               </div>
-              <div className="flex-1 px-4.5 py-4 bg-navy-900 border border-navy-600">
-                <span className="block text-[10px] uppercase tracking-[.16em] text-gray-500 mb-1.75">Veteran Caster</span>
-                <p className="text-sm leading-relaxed text-gray-400 m-0">
+              <div className="flex-1 px-4.5 py-4 bg-panel-v border border-navy-600">
+                <span className="block font-title text-[10px] uppercase tracking-[.16em] text-gray-500 mb-1.75">Veteran Caster</span>
+                <p className="text-[15px] leading-relaxed text-gray-400 m-0">
                   Jump to <a href="#advanced-rules" className="text-gold-400 hover:text-gold-300">Advanced Rules</a> for the full details.
                 </p>
               </div>

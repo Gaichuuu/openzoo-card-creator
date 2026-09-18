@@ -53,6 +53,10 @@ export function measurePillBias(bmp: Bitmap, box: PixelBox, margin: number): num
   return ((inkTop - fillTop) - (fillBot - inkBot)) / 2;
 }
 
+export function pillExportShift(bias: number, pixelRatio: number): number {
+  return bias === 0 ? 0 : -bias / pixelRatio;
+}
+
 const TRANSLATE_Y = /^translateY\((-?[\d.]+)px\)$/;
 
 export function correctPillsForExport(cardEl: HTMLElement, bmp: Bitmap, pixelRatio: number): () => void {
@@ -72,11 +76,12 @@ export function correctPillsForExport(cardEl: HTMLElement, bmp: Bitmap, pixelRat
       h: Math.round(r.height * s) + 4 * pixelRatio,
     };
     const bias = measurePillBias(bmp, box, pixelRatio);
-    if (bias === null || Math.abs(bias) < 1) continue;
+    const shift = bias === null ? 0 : pillExportShift(bias, pixelRatio);
+    if (shift === 0) continue;
     const prev = item.style.transform;
     const base = prev ? Number(TRANSLATE_Y.exec(prev)?.[1]) : 0;
     if (Number.isNaN(base)) continue;
-    item.style.transform = `translateY(${(base - bias / pixelRatio).toFixed(3)}px)`;
+    item.style.transform = `translateY(${(base + shift).toFixed(3)}px)`;
     const written = item.style.transform;
     undo.push(() => {
       if (item.style.transform === written) item.style.transform = prev;

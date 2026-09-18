@@ -88,15 +88,6 @@ export type CardTag = 'Playtesting' | 'Mockup' | 'Final' | 'Parody' | 'Proxy' | 
 
 export const CARD_TAGS: CardTag[] = ['Art Needed', 'Final', 'Mockup', 'Parody', 'Playtesting', 'Proxy'];
 
-export const TAG_COLORS: Record<CardTag, { bg: string; text: string }> = {
-  Playtesting:  { bg: 'bg-yellow-900', text: 'text-yellow-300' },
-  Mockup:       { bg: 'bg-blue-900',   text: 'text-blue-300' },
-  Final:        { bg: 'bg-green-900',  text: 'text-green-300' },
-  Parody:       { bg: 'bg-purple-900', text: 'text-purple-300' },
-  Proxy:        { bg: 'bg-orange-900', text: 'text-orange-300' },
-  'Art Needed': { bg: 'bg-red-900',    text: 'text-red-300' },
-};
-
 export interface CardSnapshot {
   cardType: CardType;
   layoutType: LayoutType;

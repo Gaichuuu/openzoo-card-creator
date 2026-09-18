@@ -42,17 +42,18 @@ export function SiteHeader({ sticky = false }: SiteHeaderProps) {
   }, [sticky, isMobile]);
 
   const linkClass = (to: string) =>
-    (pathname.startsWith(to) ? 'text-gold-300' : 'text-gray-400 hover:text-white transition-colors');
+    (pathname.startsWith(to) ? 'text-gold-400' : 'text-gray-400 hover:text-gold-100 transition-colors');
 
   return (
     <header
       ref={headerRef}
-      className={`${sticky ? 'sticky top-0 z-10 transition-transform duration-200' : 'relative'} ${hidden && isMobile && !menuOpen ? '-translate-y-full' : ''} bg-navy-950 flex items-center gap-3 md:gap-5 h-(--site-header-h) px-4 md:px-6 border-b border-gold-500 shrink-0`}
+      className={`${sticky ? 'sticky top-0 z-10 transition-transform duration-200' : 'relative'} ${hidden && isMobile && !menuOpen ? '-translate-y-full' : ''} bg-navy-950 bg-header-bar shadow-[inset_0_1px_0_rgba(255,247,207,.14)] font-body flex items-center gap-3 md:gap-5.5 h-(--site-header-h) px-4 md:px-6 shrink-0`}
     >
+      <div aria-hidden="true" className="absolute left-0 right-0 bottom-0 h-0.5 bg-holo-rule holo-animate pointer-events-none" />
       <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
         <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-6.5" />
       </Link>
-      <nav className="hidden md:flex gap-5.5 text-sm">
+      <nav className="hidden md:flex gap-5.5 text-[15px]">
         {NAV_LINKS.map(({ label, to }) => (
           <Link key={to} to={to} className={linkClass(to)}>
             {label}
@@ -61,13 +62,13 @@ export function SiteHeader({ sticky = false }: SiteHeaderProps) {
       </nav>
       <Link
         to="/create"
-        className="px-3 py-2 md:px-4.5 bg-green-600 hover:bg-green-500 text-white text-[13px] font-semibold transition-colors border-gold shrink-0"
+        className="btn-primary [--btn-drop:2px] px-3 py-2 md:px-4.5 md:py-2.25 text-xs tracking-[.09em] shrink-0"
       >
         <span className="hidden sm:inline">Card Editor</span>
         <span className="sm:hidden">Create</span>
       </Link>
       <div className="flex-1" />
-      <Link to="/gallery" className={`md:hidden text-sm ${linkClass('/gallery')}`}>
+      <Link to="/gallery" className={`md:hidden text-[15px] ${linkClass('/gallery')}`}>
         Gallery
       </Link>
       <button
@@ -87,9 +88,9 @@ export function SiteHeader({ sticky = false }: SiteHeaderProps) {
         )}
       </button>
       {menuOpen && (
-        <nav className="md:hidden absolute top-full left-0 right-0 z-20 flex flex-col bg-navy-950 border-b border-gold-500 py-1.5">
+        <nav className="md:hidden absolute top-full left-0 right-0 z-20 flex flex-col bg-navy-950 border-b border-navy-600 py-1.5">
           {NAV_LINKS.filter(({ to }) => to !== '/gallery').map(({ label, to }) => (
-            <Link key={to} to={to} onClick={() => setMenuOpen(false)} className={`px-5 py-3 text-sm ${linkClass(to)}`}>
+            <Link key={to} to={to} onClick={() => setMenuOpen(false)} className={`px-5 py-3 text-[15px] ${linkClass(to)}`}>
               {label}
             </Link>
           ))}

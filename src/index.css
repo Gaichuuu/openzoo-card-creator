@@ -13,7 +13,142 @@
   --color-gold-400: #dcbe64;
   --color-gold-500: #c8a532;
   --color-gold-600: #aa821e;
+  --color-gold-800: #5a4408;
+  --color-gold-950: #2a1b02;
   --color-keyword: #93c5fd;
+
+  --color-holo-pink: #ff5ea8;
+  --color-holo-gold: #ffcb57;
+  --color-holo-mint: #7cf5c4;
+  --color-holo-blue: #5ea8ff;
+  --color-holo-lilac: #b57cff;
+  --color-holo-pink-soft: #ff9ec9;
+  --color-holo-mint-soft: #9df3d6;
+  --color-holo-blue-soft: #8ec2ff;
+
+  --color-crimson-400: #ff3a52;
+  --color-crimson-600: #c40f22;
+  --color-crimson-800: #8e0714;
+  --color-crimson-900: #4c0009;
+  --color-crimson-950: #a80a1c;
+
+  --color-select-top: #26325c;
+  --color-select-bot: #18213f;
+
+  --color-success-500: #22c55e;
+  --color-success-700: #15803d;
+}
+
+@keyframes ozHolo {
+  to { background-position: 900px 0; }
+}
+
+@keyframes ozHoloSlide {
+  to { transform: translateX(900px); }
+}
+
+@utility bg-holo-sheen {
+  background-image: linear-gradient(115deg, #ff5ea8, #ffcb57, #7cf5c4, #5ea8ff, #b57cff, #ff5ea8);
+}
+@utility bg-holo-rule {
+  background-image: linear-gradient(90deg, #ff5ea8, #ffcb57, #7cf5c4, #5ea8ff, #b57cff, #ff5ea8);
+}
+@utility bg-header-bar {
+  background-image: linear-gradient(180deg, #141d3c 0%, #080a19 100%);
+}
+@utility bg-panel-v {
+  background-image: linear-gradient(180deg, #121c37, #0c1228);
+}
+@utility bg-panel-deep {
+  background-image: linear-gradient(180deg, #0c1228, #080a19);
+}
+@utility bg-raised {
+  background-image: linear-gradient(180deg, #1c2848, #0c1228);
+}
+
+@utility holo-animate {
+  background-size: 900px 100%;
+  animation: ozHolo 9s linear infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility holo-slide {
+  animation: ozHoloSlide 9s linear infinite;
+  will-change: transform;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility btn-primary {
+  color: #fff;
+  font-family: var(--font-title);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  background-image: var(--btn-bg, linear-gradient(180deg, #ff3a52 0%, #c40f22 52%, #8e0714 100%));
+  border: 1px solid var(--color-gold-300);
+  box-shadow: inset 0 1px 0 rgba(255, 247, 207, .5), 0 var(--btn-drop, 3px) 0 var(--color-crimson-900), var(--btn-glow, 0 0 #0000);
+  transition: filter .15s;
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    filter: brightness(1.12);
+  }
+  &:disabled {
+    filter: grayscale(.6) brightness(.75);
+    cursor: not-allowed;
+  }
+}
+@utility btn-gold {
+  color: var(--color-gold-950);
+  font-family: var(--font-title);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  background-image: linear-gradient(180deg, #fff7cf, #e8d88c 40%, #c8a532 72%, #aa821e);
+  border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75), 0 var(--btn-drop, 3px) 0 var(--color-gold-800);
+  transition: filter .15s;
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+  &:disabled {
+    filter: grayscale(.6) brightness(.75);
+    cursor: not-allowed;
+  }
+}
+@utility btn-tertiary {
+  color: var(--color-gold-100);
+  background-image: linear-gradient(180deg, #1c2848, #0c1228);
+  border: 1px solid var(--color-gold-600);
+  box-shadow: inset 0 1px 0 rgba(255, 247, 207, .22);
+  transition: color .15s, border-color .15s;
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    color: #fff;
+    border-color: var(--color-gold-400);
+  }
+}
+
+@utility chip-selected {
+  color: var(--color-gold-100);
+  font-weight: 700;
+  background-image: linear-gradient(180deg, #26325c, #18213f);
+  border: 1px solid var(--color-gold-500);
+  box-shadow: inset 0 1px 0 rgba(255, 247, 207, .18);
+}
+@utility chip-idle {
+  color: var(--color-gray-400);
+  background-color: var(--color-navy-800);
+  border: 1px solid var(--color-navy-600);
+  transition: color .15s, border-color .15s;
+  &:hover {
+    color: #fff;
+    border-color: var(--color-gold-500);
+  }
 }
 
 :root {
@@ -76,6 +211,10 @@ body {
   background-color: #080a19;
   color: #e0e0e0;
   font-family: system-ui, -apple-system, sans-serif;
+}
+
+@utility font-body {
+  font-family: 'EB Garamond', Cambria, Georgia, serif;
 }
 
 .text-gold-gradient {
@@ -196,6 +335,7 @@ select.input-plain:focus {
 }
 
 [data-oz-card-root] {
+  font-family: system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-stroke-width: 0.07px;

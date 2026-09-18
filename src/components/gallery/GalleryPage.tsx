@@ -13,6 +13,7 @@ import {
 import { GalleryCard, GalleryCardSkeleton } from './GalleryCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { CardBackBackdrop } from '@/components/CardBackBackdrop';
 import { CardDetailModal, MODAL_CONTAINER_CLASS, MODAL_CARD_CLASS, MODAL_DETAILS_CLASS } from './CardDetailModal';
 import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS, TERRAS, TRAITS } from '@/data/constants';
@@ -33,8 +34,8 @@ const GRID_LARGE = 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-
 const GRID_COMFORTABLE = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4.5';
 const GRID_COMPACT = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2.5';
 
-const FACET_HEADING_CLASS = 'text-xs font-semibold text-gold-400 uppercase tracking-wider mb-2.5';
-const DENSITY_BUTTON_CLASS = 'px-2.25 py-1 bg-navy-800 border border-navy-600 rounded transition-colors cursor-pointer';
+const FACET_HEADING_CLASS = 'font-title text-[10px] text-gold-400 uppercase tracking-[.16em] mb-2.5';
+const DENSITY_BUTTON_CLASS = 'px-2.25 py-0.75 rounded-[3px] cursor-pointer';
 
 type Density = 'large' | 'comfortable' | 'compact';
 
@@ -75,17 +76,17 @@ function FacetIconRow({ icon, label, count, active, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 cursor-pointer transition-colors ${active ? 'text-gold-300' : 'text-gray-400 hover:text-white'}`}
+      className={`flex items-center gap-2 cursor-pointer transition-colors ${active ? 'text-gold-400' : 'text-gray-400 hover:text-gold-100'}`}
     >
       <img src={icon} alt="" className="w-4.5 h-4.5 object-contain shrink-0" />
       <span className="truncate">{label}</span>
-      <span className="ml-auto text-gray-500">{count}</span>
+      <span className="ml-auto text-gray-400">{count}</span>
     </button>
   );
 }
 
 const defaultFacetClass = (isActive: boolean) =>
-  (isActive ? 'text-gold-300' : 'text-gray-400 hover:text-white');
+  (isActive ? 'text-gold-400' : 'text-gray-400 hover:text-gold-100');
 
 function FacetList<T extends string>({ title, items, active, onSelect, countFor }: {
   title: string;
@@ -97,7 +98,7 @@ function FacetList<T extends string>({ title, items, active, onSelect, countFor 
   return (
     <div>
       <div className={FACET_HEADING_CLASS}>{title}</div>
-      <div className="flex flex-col gap-1.75 text-[13px]">
+      <div className="flex flex-col gap-1.75 text-sm">
         {items.map((item) => {
           const isActive = active === item;
           return (
@@ -107,7 +108,7 @@ function FacetList<T extends string>({ title, items, active, onSelect, countFor 
               className={`flex justify-between cursor-pointer transition-colors ${defaultFacetClass(isActive)}`}
             >
               <span>{item}</span>
-              <span className="text-gray-500">{countFor(item) ?? ''}</span>
+              <span className="text-gray-400">{countFor(item) ?? ''}</span>
             </button>
           );
         })}
@@ -128,13 +129,13 @@ const FacetSections = memo(function FacetSections({
     <>
       {myCount > 0 && (
         <div>
-          <div className="flex flex-col gap-1.75 text-[13px]">
+          <div className="flex flex-col gap-1.75 text-sm">
             <button
               onClick={() => setFilterMine(!filterMine)}
               className={`flex justify-between cursor-pointer transition-colors ${defaultFacetClass(filterMine)}`}
             >
               <span>My Cards</span>
-              <span className="text-gray-500">{myCount || ''}</span>
+              <span className="text-gray-400">{myCount || ''}</span>
             </button>
           </div>
         </div>
@@ -158,7 +159,7 @@ const FacetSections = memo(function FacetSections({
 
       <div>
         <div className={FACET_HEADING_CLASS}>Aura</div>
-        <div className="flex flex-col gap-1.75 text-[13px]">
+        <div className="flex flex-col gap-1.75 text-sm">
           {FACET_ELEMENTS.map((element) => (
             <FacetIconRow
               key={element}
@@ -175,7 +176,7 @@ const FacetSections = memo(function FacetSections({
       {usedTerras.length > 0 && (
         <div>
           <div className={FACET_HEADING_CLASS}>Terra</div>
-          <div className="flex flex-col gap-1.75 text-[13px]">
+          <div className="flex flex-col gap-1.75 text-sm">
             {usedTerras.map((terra) => (
               <FacetIconRow
                 key={terra}
@@ -193,7 +194,7 @@ const FacetSections = memo(function FacetSections({
       {usedTraits.length > 0 && (
         <div>
           <div className={FACET_HEADING_CLASS}>Traits</div>
-          <div className="flex flex-col gap-1.75 text-[13px]">
+          <div className="flex flex-col gap-1.75 text-sm">
             {usedTraits.map((trait) => (
               <FacetIconRow
                 key={trait}
@@ -470,32 +471,32 @@ export function GalleryPage() {
   );
 
   return (
-    <div className="min-h-dvh bg-navy-990 text-white flex flex-col">
+    <div className="min-h-dvh bg-navy-990 text-white flex flex-col font-body">
       <SiteHeader sticky />
 
       <div className="flex flex-1 min-h-0">
         {/* Facet rail */}
-        <aside className="hidden md:flex w-59 shrink-0 bg-navy-950 border-r border-navy-600 px-4.5 py-5 flex-col gap-1.5 divide-y divide-navy-600 [&>*:not(:last-child)]:pb-3.5 overflow-y-auto sticky top-(--site-header-h) max-h-[calc(100dvh-var(--site-header-h))] self-start">
+        <aside className="hidden md:flex w-59 shrink-0 bg-navy-950 bg-panel-deep border-r border-navy-600 px-4.5 py-5 flex-col gap-1.5 divide-y divide-navy-700 [&>*:not(:last-child)]:pb-3.5 overflow-y-auto sticky top-(--site-header-h) max-h-[calc(100dvh-var(--site-header-h))] self-start">
           <FacetSections {...facetProps} />
         </aside>
 
         {/* Main column */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Toolbar */}
-          <div className="flex items-center gap-3 px-4 md:px-6 py-3.5 bg-navy-950 border-b border-navy-600">
+          <div className="flex items-center gap-3 px-4 md:px-5.5 py-3 bg-navy-950 bg-panel-deep border-b border-navy-600">
             <input
               type="text"
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
               placeholder="Card name, effects, flavor text…"
               maxLength={50}
-              className="input-plain w-full max-w-60 min-w-0 shrink bg-navy-800 rounded px-2 py-1 text-sm text-white placeholder-gray-500"
+              className="input-plain w-full max-w-62.5 min-w-0 shrink bg-navy-800 rounded-[3px] px-2.5 py-1.5 text-sm text-white placeholder-gray-500"
             />
-            <div className="hidden sm:block text-[13px] text-gray-400 whitespace-nowrap">{shownCount}{countInexact ? '+' : ''} card{shownCount === 1 && !countInexact ? '' : 's'}</div>
+            <div className="hidden sm:block text-sm text-gray-400 whitespace-nowrap">{shownCount}{countInexact ? '+' : ''} card{shownCount === 1 && !countInexact ? '' : 's'}</div>
             <div className="hidden sm:block md:hidden w-px h-4.5 bg-navy-600" />
             <button
               onClick={() => setMobileFiltersOpen(true)}
-              className={`md:hidden px-2.5 py-1.5 text-xs whitespace-nowrap border rounded cursor-pointer ${hasFilters ? 'text-gold-300 border-gold-500' : 'text-gray-300 border-navy-500'}`}
+              className={`md:hidden px-2.5 py-1.5 text-xs whitespace-nowrap border rounded cursor-pointer ${hasFilters ? 'text-gold-400 border-gold-500' : 'text-gray-300 border-navy-600'}`}
             >
               Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </button>
@@ -503,7 +504,7 @@ export function GalleryPage() {
             {(hasFilters || search) && (
               <button
                 onClick={() => { clearFilters(); setSearchName(''); }}
-                className="text-xs text-gold-400 hover:text-white transition-colors cursor-pointer"
+                className="text-[13px] text-gold-400 hover:text-gold-100 transition-colors cursor-pointer"
               >
                 Clear
               </button>
@@ -511,19 +512,19 @@ export function GalleryPage() {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as GallerySort)}
-              className="input-plain bg-navy-800 rounded px-2 py-1 text-sm text-gold-300"
+              className="input-plain bg-navy-800 rounded-[3px] px-2 py-1 text-sm text-gold-400"
             >
               <option value="newest">Newest</option>
               <option value="name">A–Z</option>
             </select>
             <div className="hidden sm:block w-px h-4.5 bg-navy-600" />
-            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+            <div className="hidden sm:flex items-center gap-2 text-[13px] text-gray-500">
               <span>Grid</span>
               {DENSITY_OPTIONS.map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => setDensity(value)}
-                  className={`${DENSITY_BUTTON_CLASS} ${density === value ? 'text-gold-300' : 'text-gray-500 hover:text-white'}`}
+                  className={`${DENSITY_BUTTON_CLASS} ${density === value ? 'chip-selected' : 'chip-idle'}`}
                 >
                   {label}
                 </button>
@@ -561,7 +562,7 @@ export function GalleryPage() {
               <div className="text-center pt-6">
                 <button
                   onClick={loadMore}
-                  className="px-4 py-2 text-xs text-gold-400 border border-navy-600 hover:text-gold-300 hover:border-gold-500 transition-colors cursor-pointer"
+                  className="btn-tertiary px-4 py-2 text-[13px]"
                 >
                   Search more cards
                 </button>
@@ -584,7 +585,7 @@ export function GalleryPage() {
       {mobileFiltersOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex flex-col bg-navy-950">
           <div className="flex items-center gap-4 pl-4 pr-1.5 h-13 border-b border-navy-600 shrink-0">
-            <span className="text-sm font-bold text-gold-300">Filters</span>
+            <span className="font-title text-xs tracking-[.14em] uppercase text-gold-400">Filters</span>
             <div className="flex-1" />
             {hasFilters && (
               <button onClick={clearFilters} className="text-xs text-gold-400 cursor-pointer">
@@ -601,13 +602,13 @@ export function GalleryPage() {
               </svg>
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 divide-y divide-navy-600 [&>*:not(:last-child)]:pb-3.5 px-4 py-5">
+          <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 divide-y divide-navy-700 [&>*:not(:last-child)]:pb-3.5 px-4 py-5">
             <FacetSections {...facetProps} />
           </div>
           <div className="px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.875rem)] border-t border-navy-600 shrink-0">
             <button
               onClick={() => setMobileFiltersOpen(false)}
-              className="w-full h-12 bg-green-600 text-white font-semibold border-gold cursor-pointer"
+              className="btn-primary w-full h-12 text-sm"
             >
               {exactCount !== null
                 ? `Show ${exactCount} card${exactCount === 1 ? '' : 's'}`
@@ -626,9 +627,10 @@ export function GalleryPage() {
         />
       ) : loadingCard && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => closeModal()}
         >
+          <CardBackBackdrop />
           <div className={MODAL_CONTAINER_CLASS}>
             <div className={`shrink-0 rounded-[14px] bg-navy-800 animate-pulse ${MODAL_CARD_CLASS}`} style={{ aspectRatio: '238/333' }} />
             <div className={`${MODAL_DETAILS_CLASS} p-5 gap-4`}>

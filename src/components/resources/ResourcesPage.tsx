@@ -34,7 +34,7 @@ const SYMBOL_PACKS: SymbolGroup[] = [
 
 const TOTAL_SYMBOLS = SYMBOL_PACKS.reduce((n, g) => n + g.items.length, 0);
 
-const BTN_CLASS = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-navy-700 hover:bg-navy-600 text-gold-300 transition-colors';
+const BTN_CLASS = 'btn-tertiary inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px]';
 
 function downloadAsset(path: string, filename: string) {
   const a = document.createElement('a');
@@ -47,7 +47,7 @@ function SectionHeading({ title, count }: { title: string; count?: string }) {
   return (
     <div className="flex items-baseline gap-3 mb-4.5">
       <h2 className="font-title font-normal text-2xl text-gold-400 m-0">{title}</h2>
-      {count && <span className="text-xs text-gray-500">{count}</span>}
+      {count && <span className="text-[13px] text-gray-500">{count}</span>}
     </div>
   );
 }
@@ -56,14 +56,14 @@ function AssetCard({ asset }: { asset: AssetDownload }) {
   return (
     <button
       onClick={() => downloadAsset(asset.path, asset.filename)}
-      className="bg-navy-900 border border-navy-600 overflow-hidden cursor-pointer hover:border-gold-400 transition-colors text-left"
+      className="bg-panel-v border border-navy-600 overflow-hidden cursor-pointer hover:border-gold-400 transition-colors text-left"
     >
       <div className="flex items-center justify-center bg-navy-990 border-b border-navy-600 p-3.5 h-42.5">
         <img src={asset.path} alt={asset.name} className="max-h-full max-w-full object-contain" />
       </div>
       <div className="p-3.5">
-        <h3 className="text-sm font-bold text-white mb-1 m-0">{asset.name}</h3>
-        <p className="text-xs text-gray-500 mb-3 m-0">{asset.description}</p>
+        <h3 className="text-[15px] font-bold text-white mb-1 m-0">{asset.name}</h3>
+        <p className="text-[13px] text-gray-500 mb-3 m-0">{asset.description}</p>
         <span className={BTN_CLASS}>Download PNG</span>
       </div>
     </button>
@@ -80,7 +80,7 @@ function FontCard({ name, fontFamily, description, url, size }: {
   return (
     <a
       href={url} target="_blank" rel="noopener noreferrer"
-      className="block bg-navy-900 border border-navy-600 p-5 cursor-pointer hover:border-gold-400 transition-colors"
+      className="block bg-panel-v border border-navy-600 p-5 cursor-pointer hover:border-gold-400 transition-colors"
     >
       <p className="text-white mb-1.5 m-0" style={{ fontFamily, fontSize: size }}>{name}</p>
       <p className="text-[13px] text-gray-400 mb-3.5 m-0">{description}</p>
@@ -116,12 +116,12 @@ function SymbolPackSection({ group }: { group: SymbolGroup }) {
 
 export function ResourcesPage() {
   return (
-    <div className="min-h-dvh bg-navy-950 text-white">
+    <div className="min-h-dvh bg-navy-950 text-white font-body">
       <SiteHeader sticky />
       <div className="max-w-5xl mx-auto px-6 md:px-10 pt-12 pb-18 flex flex-col gap-11">
         <header>
           <PageTitle className="mb-3.5">Resources</PageTitle>
-          <p className="text-[20px] leading-normal text-gray-300 m-0 mb-4" style={{ fontFamily: FONT_BODY }}>
+          <p className="text-[20px] leading-normal text-gray-300 m-0 mb-4">
             Everything you need to get started with OpenZoo.
           </p>
           <nav className="flex flex-wrap gap-2">
@@ -129,7 +129,7 @@ export function ResourcesPage() {
               <a
                 key={section}
                 href={`#${section.toLowerCase().replace(/ /g, '-')}`}
-                className="px-3.5 py-1.5 text-[13px] bg-navy-800 hover:bg-navy-700 text-gold-300 transition-colors border-gold"
+                className="btn-tertiary px-3.5 py-1.5 text-sm"
               >
                 {section}
               </a>
@@ -141,7 +141,7 @@ export function ResourcesPage() {
           <SectionHeading title="Rulebook" />
           <Link
             to="/rulebook"
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 bg-navy-900 border-gold px-5.5 py-5"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 bg-panel-v border border-gold-600 px-5.5 py-5"
           >
             <span>
               <span className="block text-base font-bold text-white mb-1">OpenZoo Rulebook version 0.1</span>
@@ -150,7 +150,7 @@ export function ResourcesPage() {
               </span>
               <span className="block text-xs text-gray-500">Updated March 29, 2026</span>
             </span>
-            <span className="shrink-0 self-start sm:self-auto px-4.5 py-2.25 text-[13px] font-semibold bg-navy-700 hover:bg-navy-600 text-gold-300 transition-colors">
+            <span className="btn-tertiary shrink-0 self-start sm:self-auto px-4.5 py-2.25 text-sm">
               Read Rulebook →
             </span>
           </Link>

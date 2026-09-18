@@ -8,9 +8,9 @@ function Accordion({ title, defaultOpen = true, children }: { title: string; def
     <div className="border border-navy-600 rounded overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2 bg-navy-800 hover:bg-navy-700 transition-colors text-left"
+        className="w-full flex items-center justify-between px-3 py-2.25 bg-linear-to-b from-navy-700 to-navy-800 hover:from-navy-600 transition-colors text-left"
       >
-        <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">{title}</span>
+        <span className="font-title text-[10px] text-gray-300 uppercase tracking-[.12em]">{title}</span>
         <span className="text-gray-300 text-xs">{open ? '▾' : '▸'}</span>
       </button>
       {open && <div className="p-3 space-y-3">{children}</div>}
@@ -58,7 +58,7 @@ function TokenTable({ query = '' }: { query?: string }) {
   if (tokens.length === 0) return null;
   return (
     <div>
-      <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Text Tokens</h4>
+      <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Text Tokens</h4>
       <div className="space-y-0.5">
         {tokens.map(([token, desc]) => (
           <div key={token} className="flex items-center gap-2">
@@ -76,7 +76,7 @@ function IconGroup({ title, items, query = '' }: { title: string; items: readonl
   if (shown.length === 0) return null;
   return (
     <div>
-      <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">{title} ({shown.length})</h4>
+      <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">{title} ({shown.length})</h4>
       <div className="flex flex-wrap gap-0.5">
         {shown.map((name) => (
           <CopyChip key={name} text={`{${name}}`} />
@@ -96,7 +96,7 @@ function ClassesCheatSheet({ query = '' }: { query?: string }) {
       <IconGroup title="Status Effects" items={STATUS_EFFECTS} query={query} />
       {matches(query, 'custom icon') && (
         <div>
-          <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Custom Icon</h4>
+          <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Custom Icon</h4>
           <CopyChip text="{path/to/image.png, scale, offset}" />
           <p className="text-[10px] text-gray-400 mt-0.5">
             scale = height in em (0.9), offset = vertical shift (0.1)
@@ -132,7 +132,7 @@ function FormattingRules({ query = '' }: { query?: string }) {
     <>
       {rules.length > 0 && (
         <div>
-          <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">When to use</h4>
+          <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">When to use</h4>
           <div className="space-y-1.5">
             {rules.map(([what, cls, ex]) => (
               <div key={what}>
@@ -149,7 +149,7 @@ function FormattingRules({ query = '' }: { query?: string }) {
 
       {plain.length > 0 && (
         <div>
-          <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Plain text</h4>
+          <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Plain text</h4>
           <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
             {plain.map((line) => <li key={line}>{line}</li>)}
           </ul>
@@ -159,14 +159,14 @@ function FormattingRules({ query = '' }: { query?: string }) {
       {showNotes && (
         <>
           <div>
-            <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Effect amounts</h4>
+            <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Effect amounts</h4>
             <p className="text-[10px] text-gray-400">
               Bold the numbers the Effect operates on: Damage, LP, ATK/LP grants, Aura Costs, and counts of Pages
               targeted, Bookmarked, or Counters placed.
             </p>
           </div>
           <div>
-            <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Nesting</h4>
+            <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Nesting</h4>
             <p className="text-[10px] text-gray-400">
               <span className="text-gray-300">{'{B:}'}</span> inside{' '}
               <span className="text-gray-300">{'{I:}'}</span> already renders bold <em>and</em> italic, so always pick
@@ -174,14 +174,14 @@ function FormattingRules({ query = '' }: { query?: string }) {
             </p>
           </div>
           <div>
-            <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">4th Wall</h4>
+            <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">4th Wall</h4>
             <p className="text-[10px] text-gray-400">
               Use the effect block's 4th wall checkbox, not a <span className="text-gray-300">{'{Star}'}</span> or an inner{' '}
               <span className="text-gray-300">{'{I:...}'}</span>. The star italicizes the whole block.
             </p>
           </div>
           <div>
-            <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">No markdown</h4>
+            <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">No markdown</h4>
             <p className="text-[10px] text-gray-400">
               <span className="text-gray-300">**bold**</span> is reserved for keyword labels: ARENA, CONTRACT, etc. Use{' '}
               <span className="text-gray-300">{'{B:}'}</span> in your own text.
@@ -198,7 +198,7 @@ function DesignBible() {
     <>
       {/* Effect Writing */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Effect Writing</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Effect Writing</h4>
         <p className="text-[10px] text-gray-300 font-mono bg-navy-800 rounded px-2 py-1">
           TARGET(S) &mdash; ACTION &mdash; QUALITY/QUANTITY
         </p>
@@ -209,13 +209,13 @@ function DesignBible() {
 
       {/* Capitalization */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Always Capitalized</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Always Capitalized</h4>
         <p className="text-[10px] text-gray-400 leading-relaxed">
           4th Wall Effect, Action(s), Arena, Artifact, Attack(s), Aura, Aura Cost, Awakened, Beastie, Bookmark, Caster, Chapter, Combat, Contract, Counter(s), Damage, Defender, Destroy, Destroyed, Discard, Effect(s), Enter, Equip, Fatigue, Indicator(s), Life Points, Page, Page Type, Potion, Power, Spell, Spellbook, Status Effect(s), Terra, Token, Trait(s), Tribe(s), Type Advantage
         </p>
       </div>
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Never Capitalized</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Never Capitalized</h4>
         <p className="text-[10px] text-gray-400 leading-relaxed">
           affect, another, burrow, control(s), controller, copy, declare, gain(s), inflict(s), name, non, nullify, own(s), owner(s), pay, place, recover(s), turn
         </p>
@@ -223,7 +223,7 @@ function DesignBible() {
 
       {/* Numbers */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Numbers</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Numbers</h4>
         <p className="text-[10px] text-gray-400">
           <span className="text-gray-300">Digits</span> for quantitative (10 Damage, Bookmark 2, +10 LP)
         </p>
@@ -234,7 +234,7 @@ function DesignBible() {
 
       {/* 4th Wall */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">4th Wall Rules</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">4th Wall Rules</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li>Keywords are NOT italicized in 4th Wall</li>
           <li>The star italicizes the whole block; extra sentences are fine</li>
@@ -245,7 +245,7 @@ function DesignBible() {
 
       {/* Dealing Damage */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Dealing Damage</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Dealing Damage</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li>"Target Beastie is dealt 10 Damage."</li>
           <li>"Target Beastie or Caster is dealt 10 Damage."</li>
@@ -259,7 +259,7 @@ function DesignBible() {
 
       {/* Referencing Pages & Casters */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Referencing Pages & Casters</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Referencing Pages & Casters</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li><span className="text-gray-300">In Arena</span> = reference by Page Type ("This Beastie...")</li>
           <li><span className="text-gray-300">In Chapter</span> = reference as "Page"</li>
@@ -272,7 +272,7 @@ function DesignBible() {
 
       {/* If Statements */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">"If" Statements</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">"If" Statements</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li>"If" always at the start of the sentence</li>
           <li>Comma after qualifier: "If [x], [y]."</li>
@@ -283,7 +283,7 @@ function DesignBible() {
 
       {/* Status Effects */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Status Effects</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Status Effects</h4>
         <p className="text-[10px] text-gray-400">
           Use <span className="text-gray-300">"is inflicted with [Status]"</span> not "inflict [Status] on"
         </p>
@@ -291,7 +291,7 @@ function DesignBible() {
 
       {/* Place / Send */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Place / Send Syntax</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Place / Send Syntax</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li>"Place [Page] into [zone]"</li>
           <li>"Place [Page] from [zone] into [zone]"</li>
@@ -302,7 +302,7 @@ function DesignBible() {
 
       {/* Control Language */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Control Language</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Control Language</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li><span className="text-gray-300">"you control"</span> = current game state / Arena</li>
           <li><span className="text-gray-300">"under your control"</span> = placing into Arena</li>
@@ -312,7 +312,7 @@ function DesignBible() {
 
       {/* Triggered Keywords */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Triggered Keywords</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Triggered Keywords</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li><span className="text-gray-300">"Each time" / "When"</span> = goes on chain</li>
           <li><span className="text-gray-300">"Instead"</span> = replacement effect</li>
@@ -322,7 +322,7 @@ function DesignBible() {
 
       {/* Declare vs Choose */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Declare vs Choose</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Declare vs Choose</h4>
         <p className="text-[10px] text-gray-400">
           <span className="text-gray-300">"declare"</span> = selecting a passive effect;{' '}
           <span className="text-gray-300">"choose"</span> = selecting a target
@@ -331,7 +331,7 @@ function DesignBible() {
 
       {/* Token Creation */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Token Creation</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Token Creation</h4>
         <p className="text-[10px] text-gray-300 font-mono bg-navy-800 rounded px-2 py-1 leading-relaxed">
           Create [#] Name Token(s) (## LP [Aura] [Type] [Tribe] with [## Damage Attack] [Aura Advantage] [Traits] [Terra Bonuses] and the Effect "...").
         </p>
@@ -343,7 +343,7 @@ function DesignBible() {
 
       {/* Terra 4th Wall Phrasing */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Terra in 4th Wall Text</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Terra in 4th Wall Text</h4>
         <p className="text-[10px] text-gray-400 mb-1">
           Use descriptive phrasing (not icons) for terra conditions:
         </p>
@@ -359,7 +359,7 @@ function DesignBible() {
 
       {/* Dual Tribes */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Dual Tribes</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Dual Tribes</h4>
         <p className="text-[10px] text-gray-400">
           Always <span className="text-gray-300">alphabetical order</span>, space-separated after Page Type.
           When referencing multiple Tribes, use <span className="text-gray-300">plural</span> form (Wolves, not Wolf).
@@ -368,7 +368,7 @@ function DesignBible() {
 
       {/* Trait Ordering */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Trait Ordering</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Trait Ordering</h4>
         <p className="text-[10px] text-gray-400 leading-relaxed">
           <span className="text-gray-300">1.</span> Ambush{' '}
           <span className="text-gray-300">2.</span> Trap{' '}
@@ -382,7 +382,7 @@ function DesignBible() {
 
       {/* Other Ordering Rules */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Other Ordering Rules</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Other Ordering Rules</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li><span className="text-gray-300">Terra Bonuses</span>: always alphabetical</li>
           <li><span className="text-gray-300">Page Types</span>: alphabetical when listing multiple</li>
@@ -392,7 +392,7 @@ function DesignBible() {
 
       {/* Aura & Cost References */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Aura & Cost References</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Aura & Cost References</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li>Generate: <span className="text-gray-300">"Generate 1 [Dark Aura]"</span> (digit + bracketed)</li>
           <li>Cost: <span className="text-gray-300">"with an Aura Cost of [number]"</span></li>
@@ -402,7 +402,7 @@ function DesignBible() {
 
       {/* Traits & Terras in Effects */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Traits & Terras in Effects</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Traits & Terras in Effects</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li>Always use <span className="text-gray-300">symbol icons</span>, never write the name</li>
           <li>Terra Bonus format: <span className="text-gray-300">[Terra] 20/20 LP</span> (no "+" prefix)</li>
@@ -411,7 +411,7 @@ function DesignBible() {
 
       {/* Has vs Gains */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">"Has" vs "Gains"</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">"Has" vs "Gains"</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li><span className="text-gray-300">"has"</span> = static conditional ("If [Terra] is active, this Beastie has [Trait]")</li>
           <li><span className="text-gray-300">"gains"</span> = temporary increase</li>
@@ -420,7 +420,7 @@ function DesignBible() {
 
       {/* Resolution Order */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Resolution Order</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Resolution Order</h4>
         <p className="text-[10px] text-gray-400">
           Effect text boxes resolve <span className="text-gray-300">top-down, left-to-right</span>. The first sentence resolves first, then the next, and so on. Keep this rule in mind when writing out complex effects.
         </p>
@@ -428,7 +428,7 @@ function DesignBible() {
 
       {/* Contractions */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Contractions</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Contractions</h4>
         <p className="text-[10px] text-gray-400">
           <span className="text-gray-300">Spell out</span> in game mechanics; <span className="text-gray-300">use contractions</span> only in Caster speech/dialogue.
         </p>
@@ -436,7 +436,7 @@ function DesignBible() {
 
       {/* Misc */}
       <div>
-        <h4 className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Common Phrases</h4>
+        <h4 className="font-title text-[10px] text-holo-mint uppercase tracking-widest mb-1.5">Common Phrases</h4>
         <ul className="text-[10px] text-gray-400 list-disc list-inside space-y-0">
           <li>"Any time" (not "anytime")</li>
           <li>"Cannot" (not "can not" or "may not")</li>
@@ -453,7 +453,7 @@ function DesignBible() {
 
 const REFERENCE_COLLAPSED_KEY = 'openzoo-reference-collapsed';
 const COLLAPSE_BUTTON_CLASS = 'w-6.5 h-6.5 border border-navy-600 text-gray-300 hover:text-white hover:border-gold-400 transition-colors text-xs cursor-pointer';
-const EYEBROW_CLASS = 'text-[11px] font-bold tracking-[.14em] uppercase text-gold-500';
+const EYEBROW_CLASS = 'font-title text-[11px] tracking-[.14em] uppercase text-gold-500';
 
 interface InfoPanelProps {
   collapsible?: boolean;
@@ -472,7 +472,7 @@ export function InfoPanel({ collapsible = false, searchable = false }: InfoPanel
 
   if (collapsible && collapsed) {
     return (
-      <div className="w-10 bg-navy-900 border-navy-600 md:border-r flex flex-col items-center gap-3 py-3 shrink-0">
+      <div className="w-10 bg-navy-900 bg-panel-deep border-navy-600 md:border-r flex flex-col items-center gap-3 py-3 shrink-0">
         <button onClick={toggleCollapsed} title="Expand reference panel" className={COLLAPSE_BUTTON_CLASS}>
           ‹
         </button>
@@ -484,7 +484,7 @@ export function InfoPanel({ collapsible = false, searchable = false }: InfoPanel
   }
 
   return (
-    <div className="w-full md:w-74 bg-navy-900 border-navy-600 md:border-r flex flex-col overflow-hidden shrink-0">
+    <div className="w-full md:w-74 bg-navy-900 bg-panel-deep border-navy-600 md:border-r flex flex-col overflow-hidden shrink-0">
       {collapsible && (
         <div className="flex items-center justify-between px-3.5 py-3 border-b border-navy-700 shrink-0">
           <span className={EYEBROW_CLASS}>Reference</span>
