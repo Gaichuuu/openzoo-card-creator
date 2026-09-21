@@ -200,12 +200,13 @@ export interface SetDef {
 export const SETS: SetDef[] = [
   { value: 'OZLegacy', label: 'Legacy', rarities: ['Bronze', 'Silver', 'Gold'] },
   { value: 'CN', label: 'Cryptid Nation', rarities: ['Bronze', 'Silver', 'Gold'] },
-  { value: 'WN', label: 'Wilderness', rarities: ['Bronze', 'Silver', 'Gold'] },
-  { value: 'NF', label: 'Nightfall', rarities: ['Bronze', 'Silver', 'Gold'] },
-  { value: 'UFO', label: 'UFO', rarities: ['Bronze', 'Silver', 'Gold'] },
-  { value: 'Seance', label: 'Seance', rarities: ['Bronze', 'Silver', 'Gold'] },
   { value: 'MetaPoo', label: 'MetaPoo', rarities: ['Bronze'] },
+  { value: 'Native', label: 'Native', rarities: ['Bronze', 'Silver', 'Gold'] },
+  { value: 'NF', label: 'Nightfall', rarities: ['Bronze', 'Silver', 'Gold'] },
   { value: 'Promo', label: 'Promo', rarities: [] },
+  { value: 'Seance', label: 'Seance', rarities: ['Bronze', 'Silver', 'Gold'] },
+  { value: 'UFO', label: 'UFO', rarities: ['Bronze', 'Silver', 'Gold'] },
+  { value: 'WN', label: 'Wilderness', rarities: ['Bronze', 'Silver', 'Gold'] },
 ];
 
 const DARK_GRADIENT = 'linear-gradient(to bottom, rgb(100,100,100), rgb(60,60,60))';
