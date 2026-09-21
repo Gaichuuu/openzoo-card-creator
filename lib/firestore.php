@@ -14,6 +14,8 @@ function parse_firestore_fields(array $fields): array {
       $result[$key] = (float)$value['doubleValue'];
     } elseif (isset($value['booleanValue'])) {
       $result[$key] = $value['booleanValue'];
+    } elseif (isset($value['timestampValue'])) {
+      $result[$key] = $value['timestampValue'];
     } elseif (isset($value['mapValue']['fields'])) {
       $result[$key] = parse_firestore_fields($value['mapValue']['fields']);
     } elseif (isset($value['arrayValue']['values'])) {
