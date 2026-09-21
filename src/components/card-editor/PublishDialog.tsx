@@ -107,7 +107,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         });
       }
 
-      if (!import.meta.env.DEV && !isUpdate) {
+      if (!import.meta.env.DEV) {
         fetch('/api/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

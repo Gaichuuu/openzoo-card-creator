@@ -128,6 +128,12 @@ describe('resolveImagePath', () => {
       expect(resolveImagePath('SeanceGold.png')).toBe('/assets/SetSymbols/SeanceGold.png');
     });
 
+    it('detects Native set symbols', () => {
+      expect(resolveImagePath('NativeBronze.png')).toBe('/assets/SetSymbols/NativeBronze.png');
+      expect(resolveImagePath('NativeSilver.png')).toBe('/assets/SetSymbols/NativeSilver.png');
+      expect(resolveImagePath('NativeGold.png')).toBe('/assets/SetSymbols/NativeGold.png');
+    });
+
     it('detects Promo set symbol', () => {
       expect(resolveImagePath('Promo.png')).toBe('/assets/SetSymbols/Promo.png');
     });

@@ -1,7 +1,6 @@
 <?php
 /**
  * Discord webhook notification endpoint.
- * POST /api/notify  { "cardId": "..." }
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -12,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
-// Origin check: only accept requests from the production site
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $referer = $_SERVER['HTTP_REFERER'] ?? '';
 $allowedOrigin = 'https://openzootcg.com';
@@ -23,7 +21,7 @@ if (!$isLocalhost && $origin !== $allowedOrigin && !str_starts_with($referer, $a
   exit;
 }
 
-// Simple file-based rate limiter: max 30 notifications per minute per IP
+// Max 30 notifications per minute per IP
 $rateLimitDir = sys_get_temp_dir() . '/openzoo-notify-rate';
 @mkdir($rateLimitDir, 0755, true);
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -62,6 +60,7 @@ if (!$webhookUrl || !$projectId) {
 }
 
 require_once dirname(__DIR__) . '/lib/firestore.php';
+require_once dirname(__DIR__) . '/lib/notifygate.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 $cardId = $input['cardId'] ?? '';
@@ -79,6 +78,12 @@ if (!$card) {
   exit;
 }
 
+$isUpdate = is_card_update($card);
+if (!notify_gate_ok($cardId, $isUpdate, time(), sys_get_temp_dir() . '/openzoo-notify-card')) {
+  echo json_encode(['ok' => true, 'skipped' => 'cooldown']);
+  exit;
+}
+
 $cardName = get_card_display_name($card);
 $desc = build_card_description($card);
 $cardUrl = "https://openzootcg.com/gallery/{$cardId}";
@@ -92,6 +97,10 @@ $embed = [
   'footer' => ['text' => 'OpenZoo TCG'],
   'timestamp' => date('c'),
 ];
+
+if ($isUpdate) {
+  $embed['author'] = ['name' => 'Card updated'];
+}
 
 if ($thumbnailUrl) {
   $embed['image'] = ['url' => $thumbnailUrl];
