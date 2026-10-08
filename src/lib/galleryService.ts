@@ -61,7 +61,13 @@ export async function publishCard(
   const ts = Date.now();
 
   const cardData = { ...snapshot.cardData };
-  const ownerUidPromise = existing ? null : ensureAnonymousUser();
+  const startedAt = performance.now();
+  let uploadBytesTotal = 0;
+  let authMs: number | undefined;
+  const ownerUidPromise = existing ? null : ensureAnonymousUser().then((uid) => {
+    authMs = Math.round(performance.now() - startedAt);
+    return uid;
+  });
 
   const uploadedUrls = new Map<string, Promise<string>>();
   const uploadDataUrl = (dataUrl: string, name: string, ext = 'png'): Promise<string> => {
@@ -69,7 +75,9 @@ export async function publishCard(
     if (!pending) {
       pending = (async () => {
         const storageRef = ref(storage, `cards/${cardId}/${versionedName(name, ext, ts)}`);
-        await uploadBlob(dataUrlToBlob(dataUrl), storageRef);
+        const blob = dataUrlToBlob(dataUrl);
+        uploadBytesTotal += blob.size;
+        await uploadBlob(blob, storageRef);
         return getDownloadURL(storageRef);
       })();
       uploadedUrls.set(dataUrl, pending);
@@ -106,8 +114,18 @@ export async function publishCard(
   }
 
   await Promise.all(uploads);
+  const uploadMs = Math.round(performance.now() - startedAt);
 
   const ownerUid = existing ? existing.ownerUid : await ownerUidPromise;
+  const client = options.client && {
+    ...options.client,
+    timing: {
+      ...options.client.timing,
+      uploadMs,
+      uploadBytes: uploadBytesTotal,
+      ...(authMs !== undefined ? { authMs } : {}),
+    },
+  };
 
   const now = Timestamp.now();
   const savedCard = {
@@ -126,12 +144,14 @@ export async function publishCard(
     remixedFrom: existing ? existing.remixedFrom : options.remixedFrom,
     remixedFromName: existing ? existing.remixedFromName : options.remixedFromName,
     ...(ownerUid ? { ownerUid } : {}),
-    ...(options.client ? { client: options.client } : {}),
+    ...(client ? { client } : {}),
     createdAt: existing ? Timestamp.fromDate(existing.createdAt) : now,
     updatedAt: now,
   };
 
+  const writeStartedAt = performance.now();
   await setDoc(doc(db, 'cards', cardId), savedCard);
+  console.info('Publish timing (ms):', { ...client?.timing, writeMs: Math.round(performance.now() - writeStartedAt) });
   invalidateCountsCache();
   return cardId;
 }

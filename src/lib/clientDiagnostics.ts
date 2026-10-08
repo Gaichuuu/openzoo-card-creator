@@ -122,6 +122,14 @@ const FONT_CHECKS: [string, string][] = [
   ['garamond-b?', 'bold 9px "EB Garamond"'],
 ];
 
+export interface PublishTiming {
+  renderMs?: number;
+  thumbMs?: number;
+  uploadMs?: number;
+  uploadBytes?: number;
+  authMs?: number;
+}
+
 export interface ClientDiagnostics extends BrowserInfo {
   appVersion: string;
   dpr: number;
@@ -132,6 +140,7 @@ export interface ClientDiagnostics extends BrowserInfo {
   mainPitch?: number;
   pillFont?: number;
   health?: ZoneHealth;
+  timing?: PublishTiming;
 }
 
 const MAIN_SELECTOR = '[data-zone-key="MainText"],[data-zone-key="MainTextBox"]';
