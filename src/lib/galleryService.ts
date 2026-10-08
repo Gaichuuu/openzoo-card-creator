@@ -42,6 +42,12 @@ interface PublishOptions {
   client?: ClientDiagnostics;
 }
 
+const knownUploads = new Map<string, string>();
+
+export function rememberUploadedImage(dataUrl: string, url: string): void {
+  if (dataUrl.startsWith('data:image/') && url.startsWith('http')) knownUploads.set(dataUrl, url);
+}
+
 async function uploadBlob(blob: Blob, storageRef: ReturnType<typeof ref>): Promise<void> {
   if (blob.size > MAX_UPLOAD_BYTES) {
     const sizeMB = (blob.size / (1024 * 1024)).toFixed(1);
@@ -72,13 +78,20 @@ export async function publishCard(
   const uploadedUrls = new Map<string, Promise<string>>();
   const uploadDataUrl = (dataUrl: string, name: string, ext = 'png'): Promise<string> => {
     let pending = uploadedUrls.get(dataUrl);
+    const known = knownUploads.get(dataUrl);
+    if (!pending && known && known.includes(encodeURIComponent(`cards/${cardId}/`))) {
+      pending = Promise.resolve(known);
+      uploadedUrls.set(dataUrl, pending);
+    }
     if (!pending) {
       pending = (async () => {
         const storageRef = ref(storage, `cards/${cardId}/${versionedName(name, ext, ts)}`);
         const blob = dataUrlToBlob(dataUrl);
         uploadBytesTotal += blob.size;
         await uploadBlob(blob, storageRef);
-        return getDownloadURL(storageRef);
+        const url = await getDownloadURL(storageRef);
+        if (name !== 'thumb') rememberUploadedImage(dataUrl, url);
+        return url;
       })();
       uploadedUrls.set(dataUrl, pending);
     }
