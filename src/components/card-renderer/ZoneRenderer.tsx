@@ -93,6 +93,7 @@ const ATTACK_EFFECT_FIX: CSSProperties = {
 const FLAVOR_TEXT_FIX: CSSProperties = {
   lineHeight: '0.95',
 };
+const FLAVOR_EXTRA_LINE_GAIN = 1.1;
 const METADATA_TEXT_FIX: CSSProperties = {
   lineHeight: '8px',
 };
@@ -365,29 +366,39 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       const flavorCs = getComputedStyle(el);
       const lineHeightPx = parseFloat(flavorCs.lineHeight);
       const padding = (parseFloat(flavorCs.paddingTop) || 0) + (parseFloat(flavorCs.paddingBottom) || 0);
-      const maxContentH = lineHeightPx > 0
-        ? Math.max(1, Math.floor((baseHeight - padding) / lineHeightPx)) * lineHeightPx + padding + 0.1
-        : baseHeight;
+      const baseLines = lineHeightPx > 0
+        ? Math.max(1, Math.floor((baseHeight - padding) / lineHeightPx))
+        : 0;
 
-      let lo = 0.1;
-      let hi = 1.0;
-      let bestRatio = lo;
+      const searchRatio = (maxLines: number) => {
+        const maxContentH = maxLines > 0 ? maxLines * lineHeightPx + padding + 0.5 : baseHeight;
+        let lo = 0.1;
+        let hi = 1.0;
+        let best = lo;
 
-      for (let i = 0; i < 12; i++) {
-        const mid = (lo + hi) / 2;
-        el.style.zoom = '1';
-        el.style.setProperty('--oz-zoom', '1');
-        el.style.height = 'auto';
-        el.style.width = `${baseWidth / mid}px`;
-        const contentH = el.offsetHeight;
-        const visualH = contentH * mid;
+        for (let i = 0; i < 12; i++) {
+          const mid = (lo + hi) / 2;
+          el.style.zoom = '1';
+          el.style.setProperty('--oz-zoom', '1');
+          el.style.height = 'auto';
+          el.style.width = `${baseWidth / mid}px`;
+          const contentH = el.offsetHeight;
+          const visualH = contentH * mid;
 
-        if (visualH <= baseHeight && contentH <= maxContentH) {
-          bestRatio = mid;
-          lo = mid;
-        } else {
-          hi = mid;
+          if (visualH <= baseHeight && contentH <= maxContentH) {
+            best = mid;
+            lo = mid;
+          } else {
+            hi = mid;
+          }
         }
+        return best;
+      };
+
+      let bestRatio = searchRatio(baseLines);
+      if (baseLines > 0) {
+        const extraRatio = searchRatio(baseLines + 1);
+        if (extraRatio >= bestRatio * FLAVOR_EXTRA_LINE_GAIN) bestRatio = extraRatio;
       }
 
       el.style.zoom = String(bestRatio);
