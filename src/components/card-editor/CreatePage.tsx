@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CardEditor } from './CardEditor';
 import { useCardStore } from '@/lib/store';
-import { fetchCard } from '@/lib/galleryService';
+import { fetchCard, rememberUploadedImage } from '@/lib/galleryService';
 import { fetchAsDataUrl } from '@/lib/exportUtils';
 import { getCurrentUid } from '@/lib/auth';
 
@@ -51,7 +51,9 @@ export function CreatePage() {
         let cardArtUrl = card.cardArtUrl;
         if (cardArtUrl && cardArtUrl.startsWith('http')) {
           try {
-            cardArtUrl = await fetchAsDataUrl(cardArtUrl);
+            const storedUrl = cardArtUrl;
+            cardArtUrl = await fetchAsDataUrl(storedUrl);
+            rememberUploadedImage(cardArtUrl, storedUrl);
           } catch {
             console.warn(
               'Could not fetch card art for remix (CORS). ' +

@@ -54,7 +54,10 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
     try {
       cardRef.current.classList.add('card-exporting');
       applyBackendClass(cardRef.current);
+      const renderStartedAt = performance.now();
       const rawDataUrl = await exportStandardPng(cardRef.current, false);
+      const renderMs = Math.round(performance.now() - renderStartedAt);
+      const thumbStartedAt = performance.now();
       const cardEl = cardRef.current;
       const { thumbnailDataUrl, health } = await new Promise<{
         thumbnailDataUrl: string; health: ZoneHealth | null;
@@ -84,6 +87,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
 
       const client = collectClientDiagnostics(cardEl);
       if (health) client.health = health;
+      client.timing = { renderMs, thumbMs: Math.round(performance.now() - thumbStartedAt) };
 
       const snapshot = getSnapshot();
 

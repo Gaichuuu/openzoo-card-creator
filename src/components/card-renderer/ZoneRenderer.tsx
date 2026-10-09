@@ -93,6 +93,7 @@ const ATTACK_EFFECT_FIX: CSSProperties = {
 const FLAVOR_TEXT_FIX: CSSProperties = {
   lineHeight: '0.95',
 };
+const FLAVOR_EXTRA_LINE_GAIN = 1.1;
 const METADATA_TEXT_FIX: CSSProperties = {
   lineHeight: '8px',
 };
@@ -352,6 +353,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       el.style.zoom = '1';
 
       el.style.setProperty('--oz-zoom', '1');
+      el.style.lineHeight = '';
+      el.style.marginTop = '0px';
       el.style.height = 'auto';
       el.style.width = `${baseWidth}px`;
       const nativeHeight = el.offsetHeight;
@@ -363,47 +366,54 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       }
 
       const flavorCs = getComputedStyle(el);
-      const lineHeightPx = parseFloat(flavorCs.lineHeight);
+      const basePitch = parseFloat(flavorCs.lineHeight) || 1;
       const padding = (parseFloat(flavorCs.paddingTop) || 0) + (parseFloat(flavorCs.paddingBottom) || 0);
-      const maxContentH = lineHeightPx > 0
-        ? Math.max(1, Math.floor((baseHeight - padding) / lineHeightPx)) * lineHeightPx + padding + 0.1
-        : baseHeight;
+      const baseLines = Math.max(1, Math.floor((baseHeight - padding) / basePitch));
 
-      let lo = 0.1;
-      let hi = 1.0;
-      let bestRatio = lo;
-
-      for (let i = 0; i < 12; i++) {
-        const mid = (lo + hi) / 2;
+      const measure = (ratio: number) => {
+        const pitch = Math.max(1, Math.round(basePitch * ratio));
         el.style.zoom = '1';
         el.style.setProperty('--oz-zoom', '1');
         el.style.height = 'auto';
-        el.style.width = `${baseWidth / mid}px`;
-        const contentH = el.offsetHeight;
-        const visualH = contentH * mid;
+        el.style.lineHeight = `${pitch / ratio}px`;
+        el.style.width = `${baseWidth / ratio}px`;
+        const lines = Math.max(1, Math.round((el.offsetHeight - padding) / (pitch / ratio)));
+        return { lines, pitch, visualHeight: lines * pitch + padding * ratio };
+      };
 
-        if (visualH <= baseHeight && contentH <= maxContentH) {
-          bestRatio = mid;
-          lo = mid;
-        } else {
-          hi = mid;
+      const searchRatio = (maxLines: number) => {
+        let lo = 0.1;
+        let hi = 1.0;
+        let best = lo;
+
+        for (let i = 0; i < 12; i++) {
+          const mid = (lo + hi) / 2;
+          const m = measure(mid);
+
+          if (m.visualHeight <= baseHeight && m.lines <= maxLines) {
+            best = mid;
+            lo = mid;
+          } else {
+            hi = mid;
+          }
         }
-      }
+        return best;
+      };
 
+      let bestRatio = searchRatio(baseLines);
+      const extraRatio = searchRatio(baseLines + 1);
+      if (extraRatio >= bestRatio * FLAVOR_EXTRA_LINE_GAIN) bestRatio = extraRatio;
+
+      const final = measure(bestRatio);
       el.style.zoom = String(bestRatio);
-
       el.style.setProperty('--oz-zoom', String(bestRatio));
-      el.style.width = `${baseWidth / bestRatio}px`;
-      el.style.height = 'auto';
-      el.style.marginTop = '0px';
-      const finalHeight = el.offsetHeight;
-      el.style.height = `${finalHeight}px`;
+      el.style.height = `${final.visualHeight / bestRatio}px`;
 
-      const visualHeight = finalHeight * bestRatio;
-      const gap = baseHeight - visualHeight;
-      if (gap > 1) {
-        el.style.marginTop = `${gap / (2 * bestRatio)}px`;
-      }
+      // The zone sits `top` px below the box it is drawn in, so centring inside the zone
+      // left shrunk text low; take the offset back out of the top margin.
+      const zoneTop = parseFloat(zone.style.top as string) || 0;
+      const gap = baseHeight - final.visualHeight;
+      el.style.marginTop = `${Math.max(0, gap / 2 - zoneTop) / bestRatio}px`;
       return;
     }
 

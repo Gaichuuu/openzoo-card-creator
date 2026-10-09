@@ -42,6 +42,12 @@ interface PublishOptions {
   client?: ClientDiagnostics;
 }
 
+const knownUploads = new Map<string, string>();
+
+export function rememberUploadedImage(dataUrl: string, url: string): void {
+  if (dataUrl.startsWith('data:image/') && url.startsWith('http')) knownUploads.set(dataUrl, url);
+}
+
 async function uploadBlob(blob: Blob, storageRef: ReturnType<typeof ref>): Promise<void> {
   if (blob.size > MAX_UPLOAD_BYTES) {
     const sizeMB = (blob.size / (1024 * 1024)).toFixed(1);
@@ -61,16 +67,31 @@ export async function publishCard(
   const ts = Date.now();
 
   const cardData = { ...snapshot.cardData };
-  const ownerUidPromise = existing ? null : ensureAnonymousUser();
+  const startedAt = performance.now();
+  let uploadBytesTotal = 0;
+  let authMs: number | undefined;
+  const ownerUidPromise = existing ? null : ensureAnonymousUser().then((uid) => {
+    authMs = Math.round(performance.now() - startedAt);
+    return uid;
+  });
 
   const uploadedUrls = new Map<string, Promise<string>>();
   const uploadDataUrl = (dataUrl: string, name: string, ext = 'png'): Promise<string> => {
     let pending = uploadedUrls.get(dataUrl);
+    const known = knownUploads.get(dataUrl);
+    if (!pending && known && known.includes(encodeURIComponent(`cards/${cardId}/`))) {
+      pending = Promise.resolve(known);
+      uploadedUrls.set(dataUrl, pending);
+    }
     if (!pending) {
       pending = (async () => {
         const storageRef = ref(storage, `cards/${cardId}/${versionedName(name, ext, ts)}`);
-        await uploadBlob(dataUrlToBlob(dataUrl), storageRef);
-        return getDownloadURL(storageRef);
+        const blob = dataUrlToBlob(dataUrl);
+        uploadBytesTotal += blob.size;
+        await uploadBlob(blob, storageRef);
+        const url = await getDownloadURL(storageRef);
+        if (name !== 'thumb') rememberUploadedImage(dataUrl, url);
+        return url;
       })();
       uploadedUrls.set(dataUrl, pending);
     }
@@ -106,8 +127,18 @@ export async function publishCard(
   }
 
   await Promise.all(uploads);
+  const uploadMs = Math.round(performance.now() - startedAt);
 
   const ownerUid = existing ? existing.ownerUid : await ownerUidPromise;
+  const client = options.client && {
+    ...options.client,
+    timing: {
+      ...options.client.timing,
+      uploadMs,
+      uploadBytes: uploadBytesTotal,
+      ...(authMs !== undefined ? { authMs } : {}),
+    },
+  };
 
   const now = Timestamp.now();
   const savedCard = {
@@ -126,12 +157,14 @@ export async function publishCard(
     remixedFrom: existing ? existing.remixedFrom : options.remixedFrom,
     remixedFromName: existing ? existing.remixedFromName : options.remixedFromName,
     ...(ownerUid ? { ownerUid } : {}),
-    ...(options.client ? { client: options.client } : {}),
+    ...(client ? { client } : {}),
     createdAt: existing ? Timestamp.fromDate(existing.createdAt) : now,
     updatedAt: now,
   };
 
+  const writeStartedAt = performance.now();
   await setDoc(doc(db, 'cards', cardId), savedCard);
+  console.info('Publish timing (ms):', { ...client?.timing, writeMs: Math.round(performance.now() - writeStartedAt) });
   invalidateCountsCache();
   return cardId;
 }
