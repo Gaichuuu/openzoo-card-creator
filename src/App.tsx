@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { LandingPage } from '@/components/landing/LandingPage';
 import { CreatePage } from '@/components/card-editor/CreatePage';
@@ -6,6 +6,8 @@ import { GalleryPage } from '@/components/gallery/GalleryPage';
 import { AboutPage } from '@/components/about/AboutPage';
 import { RulebookPage } from '@/components/rulebook/RulebookPage';
 import { ResourcesPage } from '@/components/resources/ResourcesPage';
+
+const HoloLab = lazy(() => import('@/components/holo-lab/HoloLab'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -32,6 +34,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/rulebook" element={<RulebookPage />} />
         <Route path="/resources" element={<ResourcesPage />} />
+        <Route path="/holo-lab" element={<Suspense fallback={null}><HoloLab /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );

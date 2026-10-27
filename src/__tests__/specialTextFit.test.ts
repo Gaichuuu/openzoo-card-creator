@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickSpecialTextFont, specialTextPitch, SPECIAL_TEXT_MIN_FONT } from '@/lib/specialTextFit';
+import { artWindowHeight, pickSpecialTextFont, specialTextPitch, SPECIAL_TEXT_MIN_FONT } from '@/lib/specialTextFit';
 
 describe('specialTextPitch', () => {
   it('uses font + 1 on a half-pixel grid', () => {
@@ -33,5 +33,20 @@ describe('pickSpecialTextFont', () => {
   it('raises the start font with negative shrink', () => {
     expect(pickSpecialTextFont(8, -10, () => true)).toBe(9);
     expect(pickSpecialTextFont(8, -10, (f) => f <= 8.5)).toBe(8.5);
+  });
+});
+
+describe('artWindowHeight', () => {
+  it('keeps the base height when the text box has not grown', () => {
+    expect(artWindowHeight(238, 0)).toBe(238);
+  });
+
+  it('shrinks by the growth so the art window ends where the grown box starts', () => {
+    expect(artWindowHeight(238, 7)).toBe(231);
+    expect(artWindowHeight(234, 18)).toBe(216);
+  });
+
+  it('ignores negative growth', () => {
+    expect(artWindowHeight(238, -3)).toBe(238);
   });
 });

@@ -24,6 +24,8 @@ import { db, storage } from './firebase';
 import { readSessionStorage, writeSessionStorage, removeSessionStorage } from './safeStorage';
 import { dataUrlToBlob, MAX_UPLOAD_BYTES } from './exportUtils';
 import { ensureAnonymousUser } from './auth';
+import { sanitizeCustomStyle, sanitizePopOutUrl } from './customStyle';
+import { sanitizeHolo } from './holo/holoSettings';
 import { generateId, versionedName } from './publishUtils';
 import type { ClientDiagnostics } from './clientDiagnostics';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
@@ -120,6 +122,11 @@ export async function publishCard(
     uploads.push(uploadDataUrl(cardArtUrl, 'art').then((url) => { cardArtUrl = url; }));
   }
 
+  let popOutUrl = snapshot.popOutUrl || null;
+  if (popOutUrl && popOutUrl.startsWith('data:image/')) {
+    uploads.push(uploadDataUrl(popOutUrl, 'popout').then((url) => { popOutUrl = url; }));
+  }
+
   let thumbnailUrl = '';
   if (thumbnailDataUrl) {
     const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
@@ -146,6 +153,8 @@ export async function publishCard(
     id: cardId,
     cardData,
     cardArtUrl,
+    customStyle: snapshot.customStyle ?? null,
+    popOutUrl,
     customPrimary,
     customSecondary,
     effectBlocks: snapshot.effectBlocks.map(blockToPlain),
@@ -212,6 +221,9 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     artNeeded: (data.artNeeded ?? tags.includes('Art Needed')) as boolean,
     thumbnailUrl: (data.thumbnailUrl || '') as string,
     cardArtUrl: (data.cardArtUrl || '') as string,
+    customStyle: sanitizeCustomStyle(data.customStyle),
+    popOutUrl: sanitizePopOutUrl(data.popOutUrl),
+    holo: sanitizeHolo(data.holo),
     creatorName: (data.creatorName || '') as string,
     ownerUid: (data.ownerUid || null) as string | null,
     tags,

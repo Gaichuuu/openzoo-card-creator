@@ -3,7 +3,7 @@ import { INLINE_CLASSES, INLINE_CLASS_OUTLINES, getVariables } from '@/data/inli
 import { wrapOutline } from '@/lib/outlineUtils';
 import { resolveImagePath } from '@/lib/imagePathResolver';
 import { useCardStore } from '@/lib/store';
-import { expandVariables, parseSegments, stripHtml } from '@/lib/textParserUtils';
+import { expandVariables, parseSegments, splitLineBreaks, stripHtml } from '@/lib/textParserUtils';
 import type { Segment } from '@/lib/textParserUtils';
 
 function renderInlineImage(content: string, key: string): React.ReactNode {
@@ -31,7 +31,7 @@ function renderInlineImage(content: string, key: string): React.ReactNode {
 }
 
 function renderTextWithBreaks(text: string, keyPrefix: string): React.ReactNode {
-  const lines = text.split(/\n|(?:^|\s)\/(?:\s|$)/);
+  const lines = splitLineBreaks(text);
   if (lines.length === 1) return renderMarkdown(text, keyPrefix);
 
   return (

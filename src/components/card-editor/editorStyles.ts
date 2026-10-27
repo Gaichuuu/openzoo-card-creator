@@ -1,0 +1,11 @@
+export const SECTION_LABEL = 'text-xs font-semibold text-gold-400 uppercase tracking-wider';
+export const FIELD_LABEL = 'text-xs text-gold-400';
+export const HINT = 'text-[10px] text-gold-500';
+export const CHECK_LABEL = 'text-xs text-gray-400';
+export const SUB_LABEL = 'text-[10px] text-gray-400';
+export const MICRO_BUTTON = 'h-5 px-2 text-[10px] bg-navy-700 hover:bg-navy-600 text-gray-300 hover:text-white rounded transition-colors disabled:opacity-30';
+export const SECTION_BUTTON = 'text-xs bg-linear-to-b from-select-top to-select-bot border border-gold-500 hover:border-gold-400 text-white px-2.25 py-1 transition-colors disabled:opacity-50';
+export const DANGER_LINK = 'text-xs text-crimson-400 hover:text-crimson-300 disabled:opacity-30';
+export const FULL_SELECT = 'w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:border-gold-400';
+export const SELECT = 'bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-gold-400';
+export const TEXT_LINK = 'text-[10px] text-gold-500 hover:text-white underline';

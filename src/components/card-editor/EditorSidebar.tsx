@@ -15,13 +15,13 @@ import type { Locale } from '@/data/locales';
 import { TraitSelector } from './TraitSelector';
 import { TerraSelector } from './TerraSelector';
 import { ImageUploader } from './ImageUploader';
-import { BackgroundSelector } from './BackgroundSelector';
 import { CostEditor } from './CostEditor';
 import { CryptidInfoEditor } from './CryptidInfoEditor';
 import { AuraElementSelector } from './AuraElementSelector';
 import { TerraCardSelector } from './TerraCardSelector';
 import { SetSymbolSelector } from './SetSymbolSelector';
 import { TextBoxBuilder } from './TextBoxBuilder';
+import { CustomStylingSection } from './CustomStylingSection';
 import { SpecialEffectText } from './SpecialEffectText';
 import { ExportButton } from './ExportButton';
 import { JsonExportButton } from './JsonExportButton';
@@ -536,7 +536,6 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
         <EditorSection>
           <SectionDivider />
           <ImageUploader />
-          <BackgroundSelector />
         </EditorSection>
 
         {/* Effect Text */}
@@ -613,6 +612,11 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
             placeholder="Artist name"
             maxLength={30}
           />
+        </EditorSection>
+
+        <EditorSection>
+          <SectionDivider />
+          <CustomStylingSection />
         </EditorSection>
 
         <div className="flex flex-col gap-4">

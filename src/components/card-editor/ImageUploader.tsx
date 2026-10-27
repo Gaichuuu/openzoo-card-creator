@@ -1,13 +1,19 @@
-import { useRef, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useCardStore } from '@/lib/store';
 import { CARD_TYPE_TO_LAYOUT } from '@/data/constants';
 import { MAX_UPLOAD_BYTES } from '@/lib/exportUtils';
 import { processImageFile } from '@/lib/imageUtils';
 import { Stepper } from './TextBoxBuilder';
+import { HoloControls } from './HoloControls';
+import { BackgroundSelector } from './BackgroundSelector';
+import { CollapsibleSection } from './CollapsibleSection';
+import { DropZone } from './DropZone';
+import { DANGER_LINK, HINT, MICRO_BUTTON, SECTION_LABEL } from './editorStyles';
 import { ART_ZOOM_MIN, ART_ZOOM_MAX, ART_ZOOM_STEP, ART_POS_MIN, ART_POS_MAX, artPositionCss, artZoomScale } from '@/lib/cardArtFit';
 
 const MAX_IMAGE_DIM = 1600;
 const MAX_UPLOAD_MB = MAX_UPLOAD_BYTES / (1024 * 1024);
+const POP_OUT_TYPES = ['image/png', 'image/webp'];
 
 const AXIS_ICON_PROPS = {
   viewBox: '0 0 16 16',
@@ -47,7 +53,9 @@ export function ImageUploader() {
   const setCardArtPosition = useCardStore((s) => s.setCardArtPosition);
   const zoom = useCardStore((s) => s.cardArtZoom);
   const setCardArtZoom = useCardStore((s) => s.setCardArtZoom);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const popOutUrl = useCardStore((s) => s.popOutUrl);
+  const setPopOut = useCardStore((s) => s.setPopOut);
+  const [popOutError, setPopOutError] = useState(false);
   const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
   const borderless = useCardStore((s) => s.borderless);
   const artNeeded = useCardStore((s) => s.artNeeded);
@@ -75,11 +83,18 @@ export function ImageUploader() {
     setCardArt(url);
   }
 
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
-      handleFile(file);
+  function handleArtFile(file: File) {
+    if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') handleFile(file);
+  }
+
+  async function handlePopOutFile(file: File) {
+    if (!POP_OUT_TYPES.includes(file.type)) { setPopOutError(true); return; }
+    try {
+      const { url } = await processImageFile(file, MAX_IMAGE_DIM);
+      setPopOut(url);
+      setPopOutError(false);
+    } catch {
+      setPopOutError(true);
     }
   }
 
@@ -96,19 +111,18 @@ export function ImageUploader() {
   return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between">
-        <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
+        <label className={SECTION_LABEL}>
           Card Art
         </label>
         <span className="text-[10px] text-gold-500">{ratioHint}</span>
       </div>
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        onClick={() => inputRef.current?.click()}
-        className="w-full border-gold-dashed rounded flex items-center justify-center cursor-pointer hover:border-blue-500 transition-colors overflow-hidden"
+      <DropZone
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        onFile={handleArtFile}
+        label="Upload card art"
+        className="w-full"
         style={{ aspectRatio: previewAspect }}
-      >
-        {cardArtUrl ? (
+        preview={cardArtUrl ? (
           <img
             src={cardArtUrl}
             alt="Card art"
@@ -119,25 +133,13 @@ export function ImageUploader() {
               transformOrigin: artPositionCss(posX, posY),
             }}
           />
-        ) : (
-          <span className="text-gold-500 text-sm">Drop image or click to upload</span>
-        )}
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file && file.type !== 'image/svg+xml') handleFile(file);
-        }}
-        className="hidden"
+        ) : null}
       />
       <div className="flex items-center justify-between">
         {cardArtUrl && (
           <button
             onClick={handleRemove}
-            className="text-xs text-red-400 hover:text-red-300"
+            className={DANGER_LINK}
           >
             Remove art
           </button>
@@ -156,7 +158,7 @@ export function ImageUploader() {
         <span className="text-xs text-gray-400">Art needed</span>
       </label>
       {artSizeMB !== null && artSizeMB > MAX_UPLOAD_MB && (
-        <div className="text-[11px] text-red-400">
+        <div className="text-[11px] text-crimson-400">
           Image is {artSizeMB.toFixed(1)}MB, over the {MAX_UPLOAD_MB}MB upload limit. Try a smaller image.
         </div>
       )}
@@ -176,13 +178,43 @@ export function ImageUploader() {
           <div className="flex items-center justify-end">
             <button
               onClick={handleResetFraming}
-              className="h-5 px-2 text-[10px] bg-navy-700 hover:bg-navy-600 text-gray-300 hover:text-white rounded transition-colors"
+              className={MICRO_BUTTON}
             >
               Reset
             </button>
           </div>
+          {popOutUrl && (
+            <div className={`col-span-2 ${HINT} italic`}>
+              The pop-out layer does not move with the art. Line them up in your image editor.
+            </div>
+          )}
         </div>
       )}
+      <div className="pt-2">
+        <CollapsibleSection title="Pop out layer" status={popOutUrl ? 'Added' : null}>
+          <div className="space-y-1">
+            <div className={`${HINT} text-center`}>5:7 ratio | 1500x2100 | Transparent PNG or WebP</div>
+            <DropZone
+              accept="image/png,image/webp"
+              onFile={(f) => void handlePopOutFile(f)}
+              label="Upload pop-out layer"
+              className="w-1/2 mx-auto"
+              style={{ aspectRatio: '5 / 7' }}
+              preview={popOutUrl ? <img src={popOutUrl} alt="Pop-out layer" className="w-full h-full object-contain" /> : null}
+            />
+            {popOutUrl && (
+              <button onClick={() => setPopOut(null)} className={DANGER_LINK}>
+                Remove pop-out
+              </button>
+            )}
+            {popOutError && (
+              <div className="text-[11px] text-crimson-400">Use a PNG or WebP image.</div>
+            )}
+          </div>
+        </CollapsibleSection>
+      </div>
+      <HoloControls />
+      <BackgroundSelector />
     </div>
   );
 }
