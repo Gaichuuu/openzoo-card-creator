@@ -153,7 +153,7 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
               zIndex: 60,
             }} />
           )}
-          {holo && holoAreas.includes('card') && <HoloLayer holo={holo} zIndex={61} wholeCard cornerRadius={borderless ? undefined : 10} />}
+          {holo && holoAreas.includes('card') && <HoloLayer holo={holo} zIndex={61} wholeCard cornerRadius={10} />}
         </div>
       </div>
     );
