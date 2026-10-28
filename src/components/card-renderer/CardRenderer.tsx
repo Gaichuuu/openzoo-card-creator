@@ -1,11 +1,15 @@
-import { forwardRef, useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type { LayoutType } from '@/types/layout';
-import type { CardData, CardFitSettings } from '@/types/card';
+import type { CardData, CardFitSettings, CustomStyle, HoloSettings } from '@/types/card';
+import { effectiveHoloAreas } from '@/lib/holo/holoAreas';
+import { HoloLayer, ReverseFoilLayer } from './HoloLayer';
 import { LAYOUTS } from '@/data/layouts';
 import { useCardStore } from '@/lib/store';
 import { CARD_W, CARD_H } from '@/lib/exportUtils';
 import { computeTextBoxReserve } from '@/lib/textBoxReserve';
 import { usesCeilDescent } from '@/lib/fontBackend';
+import { customPillVars, resolveBackgroundTexture, resolveCustomStyle } from '@/lib/customStyle';
+import { useArtAndBookmark } from '@/lib/holo/useArtAndBookmark';
 import { ZoneRenderer } from './ZoneRenderer';
 
 interface CardRendererProps {
@@ -15,6 +19,9 @@ interface CardRendererProps {
   borderlessOverride?: boolean;
   artNeededOverride?: boolean;
   fitOverrides?: CardFitSettings;
+  customStyleOverride?: CustomStyle | null;
+  popOutOverride?: string | null;
+  holoOverride?: HoloSettings | null;
 }
 
 function dumpEnabled(): boolean {
@@ -25,16 +32,31 @@ function dumpEnabled(): boolean {
   }
 }
 
-interface ArtRect { top: number; left: number; width: number; height: number }
-
 export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
-  ({ layoutType, cardData, scale = 2, borderlessOverride, artNeededOverride, fitOverrides }, ref) => {
+  ({ layoutType, cardData, scale = 2, borderlessOverride, artNeededOverride, fitOverrides, customStyleOverride, popOutOverride, holoOverride }, ref) => {
     const storeBorderless = useCardStore((s) => s.borderless);
     const storeArtNeeded = useCardStore((s) => s.artNeeded);
+    const storeCustomStyle = useCardStore((s) => s.customStyle);
+    const storePopOut = useCardStore((s) => s.popOutUrl);
+    const storeHolo = useCardStore((s) => s.holo);
     const artNeeded = artNeededOverride ?? storeArtNeeded;
     const borderless = borderlessOverride ?? storeBorderless;
+    const customStyle = customStyleOverride === undefined ? storeCustomStyle : customStyleOverride;
+    const popOutUrl = popOutOverride === undefined ? storePopOut : popOutOverride;
+    const holo = holoOverride === undefined ? storeHolo : holoOverride;
+    const holoAreas = useMemo(() => effectiveHoloAreas(holo, layoutType, borderless), [holo, layoutType, borderless]);
+    const reverseFoil = holoAreas.includes('reverse');
+    const zoneHoloAreas = useMemo(
+      () => (reverseFoil ? holoAreas.filter((a) => a !== 'art') : holoAreas),
+      [holoAreas, reverseFoil],
+    );
+    const backgroundTexture = customStyle ? resolveBackgroundTexture(layoutType, cardData) : null;
+    const custom = useMemo(
+      () => resolveCustomStyle(customStyle, layoutType, borderless, backgroundTexture),
+      [customStyle, layoutType, borderless, backgroundTexture],
+    );
+    const pillVars = useMemo(() => customPillVars(custom?.style), [custom]);
     const layout = LAYOUTS[layoutType];
-    const [artRect, setArtRect] = useState<ArtRect | null>(null);
     const [innerEl, setInnerEl] = useState<HTMLDivElement | null>(null);
 
     const innerRef = useCallback((node: HTMLDivElement | null) => {
@@ -60,20 +82,8 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
       }
     });
 
-    useLayoutEffect(() => {
-      if (!innerEl || !artNeeded) { setArtRect(null); return; }
-      const zone = innerEl.querySelector('[data-zone-key="CardArt"], [data-zone-key="Art"]') as HTMLElement | null;
-      if (!zone) { setArtRect(null); return; }
-      const cardBox = innerEl.getBoundingClientRect();
-      const zoneBox = zone.getBoundingClientRect();
-      const s = scale || 1;
-      setArtRect({
-        top: (zoneBox.top - cardBox.top) / s,
-        left: (zoneBox.left - cardBox.left) / s,
-        width: zoneBox.width / s,
-        height: zoneBox.height / s,
-      });
-    }, [innerEl, artNeeded, layoutType, scale]);
+    const { art, bookmark } = useArtAndBookmark(() => innerEl, artNeeded || reverseFoil, layoutType);
+    const artRect = artNeeded ? art : null;
 
     if (!layout) return <div>Unknown layout: {layoutType}</div>;
 
@@ -92,7 +102,7 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
         <div
           ref={innerRef}
           data-oz-card-root=""
-          className={borderless ? 'card-borderless' : undefined}
+          className={[borderless && 'card-borderless', reverseFoil && 'oz-holo-reverse'].filter(Boolean).join(' ') || undefined}
           style={{
             width: `${CARD_W}px`,
             height: `${CARD_H}px`,
@@ -101,9 +111,11 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
             position: 'relative',
             overflow: 'hidden',
             borderRadius: borderless ? '0' : '10px',
+            ...pillVars,
           }}
         >
-          <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
+          <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} custom={custom} holo={holo} holoAreas={zoneHoloAreas} />
+          {holo && reverseFoil && <ReverseFoilLayer holo={holo} includeArt={holoAreas.includes('art')} art={art} bookmark={bookmark} />}
           {artNeeded && artRect && (
             <div className="art-needed-overlay" style={{
               position: 'absolute',
@@ -130,6 +142,18 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
               </span>
             </div>
           )}
+          {popOutUrl && (
+            <div className="oz-popout" style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url('${popOutUrl}')`,
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+              pointerEvents: 'none',
+              zIndex: 60,
+            }} />
+          )}
+          {holo && holoAreas.includes('card') && <HoloLayer holo={holo} zIndex={61} wholeCard cornerRadius={10} />}
         </div>
       </div>
     );

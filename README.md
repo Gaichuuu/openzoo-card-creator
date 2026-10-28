@@ -7,9 +7,12 @@ Web-based card creator for the OpenZoo trading card game. Design custom cards in
 ## Features
 
 - **Editor:** upload card art with position and zoom framing, live preview, inline text formatting
-- **Card Types:** Beastie, Artifact, Spell, Potion, Aura, Terra, Token (+ Special Aura, Special Terra)
+- **Card Types:** Beastie, Artifact, Spell, Potion, Aura, Terra, Token, Special Aura, Special Terra
 - **Elements:** dual-type support with auto-resolved colors, banners, and strengths
 - **Custom Icons:** upload your own set symbols, traits, terras, aura elements, and background patterns
+- **Custom Styling:** recolor boxes, text, text outlines, and borders
+- **Card Art:** add base artwork with option for second layer that "pops out" of the art box
+- **Holo Foil:** add holographic foil patterns on the card, which shimmer as you tilt them in the gallery
 - **Effect Block System:** compose abilities and attacks with auto layout
 - **PNG Export:** standard and print-ready (with 3.5mm bleed) at 4x resolution
 - **JSON Support:** ability to export/import cards as JSON
@@ -122,6 +125,7 @@ There are no user accounts. Published cards live on the server; everything a use
 | Edit/delete access to own published cards (anonymous auth uid) | IndexedDB | Until site data is cleared |
 | Custom icon library | localStorage | Until site data is cleared (60-item cap, oldest evicted) |
 | Work-in-progress card (editor autosave) | sessionStorage | Until the tab closes |
+| Card handed to the holo lab (with images) | IndexedDB | Until the next handoff or site data is cleared |
 | Preferences (creator name, print-ready, gallery sort/density) | localStorage | Until site data is cleared |
 
 Clearing site data never affects published cards. It removes the local icon library and the anonymous identity that grants edit/delete access, so previously published cards become remix-only for that user.
@@ -134,6 +138,7 @@ src/
 │   ├── card-renderer/   # Core rendering engine (CardRenderer, ZoneRenderer, TextParser)
 │   ├── card-editor/     # Editor UI (sidebar, controls, export)
 │   ├── gallery/         # Community gallery (grid, filters, detail modal)
+│   ├── holo-lab/        # Holo Lab: 3D and gallery holo previews
 │   ├── rulebook/        # In-app rulebook (TOC, keyword tooltips)
 │   ├── resources/       # Downloads & resources page
 │   ├── about/           # Project info
@@ -149,6 +154,7 @@ src/
 │   ├── exportUtils.ts   # Shared export constants + utilities
 │   ├── galleryService.ts
 │   ├── effectComposer.ts
+│   ├── holo/            # Holo foil pattern generator, shading, export
 │   └── ...
 ├── types/               # TypeScript type definitions
 ├── App.tsx              # Router

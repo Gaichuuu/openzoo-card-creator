@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { SavedCard, CardSnapshot } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
@@ -8,6 +8,9 @@ import { exportCardPng, usePrintReady } from '@/lib/useCardExport';
 import { useAuthUid } from '@/lib/auth';
 import { deleteCard } from '@/lib/galleryService';
 import { isMeaningfullyUpdated } from '@/lib/publishUtils';
+import { sanitizeCustomStyle, sanitizePopOutUrl } from '@/lib/customStyle';
+import { sanitizeHolo } from '@/lib/holo/holoSettings';
+import { TiltCard } from './TiltCard';
 
 export const MODAL_CONTAINER_CLASS = 'relative flex flex-col md:flex-row gap-4 md:gap-7 items-center mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
 export const MODAL_CARD_CLASS = 'h-[60vh] md:h-[80vh]';
@@ -29,6 +32,9 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
   const [searchParams] = useSearchParams();
   const hiddenCardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const safeStyle = useMemo(() => sanitizeCustomStyle(card.customStyle), [card.customStyle]);
+  const holo = useMemo(() => sanitizeHolo(card.holo), [card.holo]);
+  const popOutUrl = useMemo(() => sanitizePopOutUrl(card.popOutUrl), [card.popOutUrl]);
   const uid = useAuthUid();
   const isOwner = !!card.ownerUid && card.ownerUid === uid;
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -36,9 +42,6 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
   const [deleteError, setDeleteError] = useState(false);
 
   const [printReady, setPrintReady] = usePrintReady();
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50, go: 0 });
-  const [hovering, setHovering] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -78,28 +81,6 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
     navigate({ pathname: `/gallery/${card.remixedFrom}`, search: searchParams.toString() });
   }
 
-  function handleCardMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    setTilt({
-      rx: (0.5 - y) * 30,
-      ry: (x - 0.5) * 30,
-      gx: x * 100,
-      gy: y * 100,
-      go: 0.3,
-    });
-  }
-
-  function handleCardMouseEnter() {
-    setHovering(true);
-  }
-
-  function handleCardMouseLeave() {
-    setHovering(false);
-    setTilt({ rx: 0, ry: 0, gx: 50, gy: 50, go: 0 });
-  }
-
   async function handleExportPng() {
     if (!hiddenCardRef.current || exporting) return;
     setExporting(true);
@@ -115,6 +96,8 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
         positionY: card.cardArtPositionY ?? 0,
         zoom: card.cardArtZoom ?? 0,
       },
+      borderGradient: safeStyle?.borderGradient ?? null,
+      holo,
     });
     setExporting(false);
   }
@@ -140,57 +123,17 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
           className="shrink-0 pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <div
-            onMouseMove={card.thumbnailUrl ? handleCardMouseMove : undefined}
-            onMouseEnter={card.thumbnailUrl ? handleCardMouseEnter : undefined}
-            onMouseLeave={card.thumbnailUrl ? handleCardMouseLeave : undefined}
+          <TiltCard
+            thumbnailUrl={card.thumbnailUrl}
+            alt={card.cardName}
             className={MODAL_CARD_CLASS}
-            style={{
-              transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) scale(${hovering ? 1.05 : 1})`,
-              transformStyle: 'preserve-3d',
-              transition: hovering
-                ? 'transform 0.15s ease-out'
-                : 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-              position: 'relative',
-              cursor: 'default',
-              aspectRatio: '238/333',
-            }}
-          >
-            {/* Skeleton placeholder */}
-            {!imgLoaded && (
-              <div className="card-thumb-round absolute inset-0 bg-navy-800 animate-pulse" />
-            )}
-            {card.thumbnailUrl ? (
-              <img
-                src={card.thumbnailUrl}
-                alt={card.cardName}
-                onLoad={() => setImgLoaded(true)}
-                className="card-thumb-round border border-navy-600"
-                style={{ display: 'block', width: '100%', height: '100%', pointerEvents: 'none', opacity: imgLoaded ? 1 : 0, boxShadow: '0 34px 66px rgba(0,0,0,.72)' }}
-              />
-            ) : (
-              <div className="card-thumb-round absolute inset-0 flex items-center justify-center text-gray-400 bg-navy-800">
-                No preview
-              </div>
-            )}
-            {/* Glare overlay */}
-            {imgLoaded && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: 'calc(4.31% + 1px) / calc(3.08% + 1px)',
-                  background: `radial-gradient(farthest-corner circle at ${tilt.gx}% ${tilt.gy}%, hsla(0,0%,100%,0.8) 10%, hsla(0,0%,100%,0.65) 20%, hsla(0,0%,0%,0.5) 90%)`,
-                  opacity: tilt.go,
-                  mixBlendMode: 'overlay',
-                  transition: hovering
-                    ? 'opacity 0.15s ease-out'
-                    : 'opacity 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-                  pointerEvents: 'none',
-                }}
-              />
-            )}
-          </div>
+            holo={holo}
+            layoutType={card.layoutType}
+            borderless={!!card.borderless}
+            popOutUrl={popOutUrl}
+            measureRoot={hiddenCardRef}
+            measureKey={card}
+          />
         </div>
 
         {/* Details panel */}
@@ -343,6 +286,9 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
           borderlessOverride={!!card.borderless}
           artNeededOverride={!!card.artNeeded}
           fitOverrides={card}
+          customStyleOverride={safeStyle}
+          popOutOverride={popOutUrl}
+          holoOverride={holo}
         />
       </div>
     </div>

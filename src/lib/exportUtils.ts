@@ -1,6 +1,11 @@
 import { computeArtDrawRect } from './cardArtFit';
 import { toSvg } from 'html-to-image';
 import { correctPillsForExport } from './pillExport';
+import { cssGradientLine } from './customStyle';
+import type { GradientDef, HoloSettings } from '@/types/card';
+import { isHoloActive } from './holo/holoSettings';
+import { ensureFoil } from './holo/foilImage';
+import { BLEED, CARD_H, CARD_W } from './cardDims';
 
 type SvgOptions = NonNullable<Parameters<typeof toSvg>[1]>;
 interface CardPngOptions extends SvgOptions {
@@ -42,12 +47,18 @@ async function cardToCanvas(el: HTMLElement, opts: CardPngOptions): Promise<HTML
   return canvas;
 }
 
+const isWholeCardFoil = (node: Node) => node instanceof HTMLElement && node.classList.contains('oz-holo-card');
+
 async function renderCard(el: HTMLElement, opts: CardPngOptions): Promise<string> {
   const warm = await cardToCanvas(el, opts);
+  const wholeCardLayer = el.querySelector<HTMLElement>('.oz-holo-card');
+  const measured = wholeCardLayer && (opts.filter?.(wholeCardLayer) ?? true)
+    ? await cardToCanvas(el, { ...opts, filter: (n: HTMLElement) => !isWholeCardFoil(n) && (opts.filter?.(n) ?? true) })
+    : warm;
   let undo = () => {};
   try {
-    const ctx = warm.getContext('2d');
-    if (ctx) undo = correctPillsForExport(el, ctx.getImageData(0, 0, warm.width, warm.height), opts.pixelRatio);
+    const ctx = measured.getContext('2d');
+    if (ctx) undo = correctPillsForExport(el, ctx.getImageData(0, 0, measured.width, measured.height), opts.pixelRatio);
   } catch {
     // best-effort: never fail an export over the pill correction
   }
@@ -58,12 +69,29 @@ async function renderCard(el: HTMLElement, opts: CardPngOptions): Promise<string
   }
 }
 
-export const CARD_W = 238;
-export const CARD_H = 333;
-export const BLEED = 13;
+export { BLEED, CARD_H, CARD_W };
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // must match Firebase Storage rules
 
 export const PRINT_READY_KEY = 'openzoo-print-ready';
+export const THUMBNAIL_JPEG_QUALITY = 0.85;
+
+export function renderThumbnailPng(el: HTMLElement): Promise<string> {
+  return exportStandardPng(el, false);
+}
+
+export function thumbnailCanvas(img: HTMLImageElement): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas context');
+  ctx.drawImage(img, 0, 0);
+  return { canvas, ctx };
+}
+
+export function thumbnailJpeg(canvas: HTMLCanvasElement): string {
+  return canvas.toDataURL('image/jpeg', THUMBNAIL_JPEG_QUALITY);
+}
 
 export function displayCardName(name: string): string {
   return name.replace(/\\n/g, ' ').replace(/\n/g, ' ');
@@ -181,11 +209,13 @@ export async function exportPrintReadyPng(
   cardArtUrl: string | null,
   crossOrigin?: boolean,
   artFraming?: ArtFraming,
+  borderGradient?: GradientDef | null,
+  holo?: HoloSettings | null,
 ): Promise<string> {
   if (borderless) {
-    return exportPrintBorderless(el, cardArtUrl, crossOrigin, artFraming);
+    return exportPrintBorderless(el, cardArtUrl, crossOrigin, artFraming, holo);
   }
-  return exportPrintBordered(el);
+  return exportPrintBordered(el, borderGradient, holo);
 }
 
 export interface ArtFraming {
@@ -211,11 +241,37 @@ function extendEdgesToBleed(
   if (bottom < canvasH) ctx.drawImage(src, 0, bottom - 1, canvasW, 1, 0, bottom, canvasW, canvasH - bottom);
 }
 
+type FoilPlacement = 'art' | 'border' | 'card';
+
+function foilOn(el: HTMLElement, holo: HoloSettings | null | undefined, where: FoilPlacement): holo is HoloSettings {
+  if (!isHoloActive(holo)) return false;
+  const selector = where === 'card' ? '.oz-holo-card'
+    : where === 'border' ? '[data-zone-key="CardBorder"] > .oz-holo'
+      : '[data-zone-key="CardArt"] > .oz-holo, [data-zone-key="Art"] > .oz-holo';
+  return Array.from(el.querySelectorAll<HTMLElement>(selector)).some((layer) => layer.style.display !== 'none');
+}
+
+async function multiplyFoil(ctx: CanvasRenderingContext2D, holo: HoloSettings): Promise<void> {
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap((await ensureFoil(holo)).blob);
+  } catch {
+    return;
+  }
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = holo.strength / 100;
+  ctx.drawImage(bitmap, 0, 0, ctx.canvas.width, ctx.canvas.height);
+  bitmap.close();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+}
+
 async function exportPrintBorderless(
   el: HTMLElement,
   cardArtUrl: string | null,
   crossOrigin?: boolean,
   artFraming?: ArtFraming,
+  holo?: HoloSettings | null,
 ): Promise<string> {
   const pr = PIXEL_RATIO;
   const bPx = BLEED * pr;
@@ -243,6 +299,9 @@ async function exportPrintBorderless(
     ctx.fillRect(0, 0, printW, printH);
   }
 
+  const wholeCardFoil = foilOn(el, holo, 'card');
+  if (!wholeCardFoil && foilOn(el, holo, 'art')) await multiplyFoil(ctx, holo);
+
   const [fontEmbedCSS] = await Promise.all([getFontEmbedCSS(), document.fonts.ready]);
   const overlayOpts = {
     pixelRatio: pr,
@@ -256,6 +315,7 @@ async function exportPrintBorderless(
         const key = node.getAttribute('data-zone-key');
         if (key && BACKGROUND_ZONE_KEYS.has(key)) return false;
         if (node.classList.contains('art-needed-overlay')) return false;
+        if (node.classList.contains('oz-holo-card')) return false;
       }
       return true;
     },
@@ -263,16 +323,18 @@ async function exportPrintBorderless(
   const overlayUrl = await renderCard(el, overlayOpts);
   const overlayImg = await loadImage(overlayUrl);
   ctx.drawImage(overlayImg, bPx, bPx);
+  if (wholeCardFoil) await multiplyFoil(ctx, holo!);
 
   return canvas.toDataURL('image/png');
 }
 
-async function exportPrintBordered(el: HTMLElement): Promise<string> {
+async function exportPrintBordered(el: HTMLElement, borderGradient?: GradientDef | null, holo?: HoloSettings | null): Promise<string> {
   const rootZone = el.firstElementChild as HTMLElement | null;
   const borderColor = rootZone
     ? getComputedStyle(rootZone).backgroundColor
     : 'rgb(221, 12, 34)';
 
+  const wholeCardFoil = foilOn(el, holo, 'card');
   const [fontEmbedCSS] = await Promise.all([getFontEmbedCSS(), document.fonts.ready]);
   const borderedOpts = {
     pixelRatio: PIXEL_RATIO,
@@ -282,7 +344,8 @@ async function exportPrintBordered(el: HTMLElement): Promise<string> {
     fontEmbedCSS,
     style: { transform: 'none', borderRadius: '0' },
     filter: (node: Node) =>
-      !(node instanceof HTMLElement && node.classList.contains('art-needed-overlay')),
+      !(node instanceof HTMLElement
+        && (node.classList.contains('art-needed-overlay') || (wholeCardFoil && node.classList.contains('oz-holo-card')))),
   };
   const cardDataUrl = await renderCard(el, borderedOpts);
 
@@ -292,11 +355,22 @@ async function exportPrintBordered(el: HTMLElement): Promise<string> {
   canvas.height = (CARD_H + 2 * BLEED) * pr;
   const ctx = canvas.getContext('2d')!;
 
-  ctx.fillStyle = borderColor;
+  if (borderGradient) {
+    const { x0, y0, x1, y1 } = cssGradientLine(borderGradient.angle, CARD_W, CARD_H);
+    const off = BLEED * pr;
+    const grad = ctx.createLinearGradient(x0 * pr + off, y0 * pr + off, x1 * pr + off, y1 * pr + off);
+    const last = borderGradient.stops.length - 1;
+    borderGradient.stops.forEach((c, i) => grad.addColorStop(i / last, c));
+    ctx.fillStyle = grad;
+  } else {
+    ctx.fillStyle = borderColor;
+  }
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!wholeCardFoil && foilOn(el, holo, 'border')) await multiplyFoil(ctx, holo);
 
   const img = await loadImage(cardDataUrl);
   ctx.drawImage(img, BLEED * pr, BLEED * pr, CARD_W * pr, CARD_H * pr);
+  if (wholeCardFoil) await multiplyFoil(ctx, holo!);
 
   return canvas.toDataURL('image/png');
 }

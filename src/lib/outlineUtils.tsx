@@ -1,13 +1,15 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { StrokedText } from '@/components/card-renderer/StrokedText';
+import type { Zone } from '@/types/layout';
 
 export interface ShadowStackInfo {
   radius: number;
   color: string;
 }
 
-export function wrapOutline(node: ReactNode, outline: OutlineStyle | null): ReactNode {
-  return outline ? <StrokedText outline={outline}>{node}</StrokedText> : node;
+export function wrapOutline(node: ReactNode, outline: OutlineStyle | null, fill?: CSSProperties | null): ReactNode {
+  if (outline) return <StrokedText outline={outline} fill={fill}>{node}</StrokedText>;
+  return fill ? <span style={fill}>{node}</span> : node;
 }
 
 export interface OutlineStyle {
@@ -95,5 +97,27 @@ export function applyStrokeOutline(style: CSSProperties): { style: CSSProperties
       WebkitTextStrokeColor: info.color,
       paintOrder: 'stroke fill',
     },
+  };
+}
+
+export function entersBorderlessTextScope(zone: Zone): boolean {
+  const key = zone.imageDataKey || zone.textDataKey;
+  return zone.imageDataKey === 'MainTextBox'
+    || key === 'Aura/Terra Text Box'
+    || key === 'Aura/Terra Text Box 1';
+}
+
+export const STRONG_AGAINST_STROKE_EM = '0.2209em';
+
+export function cssStrokeToOutline(style: CSSProperties): { style: CSSProperties; outline: OutlineStyle } | null {
+  const raw = style as Record<string, unknown>;
+  const shorthand = raw.WebkitTextStroke;
+  if (typeof shorthand !== 'string' || !shorthand.trim()) return null;
+  const color = shorthand.trim().split(/\s+(?![^(]*\))/).find((part) => !/^[\d.]+(px|em)?$/.test(part)) ?? '#fff';
+  const rest = { ...raw };
+  delete rest.WebkitTextStroke;
+  return {
+    style: rest as CSSProperties,
+    outline: { WebkitTextStrokeWidth: STRONG_AGAINST_STROKE_EM, WebkitTextStrokeColor: color, paintOrder: 'stroke fill' },
   };
 }

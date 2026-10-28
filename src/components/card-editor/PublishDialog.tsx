@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCardStore } from '@/lib/store';
 import { publishCard } from '@/lib/galleryService';
-import { exportStandardPng, displayCardName } from '@/lib/exportUtils';
+import { displayCardName, renderThumbnailPng, thumbnailCanvas, thumbnailJpeg } from '@/lib/exportUtils';
 import {
   collectClientDiagnostics, exportZoneRect, measureZoneHealth,
   COPYRIGHT_SELECTOR, type ZoneHealth,
@@ -11,7 +11,7 @@ import { CARD_TAGS } from '@/types/card';
 import { CardBackBackdrop } from '@/components/CardBackBackdrop';
 import type { CardTag, SavedCard } from '@/types/card';
 import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
-import { applyBackendClass } from '@/lib/fontBackend';
+import { withExportState } from '@/lib/useCardExport';
 
 const DIALOG_CLASS = 'relative bg-navy-900 bg-panel-v max-w-140 w-full mx-4 border border-gold-600 shadow-[0_28px_70px_rgba(0,0,0,.65)] font-body';
 
@@ -52,42 +52,40 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
     setError(null);
 
     try {
-      cardRef.current.classList.add('card-exporting');
-      applyBackendClass(cardRef.current);
-      const renderStartedAt = performance.now();
-      const rawDataUrl = await exportStandardPng(cardRef.current, false);
-      const renderMs = Math.round(performance.now() - renderStartedAt);
-      const thumbStartedAt = performance.now();
       const cardEl = cardRef.current;
-      const { thumbnailDataUrl, health } = await new Promise<{
-        thumbnailDataUrl: string; health: ZoneHealth | null;
-      }>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const c = document.createElement('canvas');
-          c.width = img.naturalWidth;
-          c.height = img.naturalHeight;
-          const ctx = c.getContext('2d');
-          if (!ctx) { reject(new Error('canvas context')); return; }
-          ctx.drawImage(img, 0, 0);
-          let health: ZoneHealth | null = null;
-          try {
-            const rect = exportZoneRect(cardEl, COPYRIGHT_SELECTOR, img.naturalWidth);
-            if (rect && rect.w > 1 && rect.h > 1) {
-              health = measureZoneHealth(ctx.getImageData(rect.x, rect.y, rect.w, rect.h));
+      const { thumbnailDataUrl, client } = await withExportState(cardEl, useCardStore.getState().holo, async () => {
+        const renderStartedAt = performance.now();
+        const rawDataUrl = await renderThumbnailPng(cardEl);
+        const renderMs = Math.round(performance.now() - renderStartedAt);
+        const thumbStartedAt = performance.now();
+        const { thumbnailDataUrl, health } = await new Promise<{
+          thumbnailDataUrl: string; health: ZoneHealth | null;
+        }>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            let drawn: ReturnType<typeof thumbnailCanvas>;
+            try { drawn = thumbnailCanvas(img); } catch (err) { reject(err); return; }
+            const { canvas: c, ctx } = drawn;
+            let health: ZoneHealth | null = null;
+            try {
+              const rect = exportZoneRect(cardEl, COPYRIGHT_SELECTOR, img.naturalWidth);
+              if (rect && rect.w > 1 && rect.h > 1) {
+                health = measureZoneHealth(ctx.getImageData(rect.x, rect.y, rect.w, rect.h));
+              }
+            } catch {
+              health = null; // never let diagnostics fail a publish
             }
-          } catch {
-            health = null; // never let diagnostics fail a publish
-          }
-          resolve({ thumbnailDataUrl: c.toDataURL('image/jpeg', 0.85), health });
-        };
-        img.onerror = reject;
-        img.src = rawDataUrl;
-      });
+            resolve({ thumbnailDataUrl: thumbnailJpeg(c), health });
+          };
+          img.onerror = reject;
+          img.src = rawDataUrl;
+        });
 
-      const client = collectClientDiagnostics(cardEl);
-      if (health) client.health = health;
-      client.timing = { renderMs, thumbMs: Math.round(performance.now() - thumbStartedAt) };
+        const client = collectClientDiagnostics(cardEl);
+        if (health) client.health = health;
+        client.timing = { renderMs, thumbMs: Math.round(performance.now() - thumbStartedAt) };
+        return { thumbnailDataUrl, client };
+      });
 
       const snapshot = getSnapshot();
 
@@ -129,7 +127,6 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       const msg = err instanceof Error ? err.message : String(err);
       setError(`Failed to ${isUpdate ? 'update' : 'publish'}: ${msg}`);
     } finally {
-      cardRef.current?.classList.remove('card-exporting');
       publishingRef.current = false;
       setPublishing(false);
     }

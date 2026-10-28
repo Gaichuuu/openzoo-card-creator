@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import type { LayoutType } from '@/types/layout';
-import type { CardData, CardSnapshot, CardType, Element, ElementOrCustom, SavedCard } from '@/types/card';
+import type { CardData, CardSnapshot, HoloSettings, CardType, Element, ElementOrCustom, SavedCard, CustomStyle, CustomColorKey, GradientDef, TextColorKey } from '@/types/card';
+import { GRADIENT_FIELDS, isSafeColor, sanitizeCustomStyle, sanitizePopOutUrl, type GradientTarget } from './customStyle';
+import { sanitizeHolo } from './holo/holoSettings';
+import { trimSnapshotForAutosave } from './autosave';
 import type { CustomElementDef } from '@/types/customIcons';
 import {
   CARD_TYPE_TO_LAYOUT, TYPES_WITHOUT_TERRA, TYPES_WITHOUT_TRAITS, SPECIAL_FIT_TYPES,
@@ -31,6 +34,9 @@ interface CardEditorState {
   terras: (string | null)[];
   strongAgainst: (Element | null)[];
   cardArtUrl: string | null;
+  customStyle: CustomStyle | null;
+  popOutUrl: string | null;
+  holo: HoloSettings | null;
   effectBlocks: EffectBlock[];
   locale: Locale;
   borderless: boolean;
@@ -82,6 +88,12 @@ interface CardEditorState {
   addEffectBlock: (type: EffectBlockType) => void;
   removeEffectBlock: (id: string) => void;
   updateEffectBlock: (id: string, updates: Partial<EffectBlock>) => void;
+  setCustomColor: (key: CustomColorKey, value: string | null) => void;
+  setCustomGradient: (target: GradientTarget, g: GradientDef | null) => void;
+  setCustomOutline: (key: TextColorKey, value: string | null) => void;
+  resetCustomStyle: () => void;
+  setPopOut: (url: string | null) => void;
+  setHolo: (h: HoloSettings | null) => void;
   resetCard: () => void;
   loadCardData: (layoutType: LayoutType, data: CardData) => void;
   getSnapshot: () => CardSnapshot;
@@ -224,6 +236,13 @@ function buildInitialCardData(layout: LayoutType, cardType: CardType, locale: Lo
   return data;
 }
 
+function withStyleMapColor(cur: CustomStyle | null, field: 'colors' | 'outlines', key: string, value: string | null): CustomStyle | null {
+  const map: Record<string, string> = { ...(cur?.[field] ?? {}) };
+  if (value !== null && isSafeColor(value)) map[key] = value;
+  else delete map[key];
+  return sanitizeCustomStyle({ ...cur, colors: cur?.colors ?? {}, [field]: map });
+}
+
 export const useCardStore = create<CardEditorState>((set, get) => ({
   cardType: DEFAULT_CARD_TYPE,
   layoutType: DEFAULT_LAYOUT,
@@ -239,6 +258,9 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
   terras: [null, null],
   strongAgainst: [null, null, null, null],
   cardArtUrl: null,
+  customStyle: null,
+  popOutUrl: null,
+  holo: null,
   effectBlocks: [],
   locale: 'en' as Locale,
   borderless: false,
@@ -559,6 +581,28 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     set({ cardArtZoom: clampArtZoom(v) });
   },
 
+  setCustomColor: (key, value) => {
+    set({ customStyle: withStyleMapColor(get().customStyle, 'colors', key, value) });
+  },
+
+  setCustomGradient: (target, g) => {
+    const cur = get().customStyle;
+    const next: CustomStyle = { ...cur, colors: { ...(cur?.colors ?? {}) } };
+    const field = GRADIENT_FIELDS[target];
+    if (g) next[field] = g;
+    else delete next[field];
+    set({ customStyle: sanitizeCustomStyle(next) });
+  },
+
+  setCustomOutline: (key, value) => {
+    set({ customStyle: withStyleMapColor(get().customStyle, 'outlines', key, value) });
+  },
+
+  resetCustomStyle: () => set({ customStyle: null }),
+
+  setPopOut: (url) => set({ popOutUrl: sanitizePopOutUrl(url) }),
+  setHolo: (h) => set({ holo: sanitizeHolo(h) }),
+
   setArtNeeded: (v) => set({ artNeeded: v, _artNeededTouched: true }),
 
   _setAutoFitRatio: (ratio) => {
@@ -636,6 +680,9 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       terras: [null, null],
       strongAgainst: [null, null, null, null],
       cardArtUrl: null,
+      customStyle: null,
+      popOutUrl: null,
+      holo: null,
       effectBlocks: [],
       borderless: false,
       mainTextBoxNudge: 0,
@@ -683,6 +730,9 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       terras: s.terras,
       strongAgainst: s.strongAgainst,
       cardArtUrl: s.cardArtUrl,
+      customStyle: s.customStyle,
+      popOutUrl: s.popOutUrl,
+      holo: s.holo,
       effectBlocks: s.effectBlocks,
       locale: s.locale,
       borderless: s.borderless,
@@ -742,6 +792,9 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
       locale,
       customPrimary,
       customSecondary,
+      customStyle: sanitizeCustomStyle(snapshot.customStyle),
+      popOutUrl: sanitizePopOutUrl(snapshot.popOutUrl),
+      holo: sanitizeHolo(snapshot.holo),
       borderless: snapshot.borderless ?? false,
       mainTextBoxNudge: snapshot.mainTextBoxNudge ?? 0,
       mainTextBoxExtraShrink: snapshot.mainTextBoxExtraShrink ?? 0,
@@ -772,14 +825,7 @@ useCardStore.subscribe((state) => {
   _saveTimer = setTimeout(() => {
     try {
       const snapshot = useCardStore.getState().getSnapshot();
-      const cardData = { ...snapshot.cardData };
-      for (const key of Object.keys(cardData)) {
-        const value = cardData[key];
-        if (value && value.startsWith('data:') && value.length > AUTOSAVE_MAX_VALUE_CHARS) {
-          delete cardData[key];
-        }
-      }
-      sessionStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...snapshot, cardData, cardArtUrl: null }));
+      sessionStorage.setItem(AUTOSAVE_KEY, JSON.stringify(trimSnapshotForAutosave(snapshot, AUTOSAVE_MAX_VALUE_CHARS)));
     } catch { /* sessionStorage quota exceeded or unavailable */ }
   }, 500);
 });

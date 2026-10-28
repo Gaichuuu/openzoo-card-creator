@@ -1,17 +1,20 @@
 import { type CSSProperties, useRef, useEffect, useLayoutEffect, useState } from 'react';
 import type { Zone } from '@/types/layout';
-import type { CardData, CardFitSettings } from '@/types/card';
+import type { CardData, CardFitSettings, HoloArea, HoloSettings } from '@/types/card';
+import { customNameFill, customTextOutline, customZoneStyle, type ResolvedCustomStyle } from '@/lib/customStyle';
 import { resolveImagePath } from '@/lib/imagePathResolver';
 import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
-import { applyStrokeOutline, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
+import { applyStrokeOutline, cssStrokeToOutline, entersBorderlessTextScope, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
 import { useCardStore } from '@/lib/store';
 import { artPositionCss, artZoomScale } from '@/lib/cardArtFit';
 import { ParsedText } from './TextParser';
+import { HoloLayer } from './HoloLayer';
+import { holoAreaOfZone } from '@/lib/holo/holoAreas';
 import { getFitMode } from '@/lib/fitMode';
-import { fitSpecialTextBox } from '@/lib/specialTextFit';
+import { fitSpecialTextBox, restoreArtWindow } from '@/lib/specialTextFit';
 import { FIT_CANDIDATES, FONT_STARTS, BASE_FONT_INDEX, BASE_INDEX, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
 
-function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null }) {
+function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null, fill = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null; fill?: CSSProperties | null }) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const [scale, setScale] = useState(1);
 
@@ -60,7 +63,7 @@ function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outli
         transformOrigin: origin,
       }}
     >
-      {wrapOutline(<ParsedText html={html} />, outline)}
+      {wrapOutline(<ParsedText html={html} />, outline, fill)}
     </span>
   );
 }
@@ -72,6 +75,9 @@ interface ZoneRendererProps {
   inBorderlessTextScope?: boolean;
   textBoxReserve?: number;
   fitOverrides?: CardFitSettings;
+  custom?: ResolvedCustomStyle | null;
+  holo?: HoloSettings | null;
+  holoAreas?: readonly HoloArea[];
 }
 
 const TERRA_BONUS_FIX: CSSProperties = {
@@ -125,13 +131,6 @@ const BORDERLESS_TEXT_OUTLINE: OutlineStyle = {
   WebkitTextStrokeColor: '#FFF',
   paintOrder: 'stroke fill',
 };
-
-function entersBorderlessTextScope(zone: Zone): boolean {
-  const key = zone.imageDataKey || zone.textDataKey;
-  return zone.imageDataKey === 'MainTextBox'
-    || key === 'Aura/Terra Text Box'
-    || key === 'Aura/Terra Text Box 1';
-}
 
 function parseStyleString(str: string): CSSProperties {
   if (!str) return {};
@@ -220,6 +219,7 @@ function getOutlinedZoneStyle(zone: Zone, overrideStr: string, attackEffectGap =
       ...(attackEffectGap !== 0 ? { marginTop: `${attackEffectGap - 1}px` } : {}),
       ...parseStyleString(overrideStr),
     }));
+    if (!entry.outline && zone.textDataKey === 'SAValue') entry = cssStrokeToOutline(entry.style) ?? entry;
     byOverride.set(cacheKey, entry);
   }
   return entry;
@@ -248,7 +248,9 @@ const FLEX_LAYOUT_KEYS = new Set([
   'gap', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
 ]);
 
-export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessTextScope = false, textBoxReserve, fitOverrides }: ZoneRendererProps) {
+const NO_AREAS: readonly HoloArea[] = [];
+
+export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessTextScope = false, textBoxReserve, fitOverrides, custom = null, holo = null, holoAreas = NO_AREAS }: ZoneRendererProps) {
   const zoneRef = useRef<HTMLDivElement>(null);
   const shouldAutoFit = zone.type === 'container' && zone.imageDataKey === 'MainTextBox';
   const isCardArtZone = zone.imageDataKey === 'CardArt' || zone.imageDataKey === 'Art';
@@ -308,12 +310,15 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       pitch: mainTextLineHeightAdj,
       spacing: mainTextLetterSpacingAdj,
       nudge: mainTextBoxNudge,
+      nudgeByTop: holoAreas.includes('reverse'),
     });
+    const root = el.closest('[data-oz-card-root]');
     run();
     const images = Array.from(el.querySelectorAll('img')).filter((img) => !img.complete);
     for (const img of images) img.addEventListener('load', run, { once: true });
     return () => {
       for (const img of images) img.removeEventListener('load', run);
+      restoreArtWindow(root);
     };
   });
 
@@ -804,11 +809,15 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
   const zoneKey = zone.imageDataKey || zone.textDataKey;
   const outlined = getOutlinedZoneStyle(zone, cardData[`s${zone.id}`] || '', attackEffectGap);
-  const style = outlined.style;
+  const extra = custom && zoneKey ? customZoneStyle(zoneKey, zone.type, custom.style, outlined.style, custom.background) : null;
+  const style = extra ? { ...outlined.style, ...extra } : outlined.style;
 
   const inScope = inBorderlessTextScope || (borderless && entersBorderlessTextScope(zone));
-  const outline = outlined.outline
+  const baseOutline = outlined.outline
     ?? ((inScope && (zone.type === 'text' || zone.textDataKey)) ? BORDERLESS_TEXT_OUTLINE : null);
+  const outlineColor = custom && zoneKey && baseOutline ? customTextOutline(zoneKey, zone.type, custom.style) : null;
+  const outline = outlineColor ? { ...baseOutline!, WebkitTextStrokeColor: outlineColor } : baseOutline;
+  const nameFill = custom && zoneKey ? customNameFill(zoneKey, custom.style) : null;
 
   let backgroundImage: string | undefined;
   if (zone.type === 'image') {
@@ -855,8 +864,10 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   };
 
   const renderChildren = () => zone.childZones.map((child, idx) => (
-    <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} />
+    <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} custom={custom} holo={holo} holoAreas={holoAreas} />
   ));
+  const holoArea = holoAreaOfZone(zone);
+  const holoLayer = holo && holoArea && holoAreas.includes(holoArea) ? <HoloLayer holo={holo} /> : null;
 
   const shouldShrink = textContent && zone.type === 'text' &&
     (zone.textDataKey === 'Boost 1' || zone.textDataKey === 'Boost 2' || zone.textDataKey === 'TypesTribes' || zone.textDataKey === 'CardName');
@@ -881,6 +892,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
     return (
       <div style={outerStyle} data-zone-id={zone.id} data-zone-key={zoneKey}>
+        {holoLayer}
         <div ref={zoneRef} style={innerStyle}>
           {textContent && shouldAutoFitFlavor && wrapOutline(<ParsedText html={textContent} />, outline)}
           {renderChildren()}
@@ -909,6 +921,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           transform: `scale(${artZoomScale(cardArtZoom)})`,
           transformOrigin: origin,
         }} />
+        {holoLayer}
         {renderChildren()}
       </div>
     );
@@ -916,9 +929,10 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
   return (
     <div ref={isSpecialTextBox ? zoneRef : undefined} style={finalStyle} data-zone-id={zone.id} data-zone-key={zoneKey}>
+      {holoLayer}
       {textContent && (zone.type === 'text' || zone.textDataKey) && (
         shouldShrink
-          ? <AutoShrinkText html={textContent} origin={zone.textDataKey === 'TypesTribes' || zone.textDataKey === 'CardName' ? 'left center' : 'center center'} marginRight={zone.textDataKey === 'CardName' ? 2 : 0} outline={outline} />
+          ? <AutoShrinkText html={textContent} origin={zone.textDataKey === 'TypesTribes' || zone.textDataKey === 'CardName' ? 'left center' : 'center center'} marginRight={zone.textDataKey === 'CardName' ? 2 : 0} outline={outline} fill={nameFill} />
           : wrapOutline(<ParsedText html={textContent} />, outline)
       )}
 

@@ -26,6 +26,7 @@
   --color-holo-mint-soft: #9df3d6;
   --color-holo-blue-soft: #8ec2ff;
 
+  --color-crimson-300: #ff7a8a;
   --color-crimson-400: #ff3a52;
   --color-crimson-600: #c40f22;
   --color-crimson-800: #8e0714;
@@ -339,6 +340,13 @@ select.input-plain:focus {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-stroke-width: 0.07px;
+}
+
+.oz-holo-reverse [data-zone-key] > span,
+.oz-holo-reverse [data-zone-key="MainTextBox"] > div,
+.oz-holo-reverse [data-zone-key="FlavorText"] > * {
+  position: relative;
+  z-index: 2;
 }
 
 .card-exporting [data-zone-key="StrongAgainst"] > span {

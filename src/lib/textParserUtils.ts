@@ -84,3 +84,7 @@ export function stripHtml(html: string): string {
     .replace(/<\/?[^>]+(>|$)/g, '')
     .trim();
 }
+
+export function splitLineBreaks(text: string): string[] {
+  return text.split(/\n|(?:^|\s)\/\s|\s\/$/);
+}

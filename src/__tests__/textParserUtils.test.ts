@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { expandVariables, isInlineImage, parseSegments, stripHtml } from '@/lib/textParserUtils';
+import { expandVariables, splitLineBreaks, isInlineImage, parseSegments, stripHtml } from '@/lib/textParserUtils';
 
 describe('expandVariables', () => {
   it('replaces a single variable', () => {
@@ -126,5 +126,22 @@ describe('stripHtml', () => {
 
   it('handles combined HTML', () => {
     expect(stripHtml('<p><b>bold</b><br/>next</p>')).toBe('bold\nnext');
+  });
+});
+
+describe('splitLineBreaks', () => {
+  it('splits on newlines and the spaced " / " separator', () => {
+    expect(splitLineBreaks('a\nb')).toEqual(['a', 'b']);
+    expect(splitLineBreaks('first effect / second effect')).toEqual(['first effect', 'second effect']);
+  });
+
+  it('splits a separator that sits at the edge of a segment next to whitespace', () => {
+    expect(splitLineBreaks(' / next')).toEqual(['', 'next']);
+    expect(splitLineBreaks('end /')).toEqual(['end', '']);
+  });
+
+  it('keeps a bare slash between two spans as text', () => {
+    expect(splitLineBreaks('/')).toEqual(['/']);
+    expect(splitLineBreaks('+10 LP/+10 ATK')).toEqual(['+10 LP/+10 ATK']);
   });
 });

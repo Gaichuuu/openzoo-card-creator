@@ -4,6 +4,14 @@ import type { Locale } from './locales';
 import { getPSBVariable } from './locales';
 import type { OutlineStyle } from '@/lib/outlineUtils';
 
+export const PILL_VARS = {
+  fill: '--oz-pill-fill',
+  fillImage: '--oz-pill-fill-image',
+  border: '--oz-pill-border',
+  text: '--oz-pill-text',
+  outline: '--oz-pill-outline',
+} as const;
+
 export const INLINE_CLASSES: Record<string, CSSProperties> = {
   LP: {
     fontSize: '0.40em',
@@ -60,11 +68,12 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
     paddingLeft: '0.3em',
     paddingRight: '0.3em',
     borderStyle: 'solid',
-    borderColor: 'rgba(0, 0, 0, 1)',
+    borderColor: `var(${PILL_VARS.border}, rgba(0, 0, 0, 1))`,
     borderWidth: '1px',
     borderRadius: '2em',
-    backgroundColor: 'rgba(155, 180, 216, 1)',
-    color: 'rgba(255, 255, 255, 1)',
+    backgroundColor: `var(${PILL_VARS.fill}, rgba(155, 180, 216, 1))`,
+    backgroundImage: `var(${PILL_VARS.fillImage}, none)`,
+    color: `var(${PILL_VARS.text}, rgba(255, 255, 255, 1))`,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -83,7 +92,7 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
 export const INLINE_CLASS_OUTLINES: Record<string, OutlineStyle> = {
   Power: {
     WebkitTextStrokeWidth: '0.3em',
-    WebkitTextStrokeColor: 'rgba(0, 0, 0, 1)',
+    WebkitTextStrokeColor: `var(${PILL_VARS.outline}, rgba(0, 0, 0, 1))`,
     paintOrder: 'stroke fill',
   },
 };

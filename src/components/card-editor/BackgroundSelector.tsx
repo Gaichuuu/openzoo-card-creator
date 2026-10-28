@@ -3,6 +3,8 @@ import { useCardStore } from '@/lib/store';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import { isCustomIconValue } from '@/lib/customIconUtils';
 import { CustomIconPicker } from './CustomIconPicker';
+import { CollapsibleSection } from './CollapsibleSection';
+import { FULL_SELECT, TEXT_LINK } from './editorStyles';
 
 export function BackgroundSelector() {
   const layoutType = useCardStore((s) => s.layoutType);
@@ -17,17 +19,16 @@ export function BackgroundSelector() {
   const hasCustom = isCustomIconValue(current);
 
   return (
-    <div className="space-y-1 pt-2">
-      <label className="text-xs font-semibold text-gold-400 uppercase tracking-wider">
-        Background Pattern
-      </label>
+    <div className="pt-2">
+      <CollapsibleSection title="Card texture" status={hasCustom ? 'Custom' : null}>
+      <div className="space-y-1">
       <select
         value={hasCustom ? '__custom__' : 'default'}
         onChange={(e) => {
           if (e.target.value === '__custom__') { setPickerOpen(true); return; }
           setImageField('CardBackground', '');
         }}
-        className="w-full bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
+        className={FULL_SELECT}
       >
         <option value="default">Default</option>
         <option value="__custom__">{hasCustom ? 'Custom' : 'Custom…'}</option>
@@ -36,16 +37,18 @@ export function BackgroundSelector() {
         <>
           <button
             onClick={() => setPickerOpen(true)}
-            className="text-xs text-gold-500 hover:text-white underline cursor-pointer"
+            className={`block ${TEXT_LINK}`}
           >
-            Change custom pattern…
+            Change card texture…
           </button>
-          <img src={current} alt="Background pattern" className="h-12 rounded border border-navy-600 object-cover" />
+          <img src={current} alt="Card texture" className="h-12 rounded border border-navy-600 object-cover" />
         </>
       )}
+      </div>
+      </CollapsibleSection>
       <CustomIconPicker
         type="background"
-        title="Custom background pattern"
+        title="Custom card texture"
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={(icon) => setImageField('CardBackground', icon.image)}

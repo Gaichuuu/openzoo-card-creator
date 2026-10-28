@@ -88,6 +88,36 @@ export type CardTag = 'Playtesting' | 'Mockup' | 'Final' | 'Parody' | 'Proxy' | 
 
 export const CARD_TAGS: CardTag[] = ['Art Needed', 'Final', 'Mockup', 'Parody', 'Playtesting', 'Proxy'];
 
+export type TextColorKey =
+  | 'cardName' | 'typeLine' | 'spellbookText' | 'effectText' | 'attackName' | 'boostText' | 'bottomBarText' | 'credits'
+  | 'pillText';
+
+export type CustomColorKey =
+  | 'border' | 'spellbookBar' | 'artFrame' | 'effectBox' | 'boostBar' | 'backgroundTint' | 'divider' | 'bottomBar'
+  | 'pillFill' | 'pillBorder'
+  | TextColorKey;
+
+export interface GradientDef { angle: number; stops: string[] }
+
+export interface CustomStyle {
+  colors: Partial<Record<CustomColorKey, string>>;
+  outlines?: Partial<Record<TextColorKey, string>>;
+  borderGradient?: GradientDef | null;
+  nameGradient?: GradientDef | null;
+  pillGradient?: GradientDef | null;
+}
+
+export type HoloPatternId = 'rainbow' | 'sand' | 'streaks' | 'diamond' | 'bubbles' | 'shards' | 'stars';
+
+export type HoloArea = 'art' | 'border' | 'reverse' | 'card';
+
+export interface HoloSettings {
+  pattern: HoloPatternId;
+  strength: number;
+  angle: number;
+  areas?: HoloArea[];
+}
+
 export interface CardSnapshot {
   cardType: CardType;
   layoutType: LayoutType;
@@ -117,6 +147,9 @@ export interface CardSnapshot {
   artNeeded?: boolean;
   customPrimary?: CustomElementDef | null;
   customSecondary?: CustomElementDef | null;
+  customStyle?: CustomStyle | null;
+  popOutUrl?: string | null;
+  holo?: HoloSettings | null;
 }
 
 export type CardFitSettings = Pick<CardSnapshot,

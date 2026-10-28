@@ -8,8 +8,9 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { CardThumb, CardCaption } from '@/components/gallery/GalleryCard';
 import { Card3DHero } from './Card3DHero';
 import { HoloBloom } from './HoloBloom';
+import { CardWallpaper } from './CardWallpaper';
+import { WALLPAPER_VIGNETTE } from './cardWallpaperDesign';
 
-const WALLPAPER_TILES = 24;
 const TITLE_CLASS = 'font-title font-normal text-[52px] md:text-[72px] lg:text-[90px] leading-[.94] tracking-[-.018em] m-0';
 
 function stripTierClass(slot: number): string {
@@ -50,20 +51,7 @@ export function LandingPage() {
     <div className="flex flex-col min-h-dvh bg-navy-950 font-body">
       <div className="relative flex flex-col min-h-dvh overflow-clip">
         {/* Wallpaper */}
-        <div
-          aria-hidden="true"
-          className="absolute -inset-15 grid grid-cols-4 md:grid-cols-8 gap-4.5 opacity-15"
-          style={{ transform: 'rotate(-10deg) scale(1.14)', transformOrigin: 'center' }}
-        >
-          {Array.from({ length: WALLPAPER_TILES }, (_, i) => (
-            <img
-              key={i}
-              src="/assets/OPZDexCardBackTile.jpg"
-              alt=""
-              className="w-full rounded-lg aspect-238/333 object-cover"
-            />
-          ))}
-        </div>
+        <CardWallpaper />
 
         {/* Holo bloom */}
         <HoloBloom className="-left-[10%] -top-[30%] w-[120%] h-[90%] opacity-7" blur={110} />
@@ -71,7 +59,7 @@ export function LandingPage() {
         <div
           aria-hidden="true"
           className="absolute inset-0"
-          style={{ background: 'radial-gradient(64% 62% at 50% 40%, rgba(8,10,25,.35) 0%, rgba(8,10,25,.93) 100%)' }}
+          style={{ background: WALLPAPER_VIGNETTE }}
         />
 
         <div className="relative flex flex-col flex-1">

@@ -14,15 +14,16 @@ const STROKE_BASE: CSSProperties = {
 interface StrokedTextProps {
   outline: OutlineStyle;
   children: ReactNode;
+  fill?: CSSProperties | null;
 }
 
-export function StrokedText({ outline, children }: StrokedTextProps) {
+export function StrokedText({ outline, children, fill }: StrokedTextProps) {
   return (
     <span style={WRAPPER_STYLE}>
       <span aria-hidden="true" className="stroked-text-stroke" style={{ ...STROKE_BASE, ...outline }}>
         {children}
       </span>
-      <span style={FILL_STYLE}>{children}</span>
+      <span style={fill ? { ...FILL_STYLE, ...fill } : FILL_STYLE}>{children}</span>
     </span>
   );
 }

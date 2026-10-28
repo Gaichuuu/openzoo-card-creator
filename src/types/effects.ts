@@ -46,7 +46,7 @@ export const BLOCK_ORDER: EffectBlockType[] = [
 
 export const BLOCK_LABELS: Record<EffectBlockType, string> = {
   'tribal-boost': 'Tribal Boost',
-  'static': 'Static Effect',
+  'static': 'Effect',
   'discard': 'DISCARD',
   'contract': 'CONTRACT',
   'enter': 'ENTER',

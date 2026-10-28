@@ -6,6 +6,7 @@ import { BLOCK_ORDER, BLOCK_LABELS } from '@/types/effects';
 import { getFitMode } from '@/lib/fitMode';
 import { sortBlocks } from '@/lib/effectComposer';
 import { EffectBlockEditor } from './EffectBlockEditor';
+import { SECTION_BUTTON } from './editorStyles';
 
 export function Stepper({ label, value, min, max, onChange, valueWidth = 'w-4', step = 1 }: {
   label: ReactNode;
@@ -110,7 +111,7 @@ export function TextBoxBuilder() {
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="text-xs bg-linear-to-b from-select-top to-select-bot border border-gold-500 hover:border-gold-400 text-white px-2.25 py-1 transition-colors"
+            className={SECTION_BUTTON}
           >
             + Add Component
           </button>

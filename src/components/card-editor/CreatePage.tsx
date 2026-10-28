@@ -6,6 +6,23 @@ import { fetchCard, rememberUploadedImage } from '@/lib/galleryService';
 import { fetchAsDataUrl } from '@/lib/exportUtils';
 import { getCurrentUid } from '@/lib/auth';
 
+async function toLocalDataUrl(url: string, what: string): Promise<string> {
+  try {
+    const dataUrl = await fetchAsDataUrl(url);
+    rememberUploadedImage(dataUrl, url);
+    return dataUrl;
+  } catch {
+    console.warn(
+      `Could not fetch ${what} for remix (CORS). ` +
+      'Run: gsutil cors set cors.json gs://openzoo.firebasestorage.app'
+    );
+    return url;
+  }
+}
+
+const localize = <T extends string | null | undefined>(url: T, what: string): Promise<T | string> | T =>
+  url && url.startsWith('http') ? toLocalDataUrl(url, what) : url;
+
 export function CreatePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
@@ -48,21 +65,12 @@ export function CreatePage() {
             return;
           }
         }
-        let cardArtUrl = card.cardArtUrl;
-        if (cardArtUrl && cardArtUrl.startsWith('http')) {
-          try {
-            const storedUrl = cardArtUrl;
-            cardArtUrl = await fetchAsDataUrl(storedUrl);
-            rememberUploadedImage(cardArtUrl, storedUrl);
-          } catch {
-            console.warn(
-              'Could not fetch card art for remix (CORS). ' +
-              'Run: gsutil cors set cors.json gs://openzoo.firebasestorage.app'
-            );
-          }
-        }
+        const [cardArtUrl, popOutUrl] = await Promise.all([
+          localize(card.cardArtUrl, 'card art'),
+          localize(card.popOutUrl ?? null, 'pop-out layer'),
+        ]);
         if (cancelled) return;
-        loadSnapshot({ ...card, cardArtUrl });
+        loadSnapshot({ ...card, cardArtUrl, popOutUrl });
         setLoading(false);
       })
       .catch((err) => {
