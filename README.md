@@ -14,7 +14,7 @@ Web-based card creator for the OpenZoo trading card game. Design custom cards in
 - **Card Art:** add base artwork with option for second layer that "pops out" of the art box
 - **Holo Foil:** add holographic foil patterns on the card, which shimmer as you tilt them in the gallery
 - **Effect Block System:** compose abilities and attacks with auto layout
-- **PNG Export:** standard and print-ready (with 3.5mm bleed) at 4x resolution
+- **Image Export:** PNG or SVG at 384, 768, or 1152 dpi. Optional 3.5mm print bleed and white mask
 - **JSON Support:** ability to export/import cards as JSON
 - **Gallery:** publish, browse, remix, and edit or delete your own published cards. Filter by tags, type, aura, terra, traits. Search, sort, and tile-density options
 - **Rulebook:** full rulebook with table of contents and keyword tooltips

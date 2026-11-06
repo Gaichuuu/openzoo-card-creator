@@ -148,12 +148,6 @@ export function TextBoxBuilder() {
         </FitSteppers>
       )}
 
-      {sorted.length === 0 && (
-        <p className="text-xs text-gray-400 text-center py-2">
-          No effects added. Click &quot;+ Add Component&quot; to start.
-        </p>
-      )}
-
       <div className="space-y-2">
         {sorted.map((block) => (
           <EffectBlockEditor
