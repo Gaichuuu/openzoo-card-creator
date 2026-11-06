@@ -1,7 +1,7 @@
 import type { HoloPatternId } from '@/types/card';
 import { BLEED, CARD_H, CARD_W } from '@/lib/cardDims';
 import { generateShapes, type HoloShape } from './holoShapes';
-import { shadeFoil } from './holoShade';
+import { shadeFoil, sparkleMask } from './holoShade';
 
 export const FOIL_RATIO = 4;
 const FOIL_W = CARD_W + 2 * BLEED;
@@ -16,11 +16,13 @@ type AnyContext = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 export interface FoilBlobs {
   foil: Blob;
   mask: Blob | null;
+  sparkle: Blob | null;
 }
 
 interface FoilMask {
   data: Uint8ClampedArray | null;
   blob: Blob | null;
+  sparkle: Blob | null;
 }
 
 const masks = new Map<HoloPatternId, Promise<FoilMask>>();
@@ -88,13 +90,18 @@ function drawShape(ctx: AnyContext, s: HoloShape): void {
 
 async function buildMask(pattern: HoloPatternId): Promise<FoilMask> {
   const shapes = generateShapes(pattern, FOIL_W, FOIL_H);
-  if (shapes.length === 0) return { data: null, blob: null };
+  if (shapes.length === 0) return { data: null, blob: null, sparkle: null };
   const canvas = makeCanvas();
   const ctx = context(canvas);
   ctx.scale(FOIL_RATIO, FOIL_RATIO);
   for (const s of shapes) drawShape(ctx, s);
   const data = ctx.getImageData(0, 0, PX_W, PX_H).data;
-  return { data, blob: await toPng(canvas) };
+  const blob = await toPng(canvas);
+  const glint = ctx.createImageData(PX_W, PX_H);
+  sparkleMask(data, glint.data);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.putImageData(glint, 0, 0);
+  return { data, blob, sparkle: await toPng(canvas) };
 }
 
 function ensureMask(pattern: HoloPatternId): Promise<FoilMask> {
@@ -122,5 +129,5 @@ export async function buildFoilBlobs(pattern: HoloPatternId, angle: number): Pro
   const img = ctx.createImageData(PX_W, PX_H);
   shadeFoil(mask.data ?? new Uint8ClampedArray(0), img.data, PX_W, PX_H, angle, mask.data === null);
   ctx.putImageData(img, 0, 0);
-  return { foil: await toPng(canvas), mask: mask.blob };
+  return { foil: await toPng(canvas), mask: mask.blob, sparkle: mask.sparkle };
 }

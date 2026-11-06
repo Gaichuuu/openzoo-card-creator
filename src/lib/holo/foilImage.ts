@@ -7,6 +7,7 @@ import type { FoilRequest, FoilResponse } from './foil.worker';
 export interface FoilImage {
   url: string;
   maskUrl: string | null;
+  sparkleUrl: string | null;
   blob: Blob;
 }
 
@@ -14,7 +15,7 @@ const MAX_FOILS = 4;
 
 const foils = new Map<string, Promise<FoilImage>>();
 const pins = new Map<string, number>();
-const maskUrls = new Map<HoloPatternId, string | null>();
+const maskUrls = new Map<HoloPatternId, { mask: string | null; sparkle: string | null }>();
 
 let worker: Worker | null | undefined;
 let nextId = 0;
@@ -30,7 +31,7 @@ function getWorker(): Worker | null {
       if (!job) return;
       pending.delete(e.data.id);
       if ('error' in e.data) job.reject(new Error(e.data.error));
-      else job.resolve({ foil: e.data.foil, mask: e.data.mask });
+      else job.resolve({ foil: e.data.foil, mask: e.data.mask, sparkle: e.data.sparkle });
     };
     w.onerror = () => {
       worker = null;
@@ -60,9 +61,15 @@ function buildBlobs(h: HoloSettings): Promise<FoilBlobs> {
 }
 
 async function buildFoil(h: HoloSettings): Promise<FoilImage> {
-  const { foil, mask } = await buildBlobs(h);
-  if (!maskUrls.has(h.pattern)) maskUrls.set(h.pattern, mask ? URL.createObjectURL(mask) : null);
-  return { url: URL.createObjectURL(foil), maskUrl: maskUrls.get(h.pattern) ?? null, blob: foil };
+  const { foil, mask, sparkle } = await buildBlobs(h);
+  if (!maskUrls.has(h.pattern)) {
+    maskUrls.set(h.pattern, {
+      mask: mask ? URL.createObjectURL(mask) : null,
+      sparkle: sparkle ? URL.createObjectURL(sparkle) : null,
+    });
+  }
+  const urls = maskUrls.get(h.pattern);
+  return { url: URL.createObjectURL(foil), maskUrl: urls?.mask ?? null, sparkleUrl: urls?.sparkle ?? null, blob: foil };
 }
 
 function evict(): void {

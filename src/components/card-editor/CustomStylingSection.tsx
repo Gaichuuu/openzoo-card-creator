@@ -4,7 +4,7 @@ import { CUSTOM_STYLE_ITEMS, GRADIENT_FIELDS, availableStyleItems, outlineItems,
 import { AURA_COLORS, getAuraColor, hexToRgba } from '@/data/constants';
 import type { GradientDef, TextColorKey } from '@/types/card';
 import { CollapsibleSection } from './CollapsibleSection';
-import { DANGER_LINK, FIELD_LABEL, HINT, MICRO_BUTTON, SUB_LABEL } from './editorStyles';
+import { DANGER_LINK, FIELD_LABEL, MICRO_BUTTON, SUB_LABEL } from './editorStyles';
 
 const UNSET_SENTINEL = '#000001';
 const SAFE_SEED = [AURA_COLORS.Neutral.cardBackground, AURA_COLORS.Neutral.artBorder];
@@ -196,9 +196,6 @@ function StyleRow({ item }: { item: StyleItem }) {
         </button>
       </div>
       {hasOutline(item) && outlineItems(layoutType, borderless).has(item.key) && <OutlineRow item={item} />}
-      {(item.key === 'border' || item.key === 'backgroundTint') && borderless && (
-        <div className={`${HINT} italic`}>Not shown on borderless cards</div>
-      )}
       {gradient && gradientTarget && (
         <GradientEditor
           gradient={gradient}

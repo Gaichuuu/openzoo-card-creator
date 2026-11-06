@@ -12,6 +12,8 @@ import { CardBackBackdrop } from '@/components/CardBackBackdrop';
 import type { CardTag, SavedCard } from '@/types/card';
 import { readLocalStorage, writeLocalStorage } from '@/lib/safeStorage';
 import { withExportState } from '@/lib/useCardExport';
+import { buildHolo3dImages } from '@/lib/holo/holo3d';
+import { isHoloActive } from '@/lib/holo/holoSettings';
 
 const DIALOG_CLASS = 'relative bg-navy-900 bg-panel-v max-w-140 w-full mx-4 border border-gold-600 shadow-[0_28px_70px_rgba(0,0,0,.65)] font-body';
 
@@ -88,6 +90,13 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       });
 
       const snapshot = getSnapshot();
+      const holo3d = isHoloActive(snapshot.holo)
+        ? await buildHolo3dImages(cardEl, snapshot.holo, snapshot.borderless ?? false)
+          .catch((err: unknown) => {
+            console.warn('Holo 3D images failed; publishing without them:', err);
+            return null;
+          })
+        : null;
 
       const cardId = await publishCard(snapshot, thumbnailDataUrl, {
         creatorName: creatorName.trim(),
@@ -96,6 +105,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         remixedFromName: remixedFromName || '',
         existingCard: editCard ?? undefined,
         client,
+        holo3d,
       });
 
       const prevSource = useCardStore.getState().sourceCard;
@@ -222,7 +232,6 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
               maxLength={40}
               className="w-full bg-navy-950 text-white text-[15px] px-3 py-2.5"
             />
-            <p className="text-xs text-gray-500 m-0">Username shown on the published card.</p>
           </div>
 
           <div className="flex flex-col gap-2">

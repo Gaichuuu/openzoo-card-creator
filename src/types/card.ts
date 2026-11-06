@@ -107,9 +107,9 @@ export interface CustomStyle {
   pillGradient?: GradientDef | null;
 }
 
-export type HoloPatternId = 'rainbow' | 'sand' | 'streaks' | 'diamond' | 'bubbles' | 'shards' | 'stars';
+export type HoloPatternId = 'rainbow' | 'sand' | 'streaks' | 'diamond' | 'bubbles' | 'shards' | 'stars' | 'diagonal';
 
-export type HoloArea = 'art' | 'border' | 'reverse' | 'card';
+export type HoloArea = 'art' | 'border' | 'effectBox' | 'setIcon' | 'ground' | 'popout' | 'card';
 
 export interface HoloSettings {
   pattern: HoloPatternId;
@@ -160,6 +160,8 @@ export type CardFitSettings = Pick<CardSnapshot,
 export interface SavedCard extends CardSnapshot {
   id: string;
   thumbnailUrl: string;
+  holoCardUrl?: string | null;
+  holoAreaUrl?: string | null;
   creatorName: string;
   ownerUid: string | null;
   tags: CardTag[];

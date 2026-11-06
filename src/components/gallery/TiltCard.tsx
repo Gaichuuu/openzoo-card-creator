@@ -1,15 +1,19 @@
-import { useMemo, useState, type RefObject } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState, type RefObject } from 'react';
 import type { HoloSettings } from '@/types/card';
 import type { LayoutType } from '@/types/layout';
+import type { Holo3dImages } from '@/lib/holo/holo3d';
 import { isHoloActive } from '@/lib/holo/holoSettings';
 import { useArtAndBookmark } from '@/lib/holo/useArtAndBookmark';
-import { effectiveHoloAreas, shimmerRegions } from '@/lib/holo/holoAreas';
+import { effectRegion, effectiveHoloAreas, shimmerRegions, usesReverseLayer } from '@/lib/holo/holoAreas';
+import { MAX_TILT } from '@/lib/holo/galleryFoilTuning';
 import { HoloShimmer } from './HoloShimmer';
+
+const FoilCanvas = lazy(() => import('./FoilCanvas'));
 
 const REST = { rx: 0, ry: 0, gx: 50, gy: 50, go: 0 };
 
 function tiltAt(x: number, y: number) {
-  return { rx: (0.5 - y) * 30, ry: (x - 0.5) * 30, gx: x * 100, gy: y * 100, go: 0.3 };
+  return { rx: (0.5 - y) * 2 * MAX_TILT, ry: (x - 0.5) * 2 * MAX_TILT, gx: x * 100, gy: y * 100, go: 0.3 };
 }
 
 interface TiltCardProps {
@@ -24,9 +28,10 @@ interface TiltCardProps {
   measureKey: unknown;
   glare?: number;
   pointer?: { x: number; y: number } | null;
+  foil3d?: Holo3dImages | null;
 }
 
-export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borderless, popOutUrl, measureRoot, measureKey, glare: glareProp, pointer }: TiltCardProps) {
+export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borderless, popOutUrl, measureRoot, measureKey, glare: glareProp, pointer, foil3d }: TiltCardProps) {
   const holoActive = isHoloActive(holo);
   const glare = glareProp ?? (holoActive ? 0 : 1);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -35,29 +40,34 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
   const driven = pointer !== undefined;
   const tilt = driven ? (pointer ? tiltAt(pointer.x, pointer.y) : REST) : mouseTilt;
   const hovering = driven ? pointer !== null : mouseHovering;
+  const [foilState, setFoilState] = useState<{ card: string; ok: boolean } | null>(null);
+  const foilOk = foil3d && foilState?.card === foil3d.card ? foilState.ok : null;
+  const use3d = holoActive && !!foil3d && foilOk !== false;
+  const foilCard = foil3d?.card;
+  const onFoilReady = useCallback((ok: boolean) => {
+    if (foilCard) setFoilState({ card: foilCard, ok });
+  }, [foilCard]);
 
   const shimmerAreas = useMemo(
-    () => effectiveHoloAreas(holo, layoutType, borderless),
-    [holo, layoutType, borderless],
+    () => effectiveHoloAreas(holo, layoutType, borderless, !!popOutUrl),
+    [holo, layoutType, borderless, popOutUrl],
   );
-  const needsArt = shimmerAreas.includes('art') || shimmerAreas.includes('reverse');
-  const { art: artRect, bookmark: bookmarkRect } = useArtAndBookmark(() => measureRoot.current, needsArt, measureKey);
+  const needsArt = shimmerAreas.includes('art') || shimmerAreas.includes('setIcon') || usesReverseLayer(shimmerAreas);
+  const rects = useArtAndBookmark(() => measureRoot.current, needsArt, measureKey);
   const shimmerRegion = useMemo(
-    () => shimmerRegions(shimmerAreas, artRect, borderless, bookmarkRect),
-    [shimmerAreas, artRect, borderless, bookmarkRect],
+    () => shimmerRegions(shimmerAreas, rects.art, borderless, rects.bookmark, { effect: effectRegion(rects.effect, rects.infoBar), setIcon: rects.setIcon }),
+    [shimmerAreas, rects, borderless],
   );
 
-  function handleCardMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (driven) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    setTilt(tiltAt((e.clientX - rect.left) / rect.width, (e.clientY - rect.top) / rect.height));
+    const clamp = (v: number) => Math.min(1, Math.max(0, v));
+    setHovering(true);
+    setTilt(tiltAt(clamp((e.clientX - rect.left) / rect.width), clamp((e.clientY - rect.top) / rect.height)));
   }
 
-  function handleCardMouseEnter() {
-    if (!driven) setHovering(true);
-  }
-
-  function handleCardMouseLeave() {
+  function handlePointerLeave() {
     if (driven) return;
     setHovering(false);
     setTilt(REST);
@@ -65,9 +75,10 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
 
   return (
     <div
-      onMouseMove={thumbnailUrl ? handleCardMouseMove : undefined}
-      onMouseEnter={thumbnailUrl ? handleCardMouseEnter : undefined}
-      onMouseLeave={thumbnailUrl ? handleCardMouseLeave : undefined}
+      onPointerDown={thumbnailUrl ? handlePointerMove : undefined}
+      onPointerMove={thumbnailUrl ? handlePointerMove : undefined}
+      onPointerLeave={thumbnailUrl ? handlePointerLeave : undefined}
+      onPointerCancel={thumbnailUrl ? handlePointerLeave : undefined}
       className={className}
       style={{
         transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) scale(${hovering ? 1.05 : 1})`,
@@ -77,6 +88,7 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
           : 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
         position: 'relative',
         cursor: 'default',
+        touchAction: thumbnailUrl && !driven ? 'none' : undefined,
         aspectRatio: '238/333',
       }}
     >
@@ -114,12 +126,28 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
           }}
         />
       )}
-      {holoActive && imgLoaded && shimmerAreas.length > 0 && (shimmerRegion === null || shimmerRegion.length > 0) && (
+      {use3d && foil3d && (
+        <Suspense fallback={null}>
+          <FoilCanvas
+            images={foil3d}
+            holo={holo}
+            layoutType={layoutType}
+            borderless={borderless}
+            rx={tilt.rx}
+            ry={tilt.ry}
+            hovering={hovering}
+            glare={glare}
+            onReady={onFoilReady}
+          />
+        </Suspense>
+      )}
+      {holoActive && imgLoaded && foilOk !== true && shimmerAreas.length > 0 && (shimmerRegion === null || shimmerRegion.length > 0 || shimmerAreas.includes('popout')) && (
         <div className="card-thumb-round" style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
           <HoloShimmer
             holo={holo}
             rects={shimmerRegion}
             popOutUrl={shimmerAreas.includes('card') ? null : popOutUrl}
+            popOutFoiled={shimmerAreas.includes('popout')}
             tilt={tilt}
           />
         </div>

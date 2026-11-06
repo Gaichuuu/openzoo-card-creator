@@ -6,6 +6,7 @@ import type { GradientDef, HoloSettings } from '@/types/card';
 import { isHoloActive } from './holo/holoSettings';
 import { ensureFoil } from './holo/foilImage';
 import { BLEED, CARD_H, CARD_W } from './cardDims';
+import { edgeShowsFoil, whiteInkMaskPixels } from './printFile';
 
 type SvgOptions = NonNullable<Parameters<typeof toSvg>[1]>;
 interface CardPngOptions extends SvgOptions {
@@ -190,10 +191,11 @@ export function downloadDataUrl(dataUrl: string, filename: string) {
 export async function exportStandardPng(
   el: HTMLElement,
   borderless: boolean,
+  pixelRatio = PIXEL_RATIO,
 ): Promise<string> {
   const [fontEmbedCSS] = await Promise.all([getFontEmbedCSS(), document.fonts.ready]);
   const opts = {
-    pixelRatio: PIXEL_RATIO,
+    pixelRatio,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
@@ -211,11 +213,69 @@ export async function exportPrintReadyPng(
   artFraming?: ArtFraming,
   borderGradient?: GradientDef | null,
   holo?: HoloSettings | null,
+  pixelRatio = PIXEL_RATIO,
 ): Promise<string> {
   if (borderless) {
-    return exportPrintBorderless(el, cardArtUrl, crossOrigin, artFraming, holo);
+    return exportPrintBorderless(el, cardArtUrl, crossOrigin, artFraming, holo, pixelRatio);
   }
-  return exportPrintBordered(el, borderGradient, holo);
+  return exportPrintBordered(el, borderGradient, holo, pixelRatio);
+}
+
+type HoloLayerStyle = Partial<Pick<CSSStyleDeclaration, 'backgroundImage' | 'backgroundColor' | 'opacity' | 'mixBlendMode' | 'display'>>;
+
+export async function withHoloLayerStyle<T>(el: HTMLElement, style: HoloLayerStyle, render: () => Promise<T>): Promise<T> {
+  const keys = Object.keys(style) as (keyof HoloLayerStyle)[];
+  const forced = Array.from(el.querySelectorAll<HTMLElement>('.oz-holo')).map((layer) => {
+    const prev: HoloLayerStyle = {};
+    for (const k of keys) prev[k] = layer.style[k];
+    Object.assign(layer.style, style);
+    return { layer, prev };
+  });
+  try {
+    return await render();
+  } finally {
+    for (const { layer, prev } of forced) Object.assign(layer.style, prev);
+  }
+}
+
+export async function exportWhiteInkMask(
+  el: HTMLElement,
+  printReady: boolean,
+  borderless: boolean,
+  invert: boolean,
+  pixelRatio = PIXEL_RATIO,
+): Promise<string> {
+  const [fontEmbedCSS] = await Promise.all([getFontEmbedCSS(), document.fonts.ready]);
+  const opts = {
+    pixelRatio,
+    quality: 1,
+    width: CARD_W,
+    height: CARD_H,
+    fontEmbedCSS,
+    style: { transform: 'none', borderRadius: printReady || borderless ? '0' : undefined },
+    filter: (node: Node) => !(printReady && node instanceof HTMLElement && node.classList.contains('art-needed-overlay')),
+  };
+  const pixels = async (color: string) => {
+    const canvas = await withHoloLayerStyle(el, { backgroundImage: 'none', backgroundColor: color, opacity: '1', mixBlendMode: 'normal' }, () => cardToCanvas(el, opts));
+    return canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height);
+  };
+  const on = await pixels('#000');
+  const off = await pixels('#fff');
+
+  const cardW = CARD_W * pixelRatio;
+  const corners = !printReady ? 'transparent' : edgeShowsFoil(on.data, off.data, cardW) ? 'foil' : 'ink';
+  const cardH = CARD_H * pixelRatio;
+  const bPx = printReady ? BLEED * pixelRatio : 0;
+  const canvas = document.createElement('canvas');
+  canvas.width = cardW + 2 * bPx;
+  canvas.height = cardH + 2 * bPx;
+  const ctx = canvas.getContext('2d')!;
+  ctx.putImageData(new ImageData(whiteInkMaskPixels(on.data, off.data, invert, corners), cardW, cardH), bPx, bPx);
+  if (printReady) {
+    ctx.imageSmoothingEnabled = false;
+    extendEdgesToBleed(ctx, bPx, bPx, cardW, cardH, canvas.width, canvas.height);
+  }
+  return canvas.toDataURL('image/png');
 }
 
 export interface ArtFraming {
@@ -246,7 +306,7 @@ type FoilPlacement = 'art' | 'border' | 'card';
 function foilOn(el: HTMLElement, holo: HoloSettings | null | undefined, where: FoilPlacement): holo is HoloSettings {
   if (!isHoloActive(holo)) return false;
   const selector = where === 'card' ? '.oz-holo-card'
-    : where === 'border' ? '[data-zone-key="CardBorder"] > .oz-holo'
+    : where === 'border' ? '[data-zone-key="CardBorder"] > .oz-holo, .oz-holo-border'
       : '[data-zone-key="CardArt"] > .oz-holo, [data-zone-key="Art"] > .oz-holo';
   return Array.from(el.querySelectorAll<HTMLElement>(selector)).some((layer) => layer.style.display !== 'none');
 }
@@ -272,8 +332,8 @@ async function exportPrintBorderless(
   crossOrigin?: boolean,
   artFraming?: ArtFraming,
   holo?: HoloSettings | null,
+  pr = PIXEL_RATIO,
 ): Promise<string> {
-  const pr = PIXEL_RATIO;
   const bPx = BLEED * pr;
   const printW = (CARD_W + 2 * BLEED) * pr;
   const printH = (CARD_H + 2 * BLEED) * pr;
@@ -328,7 +388,7 @@ async function exportPrintBorderless(
   return canvas.toDataURL('image/png');
 }
 
-async function exportPrintBordered(el: HTMLElement, borderGradient?: GradientDef | null, holo?: HoloSettings | null): Promise<string> {
+async function exportPrintBordered(el: HTMLElement, borderGradient?: GradientDef | null, holo?: HoloSettings | null, pr = PIXEL_RATIO): Promise<string> {
   const rootZone = el.firstElementChild as HTMLElement | null;
   const borderColor = rootZone
     ? getComputedStyle(rootZone).backgroundColor
@@ -337,7 +397,7 @@ async function exportPrintBordered(el: HTMLElement, borderGradient?: GradientDef
   const wholeCardFoil = foilOn(el, holo, 'card');
   const [fontEmbedCSS] = await Promise.all([getFontEmbedCSS(), document.fonts.ready]);
   const borderedOpts = {
-    pixelRatio: PIXEL_RATIO,
+    pixelRatio: pr,
     quality: 1,
     width: CARD_W,
     height: CARD_H,
@@ -349,7 +409,6 @@ async function exportPrintBordered(el: HTMLElement, borderGradient?: GradientDef
   };
   const cardDataUrl = await renderCard(el, borderedOpts);
 
-  const pr = PIXEL_RATIO;
   const canvas = document.createElement('canvas');
   canvas.width = (CARD_W + 2 * BLEED) * pr;
   canvas.height = (CARD_H + 2 * BLEED) * pr;

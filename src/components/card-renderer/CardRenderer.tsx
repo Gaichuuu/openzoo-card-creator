@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type { LayoutType } from '@/types/layout';
 import type { CardData, CardFitSettings, CustomStyle, HoloSettings } from '@/types/card';
-import { effectiveHoloAreas } from '@/lib/holo/holoAreas';
+import { effectRegion, effectiveHoloAreas, usesReverseLayer } from '@/lib/holo/holoAreas';
 import { HoloLayer, ReverseFoilLayer } from './HoloLayer';
 import { LAYOUTS } from '@/data/layouts';
 import { useCardStore } from '@/lib/store';
@@ -44,11 +44,13 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
     const customStyle = customStyleOverride === undefined ? storeCustomStyle : customStyleOverride;
     const popOutUrl = popOutOverride === undefined ? storePopOut : popOutOverride;
     const holo = holoOverride === undefined ? storeHolo : holoOverride;
-    const holoAreas = useMemo(() => effectiveHoloAreas(holo, layoutType, borderless), [holo, layoutType, borderless]);
-    const reverseFoil = holoAreas.includes('reverse');
+    const holoAreas = useMemo(() => effectiveHoloAreas(holo, layoutType, borderless, !!popOutUrl), [holo, layoutType, borderless, popOutUrl]);
+    const reverseFoil = usesReverseLayer(holoAreas);
+    const ground = holoAreas.includes('ground');
+    const groundBorder = ground && holoAreas.includes('border');
     const zoneHoloAreas = useMemo(
-      () => (reverseFoil ? holoAreas.filter((a) => a !== 'art') : holoAreas),
-      [holoAreas, reverseFoil],
+      () => (ground ? holoAreas.filter((a) => a !== 'art' && a !== 'border') : holoAreas),
+      [holoAreas, ground],
     );
     const backgroundTexture = customStyle ? resolveBackgroundTexture(layoutType, cardData) : null;
     const custom = useMemo(
@@ -82,7 +84,8 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
       }
     });
 
-    const { art, bookmark } = useArtAndBookmark(() => innerEl, artNeeded || reverseFoil, layoutType);
+    const { art, bookmark, effect, infoBar } = useArtAndBookmark(() => innerEl, artNeeded || reverseFoil, layoutType);
+    const effectRects = useMemo(() => effectRegion(effect, infoBar), [effect, infoBar]);
     const artRect = artNeeded ? art : null;
 
     if (!layout) return <div>Unknown layout: {layoutType}</div>;
@@ -115,7 +118,7 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
           }}
         >
           <ZoneRenderer zone={layout.rootZone} cardData={cardData} borderless={borderless} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} custom={custom} holo={holo} holoAreas={zoneHoloAreas} />
-          {holo && reverseFoil && <ReverseFoilLayer holo={holo} includeArt={holoAreas.includes('art')} art={art} bookmark={bookmark} />}
+          {holo && reverseFoil && <ReverseFoilLayer holo={holo} areas={holoAreas} includeBorder={groundBorder} art={art} bookmark={bookmark} effect={effectRects} />}
           {artNeeded && artRect && (
             <div className="art-needed-overlay" style={{
               position: 'absolute',
@@ -153,6 +156,7 @@ export const CardRenderer = forwardRef<HTMLDivElement, CardRendererProps>(
               zIndex: 60,
             }} />
           )}
+          {holo && popOutUrl && holoAreas.includes('popout') && <HoloLayer holo={holo} zIndex={60} maskUrl={popOutUrl} />}
           {holo && holoAreas.includes('card') && <HoloLayer holo={holo} zIndex={61} wholeCard cornerRadius={10} />}
         </div>
       </div>

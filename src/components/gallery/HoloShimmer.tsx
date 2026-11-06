@@ -3,6 +3,7 @@ import type { HoloSettings } from '@/types/card';
 import type { ArtRect } from '@/lib/artRect';
 import { BLEED, CARD_H, CARD_W } from '@/lib/cardDims';
 import { useFoil } from '@/lib/holo/foilImage';
+import { SHEEN_FLOOR, SHEEN_SWEEP, SHIMMER_GAIN, SHINE_BY_PATTERN } from '@/lib/holo/galleryFoilTuning';
 
 interface Tilt { gx: number; gy: number; go: number }
 
@@ -10,11 +11,12 @@ interface HoloShimmerProps {
   holo: HoloSettings;
   rects: ArtRect[] | null;
   popOutUrl: string | null;
+  popOutFoiled?: boolean;
   tilt: Tilt;
 }
 
-const RAINBOW = 'repeating-linear-gradient(115deg, hsl(0,100%,60%) 0%, hsl(55,100%,60%) 4%, hsl(120,100%,60%) 8%, hsl(190,100%,60%) 12%, hsl(260,100%,65%) 16%, hsl(320,100%,60%) 20%, hsl(360,100%,60%) 24%)';
-const SHIMMER_GAIN = 0.9;
+const rainbowImage = (angle: number) => `repeating-linear-gradient(${angle}deg, hsl(0,100%,60%) 0%, hsl(55,100%,60%) 4%, hsl(120,100%,60%) 8%, hsl(190,100%,60%) 12%, hsl(260,100%,65%) 16%, hsl(320,100%,60%) 20%, hsl(360,100%,60%) 24%)`;
+const sheenImage = (angle: number) => `linear-gradient(${angle}deg, rgba(0,0,0,${SHEEN_FLOOR}) 40%, rgba(0,0,0,0.4) 44.5%, rgba(0,0,0,0.85) 48%, #000 50%, rgba(0,0,0,0.85) 52%, rgba(0,0,0,0.4) 55.5%, rgba(0,0,0,${SHEEN_FLOOR}) 60%)`;
 const FULL_CARD: ArtRect = { top: 0, left: 0, width: CARD_W, height: CARD_H };
 
 function pct(v: number): string {
@@ -29,22 +31,27 @@ function anchor(rect: ArtRect, x: number, y: number, imageW: number, imageH: num
   };
 }
 
-export function HoloShimmer({ holo, rects, popOutUrl, tilt }: HoloShimmerProps) {
+export function HoloShimmer({ holo, rects, popOutUrl, popOutFoiled = false, tilt }: HoloShimmerProps) {
   const foil = useFoil(holo);
   if (!foil) return null;
   const list = rects ?? [FULL_CARD];
+  const angle = SHINE_BY_PATTERN[holo.pattern].bandAngle;
   return (
     <>
       {list.map((rect) => (
         <ShimmerRect
           key={`${rect.left},${rect.top},${rect.width},${rect.height}`}
           rect={rect}
-          maskUrl={foil.maskUrl}
+          maskUrl={foil.sparkleUrl}
           popOutUrl={popOutUrl}
           strength={holo.strength}
+          angle={angle}
           tilt={tilt}
         />
       ))}
+      {popOutFoiled && popOutUrl && (
+        <ShimmerRect rect={FULL_CARD} maskUrl={foil.sparkleUrl} popOutUrl={popOutUrl} strength={holo.strength} angle={angle} tilt={tilt} insidePopOut />
+      )}
     </>
   );
 }
@@ -54,38 +61,31 @@ interface ShimmerRectProps {
   maskUrl: string | null;
   popOutUrl: string | null;
   strength: number;
+  angle: number;
   tilt: Tilt;
+  insidePopOut?: boolean;
 }
 
-function ShimmerRect({ rect, maskUrl, popOutUrl, strength, tilt }: ShimmerRectProps) {
-  const images: string[] = [];
-  const sizes: string[] = [];
-  const positions: string[] = [];
-  if (maskUrl) {
-    const a = anchor(rect, -BLEED, -BLEED, CARD_W + 2 * BLEED, CARD_H + 2 * BLEED);
-    images.push(`url('${maskUrl}')`);
-    sizes.push(a.size);
-    positions.push(a.position);
-  } else if (popOutUrl) {
-    images.push('linear-gradient(#000, #000)');
-    sizes.push('100% 100%');
-    positions.push('0% 0%');
-  }
-  if (popOutUrl) {
-    const a = anchor(rect, 0, 0, CARD_W, CARD_H);
-    images.push(`url('${popOutUrl}')`);
-    sizes.push(a.size);
-    positions.push(a.position);
-  }
+function ShimmerRect({ rect, maskUrl, popOutUrl, strength, angle, tilt, insidePopOut = false }: ShimmerRectProps) {
+  const reflect = (g: number) => 0.5 - SHEEN_SWEEP * (g / 100 - 0.5) - 1.5;
+  const sheen = anchor(rect, CARD_W * reflect(tilt.gx), CARD_H * reflect(tilt.gy), 3 * CARD_W, 3 * CARD_H);
+  const layers = [{ image: sheenImage(angle), ...sheen }];
+  if (maskUrl) layers.push({ image: `url('${maskUrl}')`, ...anchor(rect, -BLEED, -BLEED, CARD_W + 2 * BLEED, CARD_H + 2 * BLEED) });
+  if (popOutUrl) layers.push({ image: `url('${popOutUrl}')`, ...anchor(rect, 0, 0, CARD_W, CARD_H) });
+  const ops = layers.map((_, i) => {
+    if (i === layers.length - 1) return 'add';
+    if (popOutUrl && i === layers.length - 2) return insidePopOut ? 'intersect' : 'subtract';
+    return 'intersect';
+  });
 
   const rainbow = anchor(rect, -2 * CARD_W * tilt.gx / 100, -2 * CARD_H * tilt.gy / 100, 3 * CARD_W, 3 * CARD_H);
 
-  const mask: CSSProperties = images.length === 0 ? {} : {
-    maskImage: images.join(', '),
-    maskSize: sizes.join(', '),
-    maskPosition: positions.join(', '),
+  const mask: CSSProperties = {
+    maskImage: layers.map((l) => l.image).join(', '),
+    maskSize: layers.map((l) => l.size).join(', '),
+    maskPosition: layers.map((l) => l.position).join(', '),
     maskRepeat: 'no-repeat',
-    maskComposite: images.length > 1 ? 'subtract' : undefined,
+    maskComposite: ops.join(', '),
   };
 
   return (
@@ -97,7 +97,7 @@ function ShimmerRect({ rect, maskUrl, popOutUrl, strength, tilt }: ShimmerRectPr
         left: pct((rect.left / CARD_W) * 100),
         width: pct((rect.width / CARD_W) * 100),
         height: pct((rect.height / CARD_H) * 100),
-        backgroundImage: RAINBOW,
+        backgroundImage: rainbowImage(angle),
         backgroundSize: rainbow.size,
         backgroundPosition: rainbow.position,
         backgroundRepeat: 'no-repeat',

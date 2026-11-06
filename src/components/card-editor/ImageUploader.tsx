@@ -183,11 +183,6 @@ export function ImageUploader() {
               Reset
             </button>
           </div>
-          {popOutUrl && (
-            <div className={`col-span-2 ${HINT} italic`}>
-              The pop-out layer does not move with the art. Line them up in your image editor.
-            </div>
-          )}
         </div>
       )}
       <div className="pt-2">

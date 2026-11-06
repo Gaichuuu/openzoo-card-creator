@@ -577,23 +577,17 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
 
         <EditorSection>
           {/* Metadata */}
-          {hasMetadata && (
+          {hasMetadata && !borderless && (
             <>
               <SectionDivider />
-              {borderless ? (
-                <div className="text-xs text-gold-500 italic">Metadata does not appear on borderless cards.</div>
-              ) : (
-                <CryptidInfoEditor />
-              )}
+              <CryptidInfoEditor />
             </>
           )}
 
           <SectionDivider />
 
           {/* Flavor Text */}
-          {isBasic && (borderless ? (
-            <div className="text-xs text-gold-500 italic">Flavor text does not appear on borderless cards.</div>
-          ) : (
+          {isBasic && !borderless && (
             <TextField
               label="Flavor Text"
               value={flavorText}
@@ -602,7 +596,7 @@ export function EditorSidebar({ cardRef, ref }: EditorSidebarProps) {
               multiline
               maxLength={200}
             />
-          ))}
+          )}
 
           {/* Artist */}
           <TextField

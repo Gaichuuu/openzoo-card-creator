@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import '@google/model-viewer';
 import type { SavedCard } from '@/types/card';
+import { isHoloActive } from '@/lib/holo/holoSettings';
+import { applyHeroFoil } from './heroFoil';
 
 type ModelViewer = HTMLElement & {
   model?: { materials: any[] };
@@ -84,6 +86,24 @@ export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCa
       setFrontApplied(true);
     };
     return applyTexture(viewer, 0, frontCard.thumbnailUrl, onFail, () => setFrontApplied(true));
+  }, [frontCard]);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || !frontCard?.holoCardUrl || !isHoloActive(frontCard.holo)) return;
+    let cancelled = false;
+    let undo: (() => void) | null = null;
+    (async () => {
+      await waitForModel(viewer);
+      const material = viewer.model?.materials?.[0];
+      if (cancelled || !material) return;
+      undo = await applyHeroFoil(viewer, material, frontCard, () => cancelled);
+      if (!undo && !cancelled) console.warn('Holo foil unavailable; showing the plain card');
+    })().catch((e) => console.warn('Holo foil unavailable:', e));
+    return () => {
+      cancelled = true;
+      undo?.();
+    };
   }, [frontCard]);
 
   useEffect(() => {

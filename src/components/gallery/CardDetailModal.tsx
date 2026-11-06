@@ -35,6 +35,10 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
   const safeStyle = useMemo(() => sanitizeCustomStyle(card.customStyle), [card.customStyle]);
   const holo = useMemo(() => sanitizeHolo(card.holo), [card.holo]);
   const popOutUrl = useMemo(() => sanitizePopOutUrl(card.popOutUrl), [card.popOutUrl]);
+  const foil3d = useMemo(
+    () => (card.holoCardUrl && card.holoAreaUrl ? { card: card.holoCardUrl, area: card.holoAreaUrl } : null),
+    [card.holoCardUrl, card.holoAreaUrl],
+  );
   const uid = useAuthUid();
   const isOwner = !!card.ownerUid && card.ownerUid === uid;
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -133,6 +137,7 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
             popOutUrl={popOutUrl}
             measureRoot={hiddenCardRef}
             measureKey={card}
+            foil3d={foil3d}
           />
         </div>
 
