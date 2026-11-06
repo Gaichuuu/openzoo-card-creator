@@ -1,8 +1,8 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import type { HoloSettings } from '@/types/card';
+import type { HoloArea, HoloSettings } from '@/types/card';
 import { BLEED, CARD_H, CARD_W } from '@/lib/cardDims';
 import { useFoil } from '@/lib/holo/foilImage';
-import { REVERSE_RECT, intersectRects } from '@/lib/holo/holoAreas';
+import { reverseClipPath, type Rect } from '@/lib/holo/holoAreas';
 import type { ArtAndBookmark } from '@/lib/artRect';
 
 interface Offset { left: number; top: number }
@@ -14,9 +14,12 @@ interface HoloLayerProps {
   cornerRadius?: number;
   clipPath?: string;
   ground?: boolean;
+  border?: boolean;
+  maskUrl?: string;
+  iconMask?: string;
 }
 
-export function HoloLayer({ holo, zIndex, wholeCard = false, cornerRadius, clipPath, ground = false }: HoloLayerProps) {
+export function HoloLayer({ holo, zIndex, wholeCard = false, cornerRadius, clipPath, ground = false, border = false, maskUrl, iconMask }: HoloLayerProps) {
   const foil = useFoil(holo);
   const ref = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState<Offset | null>(null);
@@ -44,7 +47,7 @@ export function HoloLayer({ holo, zIndex, wholeCard = false, cornerRadius, clipP
   return (
     <div
       ref={ref}
-      className={['oz-holo', wholeCard && 'oz-holo-card', ground && 'oz-holo-ground'].filter(Boolean).join(' ')}
+      className={['oz-holo', wholeCard && 'oz-holo-card', ground && 'oz-holo-ground', border && 'oz-holo-border', maskUrl && 'oz-holo-popout', iconMask && 'oz-holo-seticon'].filter(Boolean).join(' ')}
       style={{
         position: 'absolute',
         inset: 0,
@@ -58,23 +61,25 @@ export function HoloLayer({ holo, zIndex, wholeCard = false, cornerRadius, clipP
         backgroundSize: `${CARD_W + 2 * BLEED}px ${CARD_H + 2 * BLEED}px`,
         backgroundRepeat: 'no-repeat',
         backgroundPosition: offset ? `${-(offset.left + BLEED)}px ${-(offset.top + BLEED)}px` : undefined,
+        maskImage: maskUrl ? `url('${maskUrl}')` : iconMask ? `url('${iconMask}')` : undefined,
+        maskSize: maskUrl ? '100% 100%' : iconMask ? 'contain' : undefined,
+        maskPosition: iconMask ? 'center' : undefined,
+        maskRepeat: maskUrl || iconMask ? 'no-repeat' : undefined,
       }}
     />
   );
 }
 
-interface Rect { left: number; top: number; width: number; height: number }
+interface ReverseFoilProps extends Pick<ArtAndBookmark, 'art' | 'bookmark'> {
+  holo: HoloSettings;
+  areas: readonly HoloArea[];
+  includeBorder: boolean;
+  effect: Rect[];
+}
 
-const cw = (r: Rect) => `M${r.left} ${r.top}H${r.left + r.width}V${r.top + r.height}H${r.left}Z`;
-const ccw = (r: Rect) => `M${r.left} ${r.top}V${r.top + r.height}H${r.left + r.width}V${r.top}Z`;
-
-export function ReverseFoilLayer({ holo, includeArt, art, bookmark }: { holo: HoloSettings; includeArt: boolean } & ArtAndBookmark) {
-
-  let path = cw(REVERSE_RECT);
-  if (!includeArt && art) {
-    path += ccw(art);
-    const overlap = bookmark && intersectRects(bookmark, art);
-    if (overlap) path += cw(overlap);
-  }
-  return (includeArt || art) ? <HoloLayer holo={holo} zIndex={1} clipPath={`path(nonzero, '${path}')`} ground /> : null;
+export function ReverseFoilLayer({ holo, areas, includeBorder, art, bookmark, effect }: ReverseFoilProps) {
+  const path = reverseClipPath({ areas, includeBorder, art, bookmark, effect });
+  return path
+    ? <HoloLayer holo={holo} zIndex={1} clipPath={`path(nonzero, '${path}')`} ground border={includeBorder} cornerRadius={includeBorder ? 10 : undefined} />
+    : null;
 }

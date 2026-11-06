@@ -36,7 +36,9 @@ describe('isHoloActive', () => {
 });
 
 describe('HOLO_PATTERNS', () => {
-  it('lists patterns in display order', () => {
-    expect(HOLO_PATTERNS.map(p => p.id)).toEqual(['rainbow', 'sand', 'streaks', 'diamond', 'bubbles', 'shards', 'stars']);
+  it('lists patterns A-Z by label', () => {
+    expect(HOLO_PATTERNS.map(p => p.id)).toEqual(['bubbles', 'shards', 'diagonal', 'diamond', 'rainbow', 'sand', 'streaks', 'stars']);
+    const labels = HOLO_PATTERNS.map(p => p.label);
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
   });
 });

@@ -27,6 +27,7 @@ const DEFAULT_SEEDS: Record<HoloPatternId, number> = {
   bubbles: 0xb0b504,
   shards: 0x5ba705,
   stars: 0x57a606,
+  diagonal: 1,
 };
 
 const range = (rand: Rand, lo: number, hi: number) => lo + rand() * (hi - lo);
@@ -107,8 +108,8 @@ function streaks(width: number, height: number, rand: Rand): HoloShape[] {
 
 function diamond(width: number, height: number, rand: Rand): HoloShape[] {
   const out: HoloShape[] = [];
-  const cell = 48;
-  const lw = 2.2;
+  const cell = 96;
+  const lw = 4.4;
   const line = (x1: number, y1: number, x2: number, y2: number) => {
     const c = clipSegment(x1, y1, x2, y2, width, height, lw / 2);
     if (!c) return;
@@ -184,7 +185,8 @@ export function generateShapes(
 ): HoloShape[] {
   const rand = mulberry32(seed ?? DEFAULT_SEEDS[pattern]);
   switch (pattern) {
-    case 'rainbow': return [];
+    case 'rainbow':
+    case 'diagonal': return [];
     case 'sand': return sand(width, height, rand, 1, 0.25, 1.5);
     case 'streaks': return streaks(width, height, rand);
     case 'diamond': return diamond(width, height, rand);

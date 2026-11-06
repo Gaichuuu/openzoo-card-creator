@@ -28,6 +28,7 @@ import { sanitizeCustomStyle, sanitizePopOutUrl } from './customStyle';
 import { sanitizeHolo } from './holo/holoSettings';
 import { generateId, versionedName } from './publishUtils';
 import type { ClientDiagnostics } from './clientDiagnostics';
+import type { Holo3dImages } from './holo/holo3d';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element, ElementOrCustom } from '@/types/card';
 import type { CustomElementDef } from '@/types/customIcons';
@@ -42,6 +43,7 @@ interface PublishOptions {
   remixedFromName: string;
   existingCard?: SavedCard;
   client?: ClientDiagnostics;
+  holo3d?: Holo3dImages | null;
 }
 
 const knownUploads = new Map<string, string>();
@@ -133,6 +135,21 @@ export async function publishCard(
     uploads.push(uploadDataUrl(thumbnailDataUrl, 'thumb', ext).then((url) => { thumbnailUrl = url; }));
   }
 
+  let holoCardUrl: string | null = null;
+  let holoAreaUrl: string | null = null;
+  if (options.holo3d) {
+    const { card, area } = options.holo3d;
+    uploads.push(Promise.all([
+      uploadDataUrl(card, 'holo-card', card.startsWith('data:image/webp') ? 'webp' : 'png'),
+      uploadDataUrl(area, 'holo-area'),
+    ]).then(([cardUrl, areaUrl]) => {
+      holoCardUrl = cardUrl;
+      holoAreaUrl = areaUrl;
+    }, (err: unknown) => {
+      console.warn('Holo 3D uploads failed; publishing without them:', err);
+    }));
+  }
+
   await Promise.all(uploads);
   const uploadMs = Math.round(performance.now() - startedAt);
 
@@ -161,6 +178,8 @@ export async function publishCard(
     locale: snapshot.locale || 'en',
     borderless: snapshot.borderless || false,
     thumbnailUrl,
+    holoCardUrl,
+    holoAreaUrl,
     creatorName: options.creatorName,
     tags: options.tags,
     remixedFrom: existing ? existing.remixedFrom : options.remixedFrom,
@@ -185,6 +204,10 @@ export async function deleteCard(cardId: string): Promise<void> {
 
 function blockToPlain(block: EffectBlock): Record<string, unknown> {
   return { ...block };
+}
+
+function httpsUrlOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value.startsWith('https://') ? value : null;
 }
 
 function docToSavedCard(data: Record<string, unknown>): SavedCard {
@@ -220,6 +243,8 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     cardArtZoom: (data.cardArtZoom ?? 0) as number,
     artNeeded: (data.artNeeded ?? tags.includes('Art Needed')) as boolean,
     thumbnailUrl: (data.thumbnailUrl || '') as string,
+    holoCardUrl: httpsUrlOrNull(data.holoCardUrl),
+    holoAreaUrl: httpsUrlOrNull(data.holoAreaUrl),
     cardArtUrl: (data.cardArtUrl || '') as string,
     customStyle: sanitizeCustomStyle(data.customStyle),
     popOutUrl: sanitizePopOutUrl(data.popOutUrl),

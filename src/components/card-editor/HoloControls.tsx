@@ -34,13 +34,14 @@ export function HoloControls({ collapsible = true }: { collapsible?: boolean }) 
   const { pathname } = useLocation();
   const layoutType = useCardStore((s) => s.layoutType);
   const borderless = useCardStore((s) => s.borderless);
-  const available = availableHoloAreas(layoutType, borderless);
-  const shown = holo ? visibleHoloAreas(holo, layoutType, borderless) : [];
+  const hasPopOut = useCardStore((s) => !!s.popOutUrl);
+  const available = availableHoloAreas(layoutType, borderless, hasPopOut);
+  const shown = holo ? visibleHoloAreas(holo, layoutType, borderless, hasPopOut) : [];
   const wholeCard = shown.includes('card');
 
   const toggleArea = (id: HoloArea, on: boolean) => {
     if (!holo) return;
-    setHolo({ ...holo, areas: toggleHoloArea(holo, id, on, layoutType, borderless) });
+    setHolo({ ...holo, areas: toggleHoloArea(holo, id, on, layoutType, borderless, hasPopOut) });
   };
 
   const handlePattern = (value: string) => {

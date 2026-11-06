@@ -6,12 +6,9 @@ import { HoloControls } from '@/components/card-editor/HoloControls';
 import { CHECK_LABEL, FIELD_LABEL, HINT, SECTION_BUTTON, SECTION_LABEL, SELECT } from '@/components/card-editor/editorStyles';
 import { useShallow } from 'zustand/react/shallow';
 import { useCardStore } from '@/lib/store';
-import { downloadBlob, exportStandardPng, loadImage, renderThumbnailPng, sanitizeCardNameForFilename, thumbnailCanvas, thumbnailJpeg } from '@/lib/exportUtils';
-import { CARD_H, CARD_W } from '@/lib/cardDims';
-import { ensureFoil } from '@/lib/holo/foilImage';
-import { effectiveHoloAreas, shimmerRegions } from '@/lib/holo/holoAreas';
-import { measureArtAndBookmark } from '@/lib/artRect';
-import type { CardSnapshot, HoloArea } from '@/types/card';
+import { downloadBlob, loadImage, renderThumbnailPng, sanitizeCardNameForFilename, thumbnailCanvas, thumbnailJpeg } from '@/lib/exportUtils';
+import { buildHolo3dImages, foilInputs, type Holo3dImages } from '@/lib/holo/holo3d';
+import type { CardSnapshot } from '@/types/card';
 import { withExportState } from '@/lib/useCardExport';
 import { TiltCard } from '@/components/gallery/TiltCard';
 import { CardWallpaper } from '@/components/landing/CardWallpaper';
@@ -20,28 +17,9 @@ import { createLabScene, type LabScene } from './holoLabScene';
 import { handoffIdFrom, loadLabCardFor, saveLabCard, shouldRestoreLabCard } from './labHandoff';
 import { canRecordRegion, recordRegion } from './regionRecorder';
 
-const PX = 4;
 const GALLERY_CIRCLE = 0.3;
 const GALLERY_STAGE = { portrait: { w: 540, h: 675, card: 'h-[560px]' }, square: { w: 540, h: 540, card: 'h-[440px]' } } as const;
 const VIDEO_WALLPAPER_COLS = 6;
-
-async function areaMask(root: HTMLElement, areas: HoloArea[], borderless: boolean, popOutUrl: string | null): Promise<string> {
-  const c = document.createElement('canvas');
-  c.width = CARD_W * PX;
-  c.height = CARD_H * PX;
-  const ctx = c.getContext('2d')!;
-  ctx.scale(PX, PX);
-  ctx.fillStyle = '#fff';
-  const { art, bookmark } = measureArtAndBookmark(root);
-  const regions = shimmerRegions(areas, art, borderless, bookmark);
-  for (const r of regions ?? [{ left: 0, top: 0, width: CARD_W, height: CARD_H }]) ctx.fillRect(r.left, r.top, r.width, r.height);
-  if (popOutUrl && !areas.includes('card')) {
-    const img = await loadImage(popOutUrl, popOutUrl.startsWith('https://'));
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.drawImage(img, 0, 0, CARD_W, CARD_H);
-  }
-  return c.toDataURL('image/png');
-}
 
 async function wallpaperCanvas(width: number, height: number): Promise<HTMLCanvasElement> {
   const c = document.createElement('canvas');
@@ -68,9 +46,9 @@ function GalleryTilt({ setPointerRef, ...props }: Omit<ComponentProps<typeof Til
 
 export default function HoloLab() {
   const hostRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
   const holoCardRef = useRef<HTMLDivElement>(null);
   const [thumb, setThumb] = useState('');
+  const [labImages, setLabImages] = useState<Holo3dImages | null>(null);
   const sceneRef = useRef<LabScene | null>(null);
   const [autoRotate, setAutoRotate] = useState(true);
   const [glare, setGlare] = useState<number | undefined>(undefined);
@@ -104,17 +82,16 @@ export default function HoloLab() {
   useEffect(() => {
     let cancelled = false;
     const render = async () => {
-      const root = cardRef.current;
+      const root = holoCardRef.current;
       const scene = sceneRef.current;
       if (cancelled || !root || !scene) return;
       setStatus('Rendering card...');
       try {
-        const card = await withExportState(root, null, () => exportStandardPng(root, borderless));
-        const areas = effectiveHoloAreas(holo, layoutType, borderless);
-        const foil = holo && areas.length ? await ensureFoil(holo) : null;
-        const area = await areaMask(root, areas, borderless, popOutUrl);
+        const images = await buildHolo3dImages(root, holo, borderless);
+        const inputs = await foilInputs(holo, layoutType, borderless, images);
         if (cancelled) return;
-        await scene.setTextures({ card, mask: foil?.maskUrl ?? null, area, strength: foil ? holo!.strength / 100 : 0 });
+        await scene.setTextures(inputs);
+        setLabImages(images);
         const holoRoot = holoCardRef.current;
         if (holoRoot && !cancelled) {
           const baked = await bakedThumbnail(holoRoot, holo);
@@ -237,6 +214,7 @@ export default function HoloLab() {
                 measureRoot={holoCardRef}
                 measureKey={thumb}
                 glare={glare}
+                foil3d={labImages}
               />
             )}
             </div>
@@ -326,7 +304,6 @@ export default function HoloLab() {
         {status && <div className={HINT}>{status}</div>}
       </div>
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        <CardRenderer ref={cardRef} layoutType={layoutType} cardData={cardData} scale={1} holoOverride={null} />
         <CardRenderer ref={holoCardRef} layoutType={layoutType} cardData={cardData} scale={1} />
       </div>
     </div>

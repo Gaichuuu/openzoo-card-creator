@@ -2,12 +2,13 @@ import type { HoloPatternId, HoloSettings } from '@/types/card';
 import { sanitizeHoloAreas } from './holoAreas';
 
 export const HOLO_PATTERNS: readonly { id: HoloPatternId; label: string }[] = [
+  { id: 'bubbles', label: 'Cosmos' },
+  { id: 'shards', label: 'Cracked Ice' },
+  { id: 'diagonal', label: 'Diagonal' },
+  { id: 'diamond', label: 'Diamond' },
   { id: 'rainbow', label: 'Rainbow' },
   { id: 'sand', label: 'Sand' },
   { id: 'streaks', label: 'Shimmer' },
-  { id: 'diamond', label: 'Diamond' },
-  { id: 'bubbles', label: 'Cosmos' },
-  { id: 'shards', label: 'Cracked Ice' },
   { id: 'stars', label: 'Starlight' },
 ];
 

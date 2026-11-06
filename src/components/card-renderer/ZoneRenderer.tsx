@@ -9,7 +9,7 @@ import { useCardStore } from '@/lib/store';
 import { artPositionCss, artZoomScale } from '@/lib/cardArtFit';
 import { ParsedText } from './TextParser';
 import { HoloLayer } from './HoloLayer';
-import { holoAreaOfZone } from '@/lib/holo/holoAreas';
+import { holoAreaOfZone, usesReverseLayer } from '@/lib/holo/holoAreas';
 import { getFitMode } from '@/lib/fitMode';
 import { fitSpecialTextBox, restoreArtWindow } from '@/lib/specialTextFit';
 import { FIT_CANDIDATES, FONT_STARTS, BASE_FONT_INDEX, BASE_INDEX, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
@@ -310,7 +310,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       pitch: mainTextLineHeightAdj,
       spacing: mainTextLetterSpacingAdj,
       nudge: mainTextBoxNudge,
-      nudgeByTop: holoAreas.includes('reverse'),
+      nudgeByTop: usesReverseLayer(holoAreas),
     });
     const root = el.closest('[data-oz-card-root]');
     run();
@@ -328,8 +328,9 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     if (!el) return;
 
     const heightStr = zone.style.height as string;
-    const baseHeight = parseFloat(heightStr);
-    if (!baseHeight || isNaN(baseHeight) || !heightStr?.endsWith('px')) return;
+    const layoutHeight = parseFloat(heightStr);
+    if (!layoutHeight || isNaN(layoutHeight) || !heightStr?.endsWith('px')) return;
+    const baseHeight = shouldAutoFit ? (el.parentElement?.offsetHeight || layoutHeight) : layoutHeight;
 
     if (shouldAutoFitTNL) {
       el.style.zoom = '1';
@@ -820,12 +821,14 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   const nameFill = custom && zoneKey ? customNameFill(zoneKey, custom.style) : null;
 
   let backgroundImage: string | undefined;
+  let imageUrl: string | undefined;
   if (zone.type === 'image') {
     const imageKey = `i${zone.id}`;
     const rawImagePath = cardData[imageKey] || zone.image;
     if (rawImagePath && rawImagePath !== 'default_image') {
       const resolvedPath = resolveImagePath(rawImagePath);
       if (resolvedPath) {
+        imageUrl = resolvedPath;
         backgroundImage = `url('${resolvedPath}')`;
       }
     }
@@ -867,7 +870,9 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     <ZoneRenderer key={`${child.id}-${idx}`} zone={child} cardData={cardData} borderless={borderless} inBorderlessTextScope={inScope} textBoxReserve={textBoxReserve} fitOverrides={fitOverrides} custom={custom} holo={holo} holoAreas={holoAreas} />
   ));
   const holoArea = holoAreaOfZone(zone);
-  const holoLayer = holo && holoArea && holoAreas.includes(holoArea) ? <HoloLayer holo={holo} /> : null;
+  const holoLayer = !holo || !holoArea || !holoAreas.includes(holoArea) ? null
+    : holoArea === 'setIcon' ? (imageUrl ? <HoloLayer holo={holo} iconMask={imageUrl} /> : null)
+      : <HoloLayer holo={holo} />;
 
   const shouldShrink = textContent && zone.type === 'text' &&
     (zone.textDataKey === 'Boost 1' || zone.textDataKey === 'Boost 2' || zone.textDataKey === 'TypesTribes' || zone.textDataKey === 'CardName');

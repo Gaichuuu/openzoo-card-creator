@@ -1,82 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { FOIL_BASE, FOIL_FLOOR } from '@/lib/holo/holoShade';
-
-export interface LabTextures {
-  card: string;
-  mask: string | null;
-  area: string;
-  strength: number;
-}
+import { createFoilMaterial, type FoilInputs } from '@/lib/holo/foilMaterial';
 
 const W = 0.63;
 const H = 0.88;
-
-const vertex = /* glsl */ `
-  varying vec2 vUv;
-  varying vec3 vView;
-  varying vec3 vNormal;
-  varying vec3 vViewLocal;
-  void main() {
-    vUv = uv;
-    vec4 world = modelMatrix * vec4(position, 1.0);
-    vView = normalize(cameraPosition - world.xyz);
-    vNormal = normalize(mat3(modelMatrix) * normal);
-    vec3 cameraLocal = (inverse(modelMatrix) * vec4(cameraPosition, 1.0)).xyz;
-    vViewLocal = normalize(cameraLocal - position);
-    gl_Position = projectionMatrix * viewMatrix * world;
-  }
-`;
-
-const fragment = /* glsl */ `
-  uniform sampler2D uCard;
-  uniform sampler2D uMask;
-  uniform sampler2D uArea;
-  uniform float uHasMask;
-  uniform float uStrength;
-  uniform vec2 uBleed;
-  varying vec2 vUv;
-  varying vec3 vView;
-  varying vec3 vNormal;
-  varying vec3 vViewLocal;
-
-  vec3 hue2rgb(float h) {
-    vec3 k = mod(vec3(5.0, 3.0, 1.0) + h * 6.0, 6.0);
-    return 1.0 - clamp(min(k, 4.0 - k), 0.0, 1.0);
-  }
-
-  void main() {
-    vec4 card = texture2D(uCard, vUv);
-    if (card.a < 0.01) discard;
-    vec2 muv = (vUv + uBleed) / (1.0 + 2.0 * uBleed);
-    vec4 m = uHasMask > 0.5 ? texture2D(uMask, muv) : vec4(1.0, 0.0, 0.0, 1.0);
-    float cover = m.a;
-    float glint = m.r;
-    float hueOff = m.g;
-    float area = texture2D(uArea, vUv).r;
-
-    vec3 n = normalize(vNormal);
-    vec3 v = normalize(vView);
-    vec3 l = normalize(vec3(-0.4, 0.7, 0.9));
-    vec3 r = reflect(-l, n);
-    vec3 vl = normalize(vViewLocal);
-    float tiltX = vl.x;
-    float tiltY = vl.y;
-
-    float phase = (vUv.x * 0.8 + vUv.y * 1.1) + tiltX * 1.6 + tiltY * 1.2 + hueOff * 0.35;
-    vec3 rainbow = mix(vec3(1.0), hue2rgb(fract(phase)), 0.75);
-    float sheen = 0.5 + 0.5 * cos(6.2832 * (vUv.x * 0.5 - vUv.y * 0.35 + tiltX * 0.9 - tiltY * 0.7));
-    float lum = mix(0.55, 1.0, sheen * mix(0.4, 1.0, glint));
-    vec3 base = vec3(${(FOIL_BASE / 255).toFixed(4)});
-    vec3 foil = mix(base, mix(vec3(${(FOIL_FLOOR / 255).toFixed(4)}), vec3(1.0), lum) * rainbow, cover);
-
-    float k = uStrength * area;
-    vec3 col = card.rgb * mix(vec3(1.0), foil, k);
-    float spec = pow(max(dot(r, v), 0.0), 24.0);
-    col += spec * cover * k * glint * rainbow * 0.55;
-    gl_FragColor = vec4(col, card.a);
-  }
-`;
 
 export interface RecordOptions {
   seconds: number;
@@ -92,7 +19,7 @@ export interface Recording {
 }
 
 export interface LabScene {
-  setTextures(t: LabTextures): void;
+  setTextures(t: FoilInputs): Promise<void>;
   setAutoRotate(on: boolean): void;
   record(opts: RecordOptions): Promise<Recording>;
   dispose(): void;
@@ -118,20 +45,8 @@ export function createLabScene(host: HTMLElement): LabScene {
   controls.autoRotateSpeed = 2.2;
 
   const loader = new THREE.TextureLoader();
-  const blank = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
-  blank.needsUpdate = true;
-  const uniforms = {
-    uCard: { value: blank as THREE.Texture },
-    uMask: { value: blank as THREE.Texture },
-    uArea: { value: blank as THREE.Texture },
-    uHasMask: { value: 0 },
-    uStrength: { value: 0 },
-    uBleed: { value: new THREE.Vector2(13 / 238, 13 / 333) },
-  };
-  const front = new THREE.Mesh(
-    new THREE.PlaneGeometry(W, H),
-    new THREE.ShaderMaterial({ uniforms, vertexShader: vertex, fragmentShader: fragment, transparent: true }),
-  );
+  const foil = createFoilMaterial();
+  const front = new THREE.Mesh(new THREE.PlaneGeometry(W, H), foil.material);
   const backTex = loader.load('/assets/OPZDexCardBack.png');
   backTex.colorSpace = THREE.SRGBColorSpace;
   const back = new THREE.Mesh(
@@ -175,29 +90,9 @@ export function createLabScene(host: HTMLElement): LabScene {
   };
   tick();
 
-  const load = (url: string) => new Promise<THREE.Texture>((resolve) => {
-    loader.load(url, (t) => {
-      t.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      resolve(t);
-    });
-  });
-
   return {
-    async setTextures(t) {
-      const [c, m, a] = await Promise.all([
-        load(t.card),
-        t.mask ? load(t.mask) : Promise.resolve(blank),
-        load(t.area),
-      ]);
-      for (const key of ['uCard', 'uMask', 'uArea'] as const) {
-        const old = uniforms[key].value;
-        if (old !== blank) old.dispose();
-      }
-      uniforms.uCard.value = c;
-      uniforms.uMask.value = m;
-      uniforms.uArea.value = a;
-      uniforms.uHasMask.value = t.mask ? 1 : 0;
-      uniforms.uStrength.value = t.strength;
+    setTextures(t) {
+      return foil.setInputs(t, renderer.capabilities.getMaxAnisotropy());
     },
     setAutoRotate(on) {
       controls.autoRotate = on;
@@ -259,6 +154,7 @@ export function createLabScene(host: HTMLElement): LabScene {
       cancelAnimationFrame(raf);
       ro.disconnect();
       controls.dispose();
+      foil.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     },

@@ -10,10 +10,11 @@ export function measureArtRect(root: HTMLElement, scale: number): ArtRect | null
 
 export function measureZoneRect(root: HTMLElement, selector: string, scale: number): ArtRect | null {
   const zone = root.querySelector(selector);
-  if (!zone) return null;
+  if (!zone || getComputedStyle(zone).display === 'none') return null;
   const cardBox = root.getBoundingClientRect();
   const zoneBox = zone.getBoundingClientRect();
   const s = scale || 1;
+  if (zoneBox.width === 0 || zoneBox.height === 0) return null;
   return {
     top: (zoneBox.top - cardBox.top) / s,
     left: (zoneBox.left - cardBox.left) / s,
@@ -29,10 +30,33 @@ export function sameArtRect(a: ArtRect | null, b: ArtRect | null): boolean {
 
 export const BOOKMARK_SELECTOR = '[data-zone-key="Banner"]';
 
-export interface ArtAndBookmark { art: ArtRect | null; bookmark: ArtRect | null }
+export const EFFECT_BOX_SELECTOR = '[data-zone-key="MainTextBox"], [data-zone-key="Aura/Terra Text Box"]';
+export const INFO_BAR_SELECTOR = '[data-zone-key="CryptidInfoBar"]';
+export const SET_ICON_SELECTOR = '[data-zone-key="SetSymbol"]';
+
+export interface ArtAndBookmark {
+  art: ArtRect | null;
+  bookmark: ArtRect | null;
+  effect: ArtRect | null;
+  infoBar: ArtRect | null;
+  setIcon: ArtRect | null;
+}
+
+export const NO_RECTS: ArtAndBookmark = { art: null, bookmark: null, effect: null, infoBar: null, setIcon: null };
 
 export function measureArtAndBookmark(root: HTMLElement): ArtAndBookmark {
   const scale = root.getBoundingClientRect().width / CARD_W;
-  if (!scale) return { art: null, bookmark: null };
-  return { art: measureArtRect(root, scale), bookmark: measureZoneRect(root, BOOKMARK_SELECTOR, scale) };
+  if (!scale) return NO_RECTS;
+  return {
+    art: measureArtRect(root, scale),
+    bookmark: measureZoneRect(root, BOOKMARK_SELECTOR, scale),
+    effect: measureZoneRect(root, EFFECT_BOX_SELECTOR, scale),
+    infoBar: measureZoneRect(root, INFO_BAR_SELECTOR, scale),
+    setIcon: measureZoneRect(root, SET_ICON_SELECTOR, scale),
+  };
+}
+
+export function sameRects(a: ArtAndBookmark, b: ArtAndBookmark): boolean {
+  return sameArtRect(a.art, b.art) && sameArtRect(a.bookmark, b.bookmark) && sameArtRect(a.effect, b.effect)
+    && sameArtRect(a.infoBar, b.infoBar) && sameArtRect(a.setIcon, b.setIcon);
 }

@@ -4,8 +4,8 @@ import type { HoloPatternId } from '@/types/card';
 
 const W = 264;
 const H = 359;
-const PATTERNS: HoloPatternId[] = ['rainbow', 'sand', 'streaks', 'diamond', 'bubbles', 'shards', 'stars'];
-const TEXTURED = PATTERNS.filter((p) => p !== 'rainbow');
+const PATTERNS: HoloPatternId[] = ['rainbow', 'sand', 'streaks', 'diamond', 'bubbles', 'shards', 'stars', 'diagonal'];
+const TEXTURED = PATTERNS.filter((p) => p !== 'rainbow' && p !== 'diagonal');
 
 function anchor(s: HoloShape): [number, number] {
   if (s.kind === 'poly') return [s.pts[0], s.pts[1]];
@@ -22,8 +22,8 @@ describe('generateShapes', () => {
     expect(generateShapes('sand', W, H, 1)).not.toEqual(generateShapes('sand', W, H, 2));
   });
 
-  it('rainbow is empty', () => {
-    expect(generateShapes('rainbow', W, H)).toEqual([]);
+  it.each(['rainbow', 'diagonal'] as const)('%s is empty', (p) => {
+    expect(generateShapes(p, W, H)).toEqual([]);
   });
 
   it.each(TEXTURED)('%s has at least 200 shapes in range with hue/glint in [0,1]', (p) => {
@@ -61,7 +61,7 @@ describe('generateShapes', () => {
 
   it('diamond lattice lines share one hue and are never edge slivers', () => {
     const lines = generateShapes('diamond', W, H).filter((s) => s.kind === 'poly');
-    expect(lines.length).toBeGreaterThan(20);
+    expect(lines.length).toBeGreaterThan(10);
     for (const s of lines) {
       if (s.kind !== 'poly') continue;
       expect(s.hue).toBe(lines[0].hue);

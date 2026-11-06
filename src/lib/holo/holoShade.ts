@@ -1,4 +1,5 @@
 import type { HoloSettings } from '@/types/card';
+import { SPARKLE_LO } from './galleryFoilTuning';
 
 export const FOIL_BASE = 200;
 export const FOIL_FLOOR = 95;
@@ -13,6 +14,17 @@ const SHEEN_POWER = 2;
 const SHAPE_LO = 0.5;
 const GLINT_WEIGHT = 0.6;
 const UNIFORM_LO = 0.8;
+
+export { SPARKLE_LO };
+
+export function sparkleMask(mask: Uint8ClampedArray, out: Uint8ClampedArray): void {
+  for (let i = 0; i < mask.length; i += 4) {
+    out[i] = 0;
+    out[i + 1] = 0;
+    out[i + 2] = 0;
+    out[i + 3] = Math.round(mask[i + 3] * (SPARKLE_LO + (1 - SPARKLE_LO) * (mask[i] / 255)));
+  }
+}
 
 export function foilKey(h: HoloSettings): string {
   return `${h.pattern}:${h.angle}`;

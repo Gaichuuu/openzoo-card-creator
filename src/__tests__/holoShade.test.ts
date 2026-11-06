@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { shadeFoil, foilKey, FOIL_BASE, FOIL_FLOOR } from '@/lib/holo/holoShade';
+import { shadeFoil, foilKey, sparkleMask, FOIL_BASE, FOIL_FLOOR, SPARKLE_LO } from '@/lib/holo/holoShade';
 
 const W = 8;
 const H = 8;
@@ -121,5 +121,15 @@ describe('foilKey', () => {
     expect(foilKey({ pattern: 'sand', strength: 10, angle: 45 })).toBe(foilKey({ pattern: 'sand', strength: 90, angle: 45 }));
     expect(foilKey({ pattern: 'sand', strength: 10, angle: 45 })).not.toBe(foilKey({ pattern: 'sand', strength: 10, angle: 46 }));
     expect(foilKey({ pattern: 'sand', strength: 10, angle: 45 })).not.toBe(foilKey({ pattern: 'stars', strength: 10, angle: 45 }));
+  });
+});
+
+describe('sparkleMask', () => {
+  it('scales coverage by glint, keeping a floor for dull grains', () => {
+    const m = new Uint8ClampedArray([255, 9, 0, 255, 0, 9, 0, 255, 255, 9, 0, 128, 200, 9, 0, 0]);
+    const out = new Uint8ClampedArray(m.length);
+    sparkleMask(m, out);
+    expect(Array.from(out.filter((_, i) => i % 4 === 3))).toEqual([255, Math.round(255 * SPARKLE_LO), 128, 0]);
+    expect(Array.from(out.filter((_, i) => i % 4 !== 3)).every((v) => v === 0)).toBe(true);
   });
 });
