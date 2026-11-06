@@ -109,3 +109,5 @@ export const SCATTER_SPREAD = 1;
 
 export const SHIMMER_GAIN = 1.3;
 export const SHEEN_FLOOR = 0.15;
+
+export const FOIL_REVEAL_TIMEOUT_MS = 2500;

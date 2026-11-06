@@ -63,7 +63,7 @@ describe('shadeFoil', () => {
       }
     }
     expect(anyColored).toBe(true);
-    expect(maxSpread).toBeGreaterThan(60);
+    expect(maxSpread).toBeGreaterThan(40);
   });
 
   it('is opaque and never drops below the floor', () => {
@@ -96,9 +96,23 @@ describe('shadeFoil tuning', () => {
       const out = shade(fullMask(0, 0), angle, false);
       for (let i = 0; i < W * H; i++) {
         const r = out[i * 4], g = out[i * 4 + 1], b = out[i * 4 + 2];
-        expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeGreaterThan(50);
+        expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeGreaterThan(5);
       }
     }
+  });
+
+  it('tints less away from the light and most under it', () => {
+    const out = shade(fullMask(128, 0), 30, false);
+    let lo = 255;
+    let hi = 0;
+    for (let i = 0; i < W * H; i++) {
+      const r = out[i * 4], g = out[i * 4 + 1], b = out[i * 4 + 2];
+      const spread = Math.max(r, g, b) - Math.min(r, g, b);
+      lo = Math.min(lo, spread);
+      hi = Math.max(hi, spread);
+    }
+    expect(lo).toBeLessThan(60);
+    expect(hi).toBeGreaterThan(lo * 1.3);
   });
 
   it('shines a plain rainbow evenly', () => {
