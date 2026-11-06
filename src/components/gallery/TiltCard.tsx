@@ -1,11 +1,11 @@
-import { lazy, Suspense, useCallback, useMemo, useState, type RefObject } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
 import type { HoloSettings } from '@/types/card';
 import type { LayoutType } from '@/types/layout';
 import type { Holo3dImages } from '@/lib/holo/holo3d';
 import { isHoloActive } from '@/lib/holo/holoSettings';
 import { useArtAndBookmark } from '@/lib/holo/useArtAndBookmark';
 import { effectRegion, effectiveHoloAreas, shimmerRegions, usesReverseLayer } from '@/lib/holo/holoAreas';
-import { MAX_TILT } from '@/lib/holo/galleryFoilTuning';
+import { FOIL_REVEAL_TIMEOUT_MS, MAX_TILT } from '@/lib/holo/galleryFoilTuning';
 import { HoloShimmer } from './HoloShimmer';
 
 const FoilCanvas = lazy(() => import('./FoilCanvas'));
@@ -47,6 +47,14 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
   const onFoilReady = useCallback((ok: boolean) => {
     if (foilCard) setFoilState({ card: foilCard, ok });
   }, [foilCard]);
+  const [revealedCard, setRevealedCard] = useState<string | null>(null);
+  const waiting3d = use3d && foilOk === null && revealedCard !== foilCard;
+  useEffect(() => {
+    if (!waiting3d || !foilCard) return;
+    const id = setTimeout(() => setRevealedCard(foilCard), FOIL_REVEAL_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [waiting3d, foilCard]);
+  const shown = imgLoaded && !waiting3d;
 
   const shimmerAreas = useMemo(
     () => effectiveHoloAreas(holo, layoutType, borderless, !!popOutUrl),
@@ -93,7 +101,7 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
       }}
     >
       {/* Skeleton placeholder */}
-      {!imgLoaded && (
+      {!shown && (
         <div className="card-thumb-round absolute inset-0 bg-navy-800 animate-pulse" />
       )}
       {thumbnailUrl ? (
@@ -102,7 +110,7 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
           alt={alt}
           onLoad={() => setImgLoaded(true)}
           className="card-thumb-round border border-navy-600"
-          style={{ display: 'block', width: '100%', height: '100%', pointerEvents: 'none', opacity: imgLoaded ? 1 : 0, boxShadow: '0 34px 66px rgba(0,0,0,.72)' }}
+          style={{ display: 'block', width: '100%', height: '100%', pointerEvents: 'none', opacity: shown ? 1 : 0, transition: 'opacity 0.2s ease-out', boxShadow: '0 34px 66px rgba(0,0,0,.72)' }}
         />
       ) : (
         <div className="card-thumb-round absolute inset-0 flex items-center justify-center text-gray-400 bg-navy-800">
@@ -110,7 +118,7 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
         </div>
       )}
       {/* Glare overlay */}
-      {imgLoaded && glare > 0 && (
+      {shown && glare > 0 && (
         <div
           className="card-thumb-round"
           style={{
@@ -141,7 +149,7 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
           />
         </Suspense>
       )}
-      {holoActive && imgLoaded && foilOk !== true && shimmerAreas.length > 0 && (shimmerRegion === null || shimmerRegion.length > 0 || shimmerAreas.includes('popout')) && (
+      {holoActive && shown && foilOk !== true && shimmerAreas.length > 0 && (shimmerRegion === null || shimmerRegion.length > 0 || shimmerAreas.includes('popout')) && (
         <div className="card-thumb-round" style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
           <HoloShimmer
             holo={holo}

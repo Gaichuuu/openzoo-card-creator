@@ -6,8 +6,8 @@ export const FOIL_FLOOR = 95;
 
 const FLOOR = FOIL_FLOOR;
 const BAND = 420;
-const SATURATION = 0.85;
-const UNIFORM_SATURATION = 0.6;
+const TINT = { lo: 0.45, hi: 0.65 };
+const UNIFORM_TINT = { lo: 0.3, hi: 0.5 };
 const DIAGONAL = Math.PI / 4;
 const SHEEN_SPAN = 0.55;
 const SHEEN_POWER = 2;
@@ -48,7 +48,7 @@ export function shadeFoil(
   const ca = Math.cos(a + DIAGONAL);
   const sa = Math.sin(a + DIAGONAL);
   const turn = angle / 360;
-  const sat = uniform ? UNIFORM_SATURATION : SATURATION;
+  const tint = uniform ? UNIFORM_TINT : TINT;
   const colTerm = new Float32Array(w);
   for (let x = 0; x < w; x++) colTerm[x] = (x * ca) / BAND;
   const sheenCol = new Float32Array(w);
@@ -76,7 +76,7 @@ export function shadeFoil(
       const lum = uniform
         ? UNIFORM_LO + (1 - UNIFORM_LO) * sheen
         : SHAPE_LO + (1 - SHAPE_LO) * (GLINT_WEIGHT * glint + (1 - GLINT_WEIGHT) * sheen);
-      // Channels span FLOOR..255, so a dim shape keeps its hue instead of clamping to gray.
+      const sat = tint.lo + (tint.hi - tint.lo) * sheen;
       const base = FOIL_BASE * (1 - cov);
       const k = (255 - FLOOR) * lum * cov;
       const f = FLOOR * cov;
