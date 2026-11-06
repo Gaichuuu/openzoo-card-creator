@@ -349,11 +349,18 @@ select.input-plain:focus {
   z-index: 2;
 }
 
+.oz-holo-reverse [data-zone-key="SetSymbol"] {
+  z-index: 2;
+}
+
 .card-exporting [data-zone-key="StrongAgainst"] > span {
   transform: translateY(1px) !important;
 }
 .card-exporting [data-zone-key="FlavorText"] > * {
   transform: translateY(0.5px) !important;
+}
+.card-exporting [data-zone-key="SpellbookLimit"] > span {
+  translate: 0 calc(1px / var(--oz-zoom, 1));
 }
 
 .card-exporting.oz-ceil-descent [data-zone-key="DOB/Discovered:"] > span,
