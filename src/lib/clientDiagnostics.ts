@@ -128,6 +128,14 @@ export interface PublishTiming {
   uploadMs?: number;
   uploadBytes?: number;
   authMs?: number;
+  holo3dMs?: number;
+  files?: Record<string, UploadTiming>;
+}
+
+export interface UploadTiming {
+  bytes: number;
+  putMs: number;
+  urlMs: number;
 }
 
 export interface ClientDiagnostics extends BrowserInfo {
