@@ -90,6 +90,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       });
 
       const snapshot = getSnapshot();
+      const holo3dStartedAt = performance.now();
       const holo3d = isHoloActive(snapshot.holo)
         ? await buildHolo3dImages(cardEl, snapshot.holo, snapshot.borderless ?? false)
           .catch((err: unknown) => {
@@ -97,6 +98,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
             return null;
           })
         : null;
+      if (holo3d && client.timing) client.timing.holo3dMs = Math.round(performance.now() - holo3dStartedAt);
 
       const cardId = await publishCard(snapshot, thumbnailDataUrl, {
         creatorName: creatorName.trim(),

@@ -27,7 +27,7 @@ import { ensureAnonymousUser } from './auth';
 import { sanitizeCustomStyle, sanitizePopOutUrl } from './customStyle';
 import { sanitizeHolo } from './holo/holoSettings';
 import { generateId, versionedName } from './publishUtils';
-import type { ClientDiagnostics } from './clientDiagnostics';
+import type { ClientDiagnostics, UploadTiming } from './clientDiagnostics';
 import type { Holo3dImages } from './holo/holo3d';
 import type { SavedCard, CardSnapshot, CardTag } from '@/types/card';
 import type { CardType, Element, ElementOrCustom } from '@/types/card';
@@ -79,6 +79,7 @@ export async function publishCard(
     return uid;
   });
 
+  const files: Record<string, UploadTiming> = {};
   const uploadedUrls = new Map<string, Promise<string>>();
   const uploadDataUrl = (dataUrl: string, name: string, ext = 'png'): Promise<string> => {
     let pending = uploadedUrls.get(dataUrl);
@@ -92,8 +93,15 @@ export async function publishCard(
         const storageRef = ref(storage, `cards/${cardId}/${versionedName(name, ext, ts)}`);
         const blob = dataUrlToBlob(dataUrl);
         uploadBytesTotal += blob.size;
+        const putStartedAt = performance.now();
         await uploadBlob(blob, storageRef);
+        const urlStartedAt = performance.now();
         const url = await getDownloadURL(storageRef);
+        files[name] = {
+          bytes: blob.size,
+          putMs: Math.round(urlStartedAt - putStartedAt),
+          urlMs: Math.round(performance.now() - urlStartedAt),
+        };
         if (name !== 'thumb') rememberUploadedImage(dataUrl, url);
         return url;
       })();
@@ -161,6 +169,7 @@ export async function publishCard(
       uploadMs,
       uploadBytes: uploadBytesTotal,
       ...(authMs !== undefined ? { authMs } : {}),
+      files,
     },
   };
 
