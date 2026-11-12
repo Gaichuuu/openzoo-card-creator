@@ -94,8 +94,15 @@ describe('resolveImagePath', () => {
       expect(resolveImagePath('OZLegacyBronze.png')).toBe('/assets/SetSymbols/OZLegacyBronze.png');
     });
 
-    it('detects MetaPoo set symbol', () => {
-      expect(resolveImagePath('MetaPoo.png')).toBe('/assets/SetSymbols/MetaPoo.png');
+    it('detects MetaPoo set symbols', () => {
+      expect(resolveImagePath('MPooBronze.png')).toBe('/assets/SetSymbols/MPooBronze.png');
+      expect(resolveImagePath('MPooSilver.png')).toBe('/assets/SetSymbols/MPooSilver.png');
+      expect(resolveImagePath('MPooGold.png')).toBe('/assets/SetSymbols/MPooGold.png');
+    });
+
+    it('maps the legacy MetaPoo set symbol to MetaPoo Bronze', () => {
+      expect(resolveImagePath('MetaPoo.png')).toBe('/assets/SetSymbols/MPooBronze.png');
+      expect(resolveImagePath('OpenZoo Set Symbols/MetaPoo.png')).toBe('/assets/SetSymbols/MPooBronze.png');
     });
 
     it('detects CN set symbols', () => {
