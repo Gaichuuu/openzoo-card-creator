@@ -49,6 +49,11 @@ export function SetSymbolSelector() {
       const base = img.replace('.png', '');
 
       for (const def of [...SETS].sort((a, b) => b.value.length - a.value.length)) {
+        if (def.aliases?.includes(base)) {
+          setSet(def.value);
+          setRarity(def.rarities[0] ?? '');
+          break;
+        }
         if (base.startsWith(def.value)) {
           setSet(def.value);
           const rar = base.slice(def.value.length);

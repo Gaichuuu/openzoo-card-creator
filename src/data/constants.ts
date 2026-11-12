@@ -195,12 +195,13 @@ export interface SetDef {
   value: string;
   label: string;
   rarities: string[];
+  aliases?: string[];
 }
 
 export const SETS: SetDef[] = [
   { value: 'OZLegacy', label: 'Legacy', rarities: ['Bronze', 'Silver', 'Gold'] },
   { value: 'CN', label: 'Cryptid Nation', rarities: ['Bronze', 'Silver', 'Gold'] },
-  { value: 'MetaPoo', label: 'MetaPoo', rarities: ['Bronze'] },
+  { value: 'MPoo', label: 'MetaPoo', rarities: ['Bronze', 'Silver', 'Gold'], aliases: ['MetaPoo'] },
   { value: 'Native', label: 'Native', rarities: ['Bronze', 'Silver', 'Gold'] },
   { value: 'NF', label: 'Nightfall', rarities: ['Bronze', 'Silver', 'Gold'] },
   { value: 'Promo', label: 'Promo', rarities: [] },

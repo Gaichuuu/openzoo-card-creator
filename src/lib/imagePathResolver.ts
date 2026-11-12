@@ -52,7 +52,7 @@ export function resolveImagePath(rawPath: string): string {
     return `/assets/AuraSymbols/${rawPath}`;
   }
 
-  if (SETS.some((s) => rawPath.startsWith(s.value))) {
+  if (SETS.some((s) => [s.value, ...(s.aliases ?? [])].some((prefix) => rawPath.startsWith(prefix)))) {
     return `/assets/SetSymbols/${rawPath}`;
   }
 
