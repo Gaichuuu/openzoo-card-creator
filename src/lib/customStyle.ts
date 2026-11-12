@@ -24,6 +24,7 @@ export const CUSTOM_STYLE_ITEMS: readonly StyleItem[] = [
   { key: 'border', label: 'Border', group: 'box', gradient: true },
   { key: 'spellbookBar', label: 'Spellbook bar', group: 'box', alpha: true },
   { key: 'artFrame', label: 'Art frame', group: 'box', alpha: true },
+  { key: 'artFrameOutline', label: 'Art frame outline', group: 'box', alpha: true },
   { key: 'effectBox', label: 'Effect box', group: 'box', alpha: true },
   { key: 'boostBar', label: 'Boost bar', group: 'box', alpha: true },
   { key: 'backgroundTint', label: 'Background', group: 'box', alpha: true },
@@ -60,6 +61,7 @@ export const STYLE_ITEM_ZONES: Record<CustomColorKey, readonly string[]> = {
   border: ['CardBorder'],
   spellbookBar: ['SpellbookLimit'],
   artFrame: ['ArtBorder'],
+  artFrameOutline: ['ArtBorder'],
   effectBox: ['MainTextBox', 'Aura/Terra Text Box', 'Aura/Terra Text Box 1'],
   boostBar: ['Boost 1', 'Boost 2'],
   backgroundTint: ['BackgroundColor'],
@@ -317,6 +319,11 @@ export function customZoneStyle(
     Object.assign(out, background
       ? backgroundAreaStyle(colors.backgroundTint, background.texture)
       : { backgroundImage: 'none', backgroundColor: colors.backgroundTint, opacity: 1 });
+    hit = true;
+  }
+
+  if (colors.artFrameOutline && styleItemTargets('artFrameOutline', zoneKey, zoneType)) {
+    out.outlineColor = colors.artFrameOutline;
     hit = true;
   }
 

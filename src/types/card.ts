@@ -93,7 +93,7 @@ export type TextColorKey =
   | 'pillText';
 
 export type CustomColorKey =
-  | 'border' | 'spellbookBar' | 'artFrame' | 'effectBox' | 'boostBar' | 'backgroundTint' | 'divider' | 'bottomBar'
+  | 'border' | 'spellbookBar' | 'artFrame' | 'artFrameOutline' | 'effectBox' | 'boostBar' | 'backgroundTint' | 'divider' | 'bottomBar'
   | 'pillFill' | 'pillBorder'
   | TextColorKey;
 

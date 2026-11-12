@@ -43,7 +43,7 @@ interface PublishOptions {
   remixedFromName: string;
   existingCard?: SavedCard;
   client?: ClientDiagnostics;
-  holo3d?: Holo3dImages | null;
+  holo3d?: Promise<Holo3dImages | null> | null;
 }
 
 const knownUploads = new Map<string, string>();
@@ -146,14 +146,16 @@ export async function publishCard(
   let holoCardUrl: string | null = null;
   let holoAreaUrl: string | null = null;
   if (options.holo3d) {
-    const { card, area } = options.holo3d;
-    uploads.push(Promise.all([
-      uploadDataUrl(card, 'holo-card', card.startsWith('data:image/webp') ? 'webp' : 'png'),
-      uploadDataUrl(area, 'holo-area'),
-    ]).then(([cardUrl, areaUrl]) => {
+    uploads.push(options.holo3d.then(async (images) => {
+      if (!images) return;
+      const { card, area } = images;
+      const [cardUrl, areaUrl] = await Promise.all([
+        uploadDataUrl(card, 'holo-card', card.startsWith('data:image/webp') ? 'webp' : 'png'),
+        uploadDataUrl(area, 'holo-area'),
+      ]);
       holoCardUrl = cardUrl;
       holoAreaUrl = areaUrl;
-    }, (err: unknown) => {
+    }).catch((err: unknown) => {
       console.warn('Holo 3D uploads failed; publishing without them:', err);
     }));
   }
