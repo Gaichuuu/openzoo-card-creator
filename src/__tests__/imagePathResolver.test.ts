@@ -100,8 +100,9 @@ describe('resolveImagePath', () => {
       expect(resolveImagePath('MPooGold.png')).toBe('/assets/SetSymbols/MPooGold.png');
     });
 
-    it('still resolves the legacy MetaPoo set symbol', () => {
-      expect(resolveImagePath('MetaPoo.png')).toBe('/assets/SetSymbols/MetaPoo.png');
+    it('maps the legacy MetaPoo set symbol to MetaPoo Bronze', () => {
+      expect(resolveImagePath('MetaPoo.png')).toBe('/assets/SetSymbols/MPooBronze.png');
+      expect(resolveImagePath('OpenZoo Set Symbols/MetaPoo.png')).toBe('/assets/SetSymbols/MPooBronze.png');
     });
 
     it('detects CN set symbols', () => {

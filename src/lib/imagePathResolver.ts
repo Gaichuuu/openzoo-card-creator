@@ -26,6 +26,15 @@ function isAllowedUrl(url: string): boolean {
   return ALLOWED_EXTERNAL_HOSTS.some((h) => hostname === h || hostname.endsWith('.' + h));
 }
 
+function legacySetSymbol(filename: string): string | null {
+  for (const set of SETS) {
+    if (set.aliases?.some((alias) => filename === `${alias}.png`)) {
+      return `/assets/SetSymbols/${set.value}${set.rarities[0] ?? ''}.png`;
+    }
+  }
+  return null;
+}
+
 export function resolveImagePath(rawPath: string): string {
   if (!rawPath || rawPath === 'default_image') return '';
 
@@ -40,6 +49,10 @@ export function resolveImagePath(rawPath: string): string {
   for (const [dexFolder, localFolder] of Object.entries(FOLDER_MAP)) {
     if (rawPath.startsWith(dexFolder + '/')) {
       const filename = rawPath.slice(dexFolder.length + 1);
+      if (dexFolder === 'OpenZoo Set Symbols') {
+        const legacy = legacySetSymbol(filename);
+        if (legacy) return legacy;
+      }
       return `${localFolder}/${filename}`;
     }
   }
@@ -52,7 +65,10 @@ export function resolveImagePath(rawPath: string): string {
     return `/assets/AuraSymbols/${rawPath}`;
   }
 
-  if (SETS.some((s) => [s.value, ...(s.aliases ?? [])].some((prefix) => rawPath.startsWith(prefix)))) {
+  const legacy = legacySetSymbol(rawPath);
+  if (legacy) return legacy;
+
+  if (SETS.some((s) => rawPath.startsWith(s.value))) {
     return `/assets/SetSymbols/${rawPath}`;
   }
 
