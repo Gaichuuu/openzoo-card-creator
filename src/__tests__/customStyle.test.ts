@@ -170,6 +170,28 @@ describe('customZoneStyle', () => {
   });
 });
 
+describe('art frame outline', () => {
+  it('is offered on every layout with an art frame', () => {
+    for (const lt of ['BasicNoAttack', 'BasicOnlyAttack', 'BasicAttackMain', 'Aura'] as const) {
+      expect(availableStyleItems(lt)).toContain('artFrameOutline');
+    }
+    expect(availableStyleItems('Terra')).not.toContain('artFrameOutline');
+  });
+  it('recolors only the art frame outline', () => {
+    const s = cs({ artFrameOutline: 'rgba(255, 0, 0, 0.5)' });
+    expect(customZoneStyle('ArtBorder', 'image', s, {})).toEqual({ outlineColor: 'rgba(255, 0, 0, 0.5)' });
+    expect(customZoneStyle('CardArt', 'image', s, {})).toBeNull();
+    expect(customZoneStyle('BackgroundColor', 'image', s, {})).toBeNull();
+  });
+  it('composes with the Art frame fill', () => {
+    const out = customZoneStyle('ArtBorder', 'image', cs({ artFrame: '#123456', artFrameOutline: '#ff0000' }), {});
+    expect(out).toEqual({ backgroundImage: 'none', backgroundColor: '#123456', outlineColor: '#ff0000' });
+  });
+  it('survives sanitize', () => {
+    expect(sanitizeCustomStyle({ colors: { artFrameOutline: '#ff0000' } })).toEqual({ colors: { artFrameOutline: '#ff0000' } });
+  });
+});
+
 describe('removed art box outline', () => {
   it('is not an item and is dropped by sanitize', () => {
     expect(CUSTOM_STYLE_ITEMS.some((i) => (i.key as string) === 'artOutline')).toBe(false);
