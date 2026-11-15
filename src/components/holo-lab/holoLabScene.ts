@@ -47,7 +47,7 @@ export function createLabScene(host: HTMLElement): LabScene {
   const loader = new THREE.TextureLoader();
   const foil = createFoilMaterial();
   const front = new THREE.Mesh(new THREE.PlaneGeometry(W, H), foil.material);
-  const backTex = loader.load('/assets/OPZDexCardBack.png');
+  const backTex = loader.load('/assets/OPZDexCardBack.webp');
   backTex.colorSpace = THREE.SRGBColorSpace;
   const back = new THREE.Mesh(
     new THREE.PlaneGeometry(W, H),

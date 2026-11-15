@@ -550,8 +550,8 @@ export function GalleryPage() {
               </div>
             ) : (
               <div className={gridClass}>
-                {filteredCards.map((card) => (
-                  <GalleryCard key={card.id} card={card} onOpen={openCard} />
+                {filteredCards.map((card, i) => (
+                  <GalleryCard key={card.id} card={card} onOpen={openCard} priority={i < 6} />
                 ))}
               </div>
             )}

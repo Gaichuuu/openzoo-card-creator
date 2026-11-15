@@ -44,6 +44,7 @@ interface PublishOptions {
   existingCard?: SavedCard;
   client?: ClientDiagnostics;
   holo3d?: Promise<Holo3dImages | null> | null;
+  gridThumbDataUrl?: string | null;
 }
 
 const knownUploads = new Map<string, string>();
@@ -102,7 +103,7 @@ export async function publishCard(
           putMs: Math.round(urlStartedAt - putStartedAt),
           urlMs: Math.round(performance.now() - urlStartedAt),
         };
-        if (name !== 'thumb') rememberUploadedImage(dataUrl, url);
+        if (name !== 'thumb' && name !== 'grid') rememberUploadedImage(dataUrl, url);
         return url;
       })();
       uploadedUrls.set(dataUrl, pending);
@@ -141,6 +142,15 @@ export async function publishCard(
   if (thumbnailDataUrl) {
     const ext = thumbnailDataUrl.startsWith('data:image/jpeg') ? 'jpg' : 'png';
     uploads.push(uploadDataUrl(thumbnailDataUrl, 'thumb', ext).then((url) => { thumbnailUrl = url; }));
+  }
+
+  let gridThumbUrl: string | null = null;
+  const gridDataUrl = options.gridThumbDataUrl;
+  if (gridDataUrl) {
+    const ext = gridDataUrl.startsWith('data:image/webp') ? 'webp' : 'jpg';
+    uploads.push(uploadDataUrl(gridDataUrl, 'grid', ext)
+      .then((url) => { gridThumbUrl = url; })
+      .catch((err: unknown) => { console.warn('Grid thumbnail upload failed; the gallery falls back to the full thumbnail:', err); }));
   }
 
   let holoCardUrl: string | null = null;
@@ -189,6 +199,7 @@ export async function publishCard(
     locale: snapshot.locale || 'en',
     borderless: snapshot.borderless || false,
     thumbnailUrl,
+    gridThumbUrl,
     holoCardUrl,
     holoAreaUrl,
     creatorName: options.creatorName,
@@ -254,6 +265,7 @@ function docToSavedCard(data: Record<string, unknown>): SavedCard {
     cardArtZoom: (data.cardArtZoom ?? 0) as number,
     artNeeded: (data.artNeeded ?? tags.includes('Art Needed')) as boolean,
     thumbnailUrl: (data.thumbnailUrl || '') as string,
+    gridThumbUrl: httpsUrlOrNull(data.gridThumbUrl),
     holoCardUrl: httpsUrlOrNull(data.holoCardUrl),
     holoAreaUrl: httpsUrlOrNull(data.holoAreaUrl),
     cardArtUrl: (data.cardArtUrl || '') as string,

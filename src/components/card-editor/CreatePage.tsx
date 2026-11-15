@@ -5,6 +5,7 @@ import { useCardStore } from '@/lib/store';
 import { fetchCard, rememberUploadedImage } from '@/lib/galleryService';
 import { fetchAsDataUrl } from '@/lib/exportUtils';
 import { getCurrentUid } from '@/lib/auth';
+import { preloadItalicFonts } from '@/lib/preloadItalics';
 
 async function toLocalDataUrl(url: string, what: string): Promise<string> {
   try {
@@ -24,6 +25,7 @@ const localize = <T extends string | null | undefined>(url: T, what: string): Pr
   url && url.startsWith('http') ? toLocalDataUrl(url, what) : url;
 
 export function CreatePage() {
+  preloadItalicFonts();
   const [searchParams, setSearchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
   const editId = searchParams.get('edit');

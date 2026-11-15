@@ -165,35 +165,35 @@
   font-family: 'EB Garamond';
   font-style: normal;
   font-weight: 400;
-  src: url('/fonts/EBGaramond-Medium.ttf') format('truetype');
+  src: url('/fonts/EBGaramond-Medium.woff2') format('woff2');
 }
 
 @font-face {
   font-family: 'EB Garamond';
   font-style: italic;
   font-weight: 400;
-  src: url('/fonts/EBGaramond-MediumItalic.ttf') format('truetype');
+  src: url('/fonts/EBGaramond-MediumItalic.woff2') format('woff2');
 }
 
 @font-face {
   font-family: 'EB Garamond';
   font-style: normal;
   font-weight: 700;
-  src: url('/fonts/EBGaramond-Bold.ttf') format('truetype');
+  src: url('/fonts/EBGaramond-Bold.woff2') format('woff2');
 }
 
 @font-face {
   font-family: 'EB Garamond';
   font-style: italic;
   font-weight: 700;
-  src: url('/fonts/EBGaramond-BoldItalic.ttf') format('truetype');
+  src: url('/fonts/EBGaramond-BoldItalic.woff2') format('woff2');
 }
 
 @font-face {
   font-family: 'Archivo Black';
   font-style: normal;
   font-weight: 400;
-  src: url('/fonts/ArchivoBlack-Regular.ttf') format('truetype');
+  src: url('/fonts/ArchivoBlack-Regular.woff2') format('woff2');
 }
 
 html, body {
