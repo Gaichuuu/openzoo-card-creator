@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { SavedCard, CardSnapshot } from '@/types/card';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
@@ -10,6 +10,8 @@ import { deleteCard } from '@/lib/galleryService';
 import { isMeaningfullyUpdated } from '@/lib/publishUtils';
 import { sanitizeCustomStyle, sanitizePopOutUrl } from '@/lib/customStyle';
 import { sanitizeHolo } from '@/lib/holo/holoSettings';
+import { gridThumbOf } from '@/lib/gridThumb';
+import { FLIGHT_EASE, clearCardOrigin, flightTransform, isOnScreen, peekCardOrigin, setTileLifted } from '@/lib/cardFlight';
 import { TiltCard } from './TiltCard';
 
 export const MODAL_CONTAINER_CLASS = 'relative flex flex-col md:flex-row gap-4 md:gap-7 items-center mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
@@ -47,17 +49,79 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
 
   const [printReady, setPrintReady] = usePrintReady();
 
+  const [origin] = useState(() => ({ id: card.id, el: peekCardOrigin(card.id) }));
+  const tile = origin.id === card.id ? origin.el : null;
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const flightRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const entranceRef = useRef<Animation[]>([]);
+  const closingRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const el = origin.el;
+    clearCardOrigin();
+    if (!el) return;
+    setTileLifted(el, true);
+    const flight = flightRef.current;
+    const container = containerRef.current;
+    const anims: Animation[] = [];
+    if (flight && container) {
+      container.style.overflow = 'visible';
+      const lift = flight.animate(
+        [{ transform: flightTransform(el.getBoundingClientRect(), flight.getBoundingClientRect()) }, { transform: 'none' }],
+        { duration: 460, easing: FLIGHT_EASE },
+      );
+      lift.finished.then(() => { container.style.overflow = ''; }, () => { container.style.overflow = ''; });
+      anims.push(lift);
+    }
+    if (backdropRef.current) {
+      anims.push(backdropRef.current.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: 'ease-out' }));
+    }
+    if (panelRef.current) {
+      anims.push(panelRef.current.animate(
+        [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 340, delay: 140, easing: FLIGHT_EASE, fill: 'backwards' },
+      ));
+    }
+    entranceRef.current = anims;
+    return () => setTileLifted(el, false);
+  }, [origin]);
+
+  const requestClose = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    entranceRef.current.forEach((a) => a.cancel());
+    const flight = flightRef.current;
+    const container = containerRef.current;
+    const tileRect = tile?.isConnected ? tile.getBoundingClientRect() : null;
+    const anims: Animation[] = [];
+    const hold = { fill: 'forwards' as const };
+    if (flight && container && tileRect && container.scrollTop === 0 && isOnScreen(tileRect)) {
+      container.style.overflow = 'visible';
+      anims.push(flight.animate(
+        [{ transform: 'none' }, { transform: flightTransform(tileRect, flight.getBoundingClientRect()) }],
+        { duration: 300, easing: 'cubic-bezier(.5, 0, .2, 1)', ...hold },
+      ));
+    } else if (flight) {
+      anims.push(flight.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-in', ...hold }));
+    }
+    if (backdropRef.current) anims.push(backdropRef.current.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: 'ease-in', ...hold }));
+    if (panelRef.current) anims.push(panelRef.current.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'ease-in', ...hold }));
+    Promise.all(anims.map((a) => a.finished)).catch(() => {}).finally(onClose);
+  }, [tile, onClose]);
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') requestClose();
     }
     document.addEventListener('keydown', handleKey);
     return () => {
       document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKey);
     };
-  }, [onClose]);
+  }, [requestClose]);
 
   function handleRemix() {
     navigate(`/create?remix=${card.id}`);
@@ -116,13 +180,16 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      onClick={onClose}
+      onClick={requestClose}
     >
-      <CardBackBackdrop />
+      <div ref={backdropRef} className="absolute inset-0 pointer-events-none">
+        <CardBackBackdrop />
+      </div>
       {/* Modal */}
-      <div className={MODAL_CONTAINER_CLASS}>
+      <div ref={containerRef} className={MODAL_CONTAINER_CLASS}>
         {/* Card */}
         <div
+          ref={flightRef}
           style={{ perspective: '800px' }}
           className="shrink-0 pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
@@ -138,18 +205,20 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
             measureRoot={hiddenCardRef}
             measureKey={card}
             foil3d={foil3d}
+            placeholderUrl={tile ? gridThumbOf(card) : undefined}
           />
         </div>
 
         {/* Details panel */}
         <div
+          ref={panelRef}
           className={`relative ${MODAL_DETAILS_CLASS}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="relative px-5 pt-4.5 pb-4 border-b border-navy-600">
             <button
-              onClick={onClose}
+              onClick={requestClose}
               className="absolute top-2.5 right-3 text-gold-400 hover:text-gold-100 transition-colors text-[22px] leading-none"
               aria-label="Close"
             >

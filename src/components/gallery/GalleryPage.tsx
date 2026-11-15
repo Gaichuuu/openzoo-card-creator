@@ -584,7 +584,7 @@ export function GalleryPage() {
 
       {/* Mobile filter */}
       {mobileFiltersOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex flex-col bg-navy-950">
+        <div className="oz-sheet-in md:hidden fixed inset-0 z-40 flex flex-col bg-navy-950">
           <div className="flex items-center gap-4 pl-4 pr-1.5 h-13 border-b border-navy-600 shrink-0">
             <span className="font-title text-xs tracking-[.14em] uppercase text-gold-400">Filters</span>
             <div className="flex-1" />
@@ -628,7 +628,7 @@ export function GalleryPage() {
         />
       ) : loadingCard && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="oz-fade-in fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => closeModal()}
         >
           <CardBackBackdrop />

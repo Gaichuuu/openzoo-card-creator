@@ -15,7 +15,7 @@ import { withExportState } from '@/lib/useCardExport';
 import { buildHolo3dImages } from '@/lib/holo/holo3d';
 import { isHoloActive } from '@/lib/holo/holoSettings';
 
-const DIALOG_CLASS = 'relative bg-navy-900 bg-panel-v max-w-140 w-full mx-4 border border-gold-600 shadow-[0_28px_70px_rgba(0,0,0,.65)] font-body';
+const DIALOG_CLASS = 'oz-panel-in relative bg-navy-900 bg-panel-v max-w-140 w-full mx-4 border border-gold-600 shadow-[0_28px_70px_rgba(0,0,0,.65)] font-body';
 
 interface PublishDialogProps {
   cardRef: React.RefObject<HTMLDivElement | null>;
@@ -212,7 +212,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
       className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={(e) => { if (e.target === e.currentTarget && !publishing) onClose(); }}
     >
-      <CardBackBackdrop opacity={0.09} />
+      <div className="oz-fade-in absolute inset-0 pointer-events-none"><CardBackBackdrop opacity={0.09} /></div>
       <div className={DIALOG_CLASS}>
         <button
           onClick={() => { if (!publishing) onClose(); }}

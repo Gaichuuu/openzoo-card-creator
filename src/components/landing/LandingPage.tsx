@@ -148,7 +148,7 @@ export function LandingPage() {
                   <Link
                     key={card.id}
                     to={`/gallery/${card.id}`}
-                    className={`relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform ${stripTierClass(i + 1)}`}
+                    className={`relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform duration-200 ease-snap ${stripTierClass(i + 1)}`}
                   >
                     {card.thumbnailUrl ? (
                       <CardThumb url={gridThumbOf(card)} alt={displayCardName(card.cardName)} roundedClass="rounded-[7px]" />
@@ -161,7 +161,7 @@ export function LandingPage() {
                 {/* Final slot */}
                 <Link
                   to="/gallery"
-                  className="relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform"
+                  className="relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform duration-200 ease-snap"
                 >
                   <span className="w-full aspect-238/333 rounded-[7px] border-gold-dashed flex items-center justify-center p-3.5 text-center font-title text-xs tracking-[.08em] uppercase leading-snug text-gold-400 hover:text-gold-100 transition-colors">
                     Browse the gallery →
