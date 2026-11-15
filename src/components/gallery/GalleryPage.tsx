@@ -17,6 +17,7 @@ import { CardBackBackdrop } from '@/components/CardBackBackdrop';
 import { CardDetailModal, MODAL_CONTAINER_CLASS, MODAL_CARD_CLASS, MODAL_DETAILS_CLASS } from './CardDetailModal';
 import { CARD_TAGS } from '@/types/card';
 import { CARD_TYPES, ELEMENTS, TERRAS, TRAITS } from '@/data/constants';
+import { facetIcon } from '@/lib/facetIcon';
 import { useLocalStorageState } from '@/lib/useLocalStorageState';
 import { useAuthUid, useAuthReady } from '@/lib/auth';
 import { buildCardSearchText } from '@/lib/cardSearchText';
@@ -78,7 +79,7 @@ function FacetIconRow({ icon, label, count, active, onClick }: {
       onClick={onClick}
       className={`flex items-center gap-2 cursor-pointer transition-colors ${active ? 'text-gold-400' : 'text-gray-400 hover:text-gold-100'}`}
     >
-      <img src={icon} alt="" className="w-4.5 h-4.5 object-contain shrink-0" />
+      <img src={icon} alt="" loading="lazy" decoding="async" width={18} height={18} className="w-4.5 h-4.5 object-contain shrink-0" />
       <span className="truncate">{label}</span>
       <span className="ml-auto text-gray-400">{count}</span>
     </button>
@@ -163,7 +164,7 @@ const FacetSections = memo(function FacetSections({
           {FACET_ELEMENTS.map((element) => (
             <FacetIconRow
               key={element}
-              icon={`/assets/AuraSymbols/${element}.png`}
+              icon={facetIcon('AuraSymbols', element)}
               label={element}
               count={countOf(counts?.byElement[element])}
               active={filterElement === element}
@@ -180,7 +181,7 @@ const FacetSections = memo(function FacetSections({
             {usedTerras.map((terra) => (
               <FacetIconRow
                 key={terra}
-                icon={`/assets/TerraNoGlow/${encodeURIComponent(terra)}.png`}
+                icon={facetIcon('TerraNoGlow', terra)}
                 label={terra}
                 count={countOf(counts?.byTerra[terra])}
                 active={filterTerra === terra}
@@ -198,7 +199,7 @@ const FacetSections = memo(function FacetSections({
             {usedTraits.map((trait) => (
               <FacetIconRow
                 key={trait}
-                icon={`/assets/TraitsNoGlow/${encodeURIComponent(trait)}.png`}
+                icon={facetIcon('TraitsNoGlow', trait)}
                 label={trait}
                 count={countOf(counts?.byTrait[trait])}
                 active={filterTrait === trait}
