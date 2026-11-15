@@ -51,7 +51,7 @@ export function SiteHeader({ sticky = false }: SiteHeaderProps) {
     >
       <div aria-hidden="true" className="absolute left-0 right-0 bottom-0 h-0.5 bg-holo-rule holo-animate pointer-events-none" />
       <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
-        <img src="/assets/ozLogo.png" alt="OpenZoo" className="h-6.5" />
+        <img src="/assets/ozLogo-header.webp" alt="OpenZoo" width={71} height={26} className="h-6.5 w-auto" />
       </Link>
       <nav className="hidden md:flex gap-5.5 text-[15px]">
         {NAV_LINKS.map(({ label, to }) => (

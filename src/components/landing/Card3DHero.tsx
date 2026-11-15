@@ -3,6 +3,7 @@ import '@google/model-viewer';
 import type { SavedCard } from '@/types/card';
 import { isHoloActive } from '@/lib/holo/holoSettings';
 import { applyHeroFoil } from './heroFoil';
+import { HeroSkeleton } from './HeroSkeleton';
 
 type ModelViewer = HTMLElement & {
   model?: { materials: any[] };
@@ -75,7 +76,7 @@ export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCa
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
-    return applyTexture(viewer, 1, '/assets/OPZDexCardBack.png', () => setBackApplied(true), () => setBackApplied(true));
+    return applyTexture(viewer, 1, '/assets/OPZDexCardBack.webp', () => setBackApplied(true), () => setBackApplied(true));
   }, []);
 
   useEffect(() => {
@@ -125,18 +126,7 @@ export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCa
 
   return (
     <div className={`relative ${className}`}>
-      {!revealed && (
-        <div className="animate-pulse absolute inset-0 flex items-center justify-center">
-          <div
-            style={{
-              width: '78%',
-              height: '82%',
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, rgb(30 41 59) 0%, rgb(51 65 85) 100%)',
-            }}
-          />
-        </div>
-      )}
+      {!revealed && <HeroSkeleton />}
 
       <model-viewer
         ref={viewerRef as any}

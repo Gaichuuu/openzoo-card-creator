@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { SavedCard } from '@/types/card';
 import { fetchCards } from '@/lib/galleryService';
@@ -6,10 +6,25 @@ import { displayCardName } from '@/lib/exportUtils';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { CardThumb, CardCaption } from '@/components/gallery/GalleryCard';
-import { Card3DHero } from './Card3DHero';
+import { gridThumbOf } from '@/lib/gridThumb';
+import { HeroSkeleton } from './HeroSkeleton';
 import { HoloBloom } from './HoloBloom';
 import { CardWallpaper } from './CardWallpaper';
 import { WALLPAPER_VIGNETTE } from './cardWallpaperDesign';
+
+const Card3DHero = lazy(() => import('./Card3DHero').then((m) => ({ default: m.Card3DHero })));
+const HERO_CLASS = 'w-65 h-92.5 md:w-100 md:h-142 drop-shadow-[0_26px_40px_rgba(0,0,0,.75)]';
+const heroSkeleton = <div className={`relative ${HERO_CLASS}`}><HeroSkeleton /></div>;
+
+function useAfterFirstPaint(): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let inner = 0;
+    const outer = requestAnimationFrame(() => { inner = requestAnimationFrame(() => setReady(true)); });
+    return () => { cancelAnimationFrame(outer); cancelAnimationFrame(inner); };
+  }, []);
+  return ready;
+}
 
 const TITLE_CLASS = 'font-title font-normal text-[52px] md:text-[72px] lg:text-[90px] leading-[.94] tracking-[-.018em] m-0';
 
@@ -46,6 +61,7 @@ function useRecentCards(): { cards: SavedCard[]; heroCard: SavedCard | null; loa
 export function LandingPage() {
   const { cards: recentCards, heroCard, loading } = useRecentCards();
   const justPublished = recentCards.slice(0, 6);
+  const heroReady = useAfterFirstPaint();
 
   return (
     <div className="flex flex-col min-h-dvh bg-navy-950 font-body">
@@ -102,7 +118,11 @@ export function LandingPage() {
             </div>
             <div className="relative shrink-0">
               <HoloBloom className="-inset-8.5 opacity-15" blur={70} />
-              <Card3DHero className="w-65 h-92.5 md:w-100 md:h-142 drop-shadow-[0_26px_40px_rgba(0,0,0,.75)]" frontCard={heroCard} frontPending={loading} />
+              {heroReady ? (
+                <Suspense fallback={heroSkeleton}>
+                  <Card3DHero className={HERO_CLASS} frontCard={heroCard} frontPending={loading} />
+                </Suspense>
+              ) : heroSkeleton}
             </div>
           </div>
 
@@ -128,10 +148,10 @@ export function LandingPage() {
                   <Link
                     key={card.id}
                     to={`/gallery/${card.id}`}
-                    className={`relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform ${stripTierClass(i + 1)}`}
+                    className={`relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform duration-200 ease-snap ${stripTierClass(i + 1)}`}
                   >
                     {card.thumbnailUrl ? (
-                      <CardThumb url={card.thumbnailUrl} alt={displayCardName(card.cardName)} roundedClass="rounded-[7px]" />
+                      <CardThumb url={gridThumbOf(card)} alt={displayCardName(card.cardName)} roundedClass="rounded-[7px]" />
                     ) : (
                       <div className="w-full aspect-238/333 rounded-[7px] border border-navy-600 bg-navy-800" />
                     )}
@@ -141,7 +161,7 @@ export function LandingPage() {
                 {/* Final slot */}
                 <Link
                   to="/gallery"
-                  className="relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform"
+                  className="relative w-33 max-md:shrink-0 md:min-w-0 flex flex-col gap-1.5 hover:scale-110 hover:z-10 transition-transform duration-200 ease-snap"
                 >
                   <span className="w-full aspect-238/333 rounded-[7px] border-gold-dashed flex items-center justify-center p-3.5 text-center font-title text-xs tracking-[.08em] uppercase leading-snug text-gold-400 hover:text-gold-100 transition-colors">
                     Browse the gallery →

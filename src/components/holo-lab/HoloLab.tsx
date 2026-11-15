@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ComponentProps, type MutableRefObject } from 'react';
+import { preloadItalicFonts } from '@/lib/preloadItalics';
 import { CardRenderer } from '@/components/card-renderer/CardRenderer';
 import { SiteHeader } from '@/components/SiteHeader';
 import { useIsMobile } from '@/lib/useIsMobile';
@@ -45,6 +46,7 @@ function GalleryTilt({ setPointerRef, ...props }: Omit<ComponentProps<typeof Til
 }
 
 export default function HoloLab() {
+  preloadItalicFonts();
   const hostRef = useRef<HTMLDivElement>(null);
   const holoCardRef = useRef<HTMLDivElement>(null);
   const [thumb, setThumb] = useState('');

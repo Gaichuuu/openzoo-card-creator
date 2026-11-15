@@ -94,6 +94,28 @@ export function thumbnailJpeg(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL('image/jpeg', THUMBNAIL_JPEG_QUALITY);
 }
 
+export const GRID_THUMB_WIDTH = 600;
+const GRID_THUMB_QUALITY = 0.85;
+
+export function gridThumbnail(source: HTMLCanvasElement): string {
+  const width = Math.min(GRID_THUMB_WIDTH, source.width);
+  const height = Math.round(source.height * width / source.width);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas context');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source, 0, 0, width, height);
+  return encodeWithFallback(canvas, 'image/webp', 'image/jpeg', GRID_THUMB_QUALITY);
+}
+
+function encodeWithFallback(canvas: HTMLCanvasElement, type: string, fallback: string, quality: number): string {
+  const url = canvas.toDataURL(type, quality);
+  return url.startsWith(`data:${type}`) ? url : canvas.toDataURL(fallback, quality);
+}
+
 export function displayCardName(name: string): string {
   return name.replace(/\\n/g, ' ').replace(/\n/g, ' ');
 }
@@ -106,11 +128,11 @@ const BACKGROUND_ZONE_KEYS = new Set([
 ]);
 
 const FONT_FACES = [
-  { family: 'EB Garamond', style: 'normal', weight: 400, file: '/fonts/EBGaramond-Medium.ttf' },
-  { family: 'EB Garamond', style: 'italic', weight: 400, file: '/fonts/EBGaramond-MediumItalic.ttf' },
-  { family: 'EB Garamond', style: 'normal', weight: 700, file: '/fonts/EBGaramond-Bold.ttf' },
-  { family: 'EB Garamond', style: 'italic', weight: 700, file: '/fonts/EBGaramond-BoldItalic.ttf' },
-  { family: 'Archivo Black', style: 'normal', weight: 400, file: '/fonts/ArchivoBlack-Regular.ttf' },
+  { family: 'EB Garamond', style: 'normal', weight: 400, file: '/fonts/EBGaramond-Medium.woff2' },
+  { family: 'EB Garamond', style: 'italic', weight: 400, file: '/fonts/EBGaramond-MediumItalic.woff2' },
+  { family: 'EB Garamond', style: 'normal', weight: 700, file: '/fonts/EBGaramond-Bold.woff2' },
+  { family: 'EB Garamond', style: 'italic', weight: 700, file: '/fonts/EBGaramond-BoldItalic.woff2' },
+  { family: 'Archivo Black', style: 'normal', weight: 400, file: '/fonts/ArchivoBlack-Regular.woff2' },
 ];
 
 let fontEmbedCSSCache: string | null = null;
@@ -133,7 +155,7 @@ export function getFontEmbedCSS(): Promise<string> {
   if (fontEmbedCSSPending) return fontEmbedCSSPending;
   fontEmbedCSSPending = Promise.all(FONT_FACES.map(async (f) => {
     const dataUrl = await fetchAsDataUrl(f.file);
-    return `@font-face { font-family: '${f.family}'; font-style: ${f.style}; font-weight: ${f.weight}; src: url('${dataUrl}') format('truetype'); }`;
+    return `@font-face { font-family: '${f.family}'; font-style: ${f.style}; font-weight: ${f.weight}; src: url('${dataUrl}') format('woff2'); }`;
   })).then((rules) => {
     rules.push(
       "@font-face { font-family: 'Cambria'; src: local('Cambria'); }",

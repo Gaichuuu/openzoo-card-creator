@@ -18,6 +18,9 @@ CLAUDE.md
 /data/
 /docs/
 /scripts/temp/
+DESIGN.md
+PRODUCT.md
+.impeccable/
 
 # Editor directories and files
 !.vscode/extensions.json

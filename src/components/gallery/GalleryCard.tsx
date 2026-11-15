@@ -1,22 +1,27 @@
 import { memo, useState } from 'react';
 import type { SavedCard } from '@/types/card';
 import { displayCardName } from '@/lib/exportUtils';
+import { gridThumbOf } from '@/lib/gridThumb';
+import { rememberCardOrigin } from '@/lib/cardFlight';
 
-export function CardThumb({ url, alt, roundedClass = 'card-thumb-round' }: {
+export function CardThumb({ url, alt, roundedClass = 'card-thumb-round', priority = false }: {
   url: string;
   alt: string;
   roundedClass?: string;
+  priority?: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
   return (
-    <span className="relative block w-full aspect-238/333">
+    <span data-card-thumb className="relative block w-full aspect-238/333">
       {!loaded && (
         <span className={`${roundedClass} absolute inset-0 block border border-navy-600 bg-navy-800 animate-pulse`} />
       )}
       <img
         src={url}
         alt={alt}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : undefined}
+        decoding="async"
         onLoad={() => setLoaded(true)}
         className={`${roundedClass} absolute inset-0 w-full h-full object-cover border border-navy-600 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
       />
@@ -38,18 +43,22 @@ export function CardCaption({ card, className = 'gap-1.75' }: { card: SavedCard;
 interface GalleryCardProps {
   card: SavedCard;
   onOpen: (id: string) => void;
+  priority?: boolean;
 }
 
-export const GalleryCard = memo(function GalleryCard({ card, onOpen }: GalleryCardProps) {
+export const GalleryCard = memo(function GalleryCard({ card, onOpen, priority = false }: GalleryCardProps) {
   return (
     <button
-      onClick={() => onOpen(card.id)}
-      className="flex flex-col gap-1.5 text-left transition-all cursor-pointer hover:scale-105"
+      onClick={(e) => {
+        rememberCardOrigin(card.id, e.currentTarget.querySelector<HTMLElement>('[data-card-thumb]'));
+        onOpen(card.id);
+      }}
+      className="flex flex-col gap-1.5 text-left cursor-pointer transition-transform duration-200 ease-snap hover:scale-105 active:scale-[1.02]"
     >
       {card.thumbnailUrl ? (
-        <CardThumb url={card.thumbnailUrl} alt={card.cardName} />
+        <CardThumb url={gridThumbOf(card)} alt={card.cardName} priority={priority} />
       ) : (
-        <div className="card-thumb-round w-full aspect-238/333 bg-navy-800 border border-navy-600 flex items-center justify-center text-gray-400 text-xs">
+        <div data-card-thumb className="card-thumb-round w-full aspect-238/333 bg-navy-800 border border-navy-600 flex items-center justify-center text-gray-400 text-xs">
           No preview
         </div>
       )}

@@ -160,6 +160,7 @@ export type CardFitSettings = Pick<CardSnapshot,
 export interface SavedCard extends CardSnapshot {
   id: string;
   thumbnailUrl: string;
+  gridThumbUrl?: string | null;
   holoCardUrl?: string | null;
   holoAreaUrl?: string | null;
   creatorName: string;
