@@ -11,7 +11,8 @@ import { isMeaningfullyUpdated } from '@/lib/publishUtils';
 import { sanitizeCustomStyle, sanitizePopOutUrl } from '@/lib/customStyle';
 import { sanitizeHolo } from '@/lib/holo/holoSettings';
 import { gridThumbOf } from '@/lib/gridThumb';
-import { FLIGHT_EASE, clearCardOrigin, flightTransform, isOnScreen, peekCardOrigin, setTileLifted } from '@/lib/cardFlight';
+import { preloadItalicFonts } from '@/lib/preloadItalics';
+import { flightEase, clearCardOrigin, flightTransform, isOnScreen, peekCardOrigin, setTileLifted } from '@/lib/cardFlight';
 import { TiltCard } from './TiltCard';
 
 export const MODAL_CONTAINER_CLASS = 'relative flex flex-col md:flex-row gap-4 md:gap-7 items-center mx-4 pointer-events-none max-h-[90vh] overflow-y-auto md:overflow-visible';
@@ -25,11 +26,14 @@ interface CardDetailModalProps {
 }
 
 function savedCardToSnapshot(card: SavedCard): CardSnapshot {
-  const { id, thumbnailUrl, creatorName, tags, remixedFrom, remixedFromName, createdAt, updatedAt, ...snapshot } = card;
+  const { id, thumbnailUrl, gridThumbUrl, creatorName, tags, remixedFrom, remixedFromName, createdAt, updatedAt, ...snapshot } = card;
   return snapshot;
 }
 
+const CLOSE_FALLBACK_MS = 1000;
+
 export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalProps) {
+  preloadItalicFonts();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hiddenCardRef = useRef<HTMLDivElement>(null);
@@ -57,6 +61,12 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
   const panelRef = useRef<HTMLDivElement>(null);
   const entranceRef = useRef<Animation[]>([]);
   const closingRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   useLayoutEffect(() => {
     const el = origin.el;
@@ -70,19 +80,14 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
       container.style.overflow = 'visible';
       const lift = flight.animate(
         [{ transform: flightTransform(el.getBoundingClientRect(), flight.getBoundingClientRect()) }, { transform: 'none' }],
-        { duration: 460, easing: FLIGHT_EASE },
+        { duration: 460, easing: flightEase() },
       );
-      lift.finished.then(() => { container.style.overflow = ''; }, () => { container.style.overflow = ''; });
+      const unclip = () => { if (!closingRef.current) container.style.overflow = ''; };
+      lift.finished.then(unclip, unclip);
       anims.push(lift);
     }
-    if (backdropRef.current) {
-      anims.push(backdropRef.current.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: 'ease-out' }));
-    }
-    if (panelRef.current) {
-      anims.push(panelRef.current.animate(
-        [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
-        { duration: 340, delay: 140, easing: FLIGHT_EASE, fill: 'backwards' },
-      ));
+    for (const node of [backdropRef.current, panelRef.current]) {
+      if (node) anims.push(...node.getAnimations());
     }
     entranceRef.current = anims;
     return () => setTileLifted(el, false);
@@ -108,7 +113,15 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
     }
     if (backdropRef.current) anims.push(backdropRef.current.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: 'ease-in', ...hold }));
     if (panelRef.current) anims.push(panelRef.current.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'ease-in', ...hold }));
-    Promise.all(anims.map((a) => a.finished)).catch(() => {}).finally(onClose);
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(fallback);
+      if (mountedRef.current) onClose();
+    };
+    const fallback = setTimeout(finish, CLOSE_FALLBACK_MS);
+    Promise.all(anims.map((a) => a.finished)).catch(() => {}).finally(finish);
   }, [tile, onClose]);
 
   useEffect(() => {
@@ -182,7 +195,7 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
       className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={requestClose}
     >
-      <div ref={backdropRef} className="absolute inset-0 pointer-events-none">
+      <div ref={backdropRef} className={`absolute inset-0 pointer-events-none ${tile ? 'oz-fade-in' : ''}`}>
         <CardBackBackdrop />
       </div>
       {/* Modal */}
@@ -212,7 +225,7 @@ export function CardDetailModal({ card, onClose, onDeleted }: CardDetailModalPro
         {/* Details panel */}
         <div
           ref={panelRef}
-          className={`relative ${MODAL_DETAILS_CLASS}`}
+          className={`relative ${MODAL_DETAILS_CLASS} ${tile ? 'oz-panel-in [animation-delay:140ms]' : ''}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

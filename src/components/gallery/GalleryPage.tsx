@@ -622,6 +622,7 @@ export function GalleryPage() {
       {/* Modal */}
       {selectedCard ? (
         <CardDetailModal
+          key={selectedCard.id}
           card={selectedCard}
           onClose={() => closeModal()}
           onDeleted={() => { closeModal(true); setRefreshKey((k) => k + 1); }}

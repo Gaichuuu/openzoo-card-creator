@@ -55,13 +55,13 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
 
     try {
       const cardEl = cardRef.current;
-      const { thumbnailDataUrl, gridThumbDataUrl, client } = await withExportState(cardEl, useCardStore.getState().holo, async () => {
+      const { thumbnailDataUrl, thumbCanvas, client } = await withExportState(cardEl, useCardStore.getState().holo, async () => {
         const renderStartedAt = performance.now();
         const rawDataUrl = await renderThumbnailPng(cardEl);
         const renderMs = Math.round(performance.now() - renderStartedAt);
         const thumbStartedAt = performance.now();
-        const { thumbnailDataUrl, gridThumbDataUrl, health } = await new Promise<{
-          thumbnailDataUrl: string; gridThumbDataUrl: string | null; health: ZoneHealth | null;
+        const { thumbnailDataUrl, thumbCanvas, health } = await new Promise<{
+          thumbnailDataUrl: string; thumbCanvas: HTMLCanvasElement; health: ZoneHealth | null;
         }>((resolve, reject) => {
           const img = new Image();
           img.onload = () => {
@@ -77,9 +77,7 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
             } catch {
               health = null; // never let diagnostics fail a publish
             }
-            let grid: string | null = null;
-            try { grid = gridThumbnail(c); } catch { grid = null; }
-            resolve({ thumbnailDataUrl: thumbnailJpeg(c), gridThumbDataUrl: grid, health });
+            resolve({ thumbnailDataUrl: thumbnailJpeg(c), thumbCanvas: c, health });
           };
           img.onerror = reject;
           img.src = rawDataUrl;
@@ -88,8 +86,10 @@ export function PublishDialog({ cardRef, onClose, remixedFrom, remixedFromName, 
         const client = collectClientDiagnostics(cardEl);
         if (health) client.health = health;
         client.timing = { renderMs, thumbMs: Math.round(performance.now() - thumbStartedAt) };
-        return { thumbnailDataUrl, gridThumbDataUrl, client };
+        return { thumbnailDataUrl, thumbCanvas, client };
       });
+      let gridThumbDataUrl: string | null = null;
+      try { gridThumbDataUrl = gridThumbnail(thumbCanvas); } catch { gridThumbDataUrl = null; }
 
       const snapshot = getSnapshot();
       const holo3dStartedAt = performance.now();

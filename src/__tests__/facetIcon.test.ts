@@ -7,7 +7,7 @@ const missing = (dir: FacetIconDir, names: readonly string[]) =>
   names.filter((name) => !files.has(`/public${decodeURIComponent(facetIcon(dir, name))}`));
 
 describe('facet icons', () => {
-  it('has a small icon for every aura, terra and trait (run scripts/temp/generateFacetIcons.sh)', () => {
+  it('has a small icon for every aura, terra and trait (a 54px WebP copy in public/assets/facet-icons/)', () => {
     expect(missing('AuraSymbols', ELEMENTS.filter((e) => e !== 'Special'))).toEqual([]);
     expect(missing('TerraNoGlow', TERRAS)).toEqual([]);
     expect(missing('TraitsNoGlow', TRAITS)).toEqual([]);

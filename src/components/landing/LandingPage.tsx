@@ -14,6 +14,7 @@ import { WALLPAPER_VIGNETTE } from './cardWallpaperDesign';
 
 const Card3DHero = lazy(() => import('./Card3DHero').then((m) => ({ default: m.Card3DHero })));
 const HERO_CLASS = 'w-65 h-92.5 md:w-100 md:h-142 drop-shadow-[0_26px_40px_rgba(0,0,0,.75)]';
+const heroSkeleton = <div className={`relative ${HERO_CLASS}`}><HeroSkeleton /></div>;
 
 function useAfterFirstPaint(): boolean {
   const [ready, setReady] = useState(false);
@@ -61,7 +62,6 @@ export function LandingPage() {
   const { cards: recentCards, heroCard, loading } = useRecentCards();
   const justPublished = recentCards.slice(0, 6);
   const heroReady = useAfterFirstPaint();
-  const heroSkeleton = <div className={`relative ${HERO_CLASS}`}><HeroSkeleton /></div>;
 
   return (
     <div className="flex flex-col min-h-dvh bg-navy-950 font-body">

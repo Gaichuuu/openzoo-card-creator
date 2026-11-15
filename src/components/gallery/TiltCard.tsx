@@ -12,6 +12,7 @@ const FoilCanvas = lazy(() => import('./FoilCanvas'));
 
 const REST = { rx: 0, ry: 0, gx: 50, gy: 50, go: 0 };
 const CARD_SHADOW = '0 34px 66px rgba(0,0,0,.72)';
+const CARD_IMG_CLASS = 'card-thumb-round border border-navy-600';
 
 function tiltAt(x: number, y: number) {
   return { rx: (0.5 - y) * 2 * MAX_TILT, ry: (x - 0.5) * 2 * MAX_TILT, gx: x * 100, gy: y * 100, go: 0.3 };
@@ -105,7 +106,7 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
     >
       {/* Skeleton placeholder */}
       {!shown && (usePlaceholder ? (
-        <img src={placeholderUrl} alt="" aria-hidden="true" className="card-thumb-round border border-navy-600 absolute inset-0 w-full h-full" style={{ boxShadow: CARD_SHADOW }} />
+        <img src={placeholderUrl} alt="" aria-hidden="true" className={`${CARD_IMG_CLASS} absolute inset-0 w-full h-full`} style={{ boxShadow: CARD_SHADOW }} />
       ) : (
         <div className="card-thumb-round absolute inset-0" style={{ boxShadow: CARD_SHADOW }}>
           <div className="card-thumb-round w-full h-full bg-navy-800 animate-pulse" />
@@ -116,7 +117,7 @@ export function TiltCard({ thumbnailUrl, alt, className, holo, layoutType, borde
           src={thumbnailUrl}
           alt={alt}
           onLoad={() => setImgLoaded(true)}
-          className="card-thumb-round border border-navy-600"
+          className={CARD_IMG_CLASS}
           style={{ display: 'block', width: '100%', height: '100%', pointerEvents: 'none', opacity: shown ? 1 : 0, transition: usePlaceholder ? 'none' : 'opacity 0.2s ease-out', boxShadow: CARD_SHADOW }}
         />
       ) : (

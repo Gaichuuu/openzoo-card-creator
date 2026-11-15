@@ -6,7 +6,6 @@ interface Origin {
 
 let origin: Origin | null = null;
 
-export const FLIGHT_EASE = 'cubic-bezier(.16, 1, .3, 1)';
 const ORIGIN_TTL_MS = 4000;
 
 export function rememberCardOrigin(id: string, el: HTMLElement | null): void {
@@ -17,6 +16,10 @@ export function peekCardOrigin(id: string): HTMLElement | null {
   const o = origin;
   if (!o || o.id !== id || performance.now() - o.at > ORIGIN_TTL_MS || !o.el.isConnected) return null;
   return o.el;
+}
+
+export function flightEase(): string {
+  return getComputedStyle(document.documentElement).getPropertyValue('--ease-snap').trim() || 'ease-out';
 }
 
 export function clearCardOrigin(): void {

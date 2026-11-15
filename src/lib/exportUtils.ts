@@ -108,8 +108,12 @@ export function gridThumbnail(source: HTMLCanvasElement): string {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(source, 0, 0, width, height);
-  const webp = canvas.toDataURL('image/webp', GRID_THUMB_QUALITY);
-  return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', GRID_THUMB_QUALITY);
+  return encodeWithFallback(canvas, 'image/webp', 'image/jpeg', GRID_THUMB_QUALITY);
+}
+
+function encodeWithFallback(canvas: HTMLCanvasElement, type: string, fallback: string, quality: number): string {
+  const url = canvas.toDataURL(type, quality);
+  return url.startsWith(`data:${type}`) ? url : canvas.toDataURL(fallback, quality);
 }
 
 export function displayCardName(name: string): string {

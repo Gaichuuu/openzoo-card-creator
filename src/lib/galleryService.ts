@@ -36,6 +36,8 @@ import type { LayoutType } from '@/types/layout';
 import type { EffectBlock } from '@/types/effects';
 import type { Locale } from '@/data/locales';
 
+const GRID_UPLOAD_TIMEOUT_MS = 20000;
+
 interface PublishOptions {
   creatorName: string;
   tags: CardTag[];
@@ -148,7 +150,12 @@ export async function publishCard(
   const gridDataUrl = options.gridThumbDataUrl;
   if (gridDataUrl) {
     const ext = gridDataUrl.startsWith('data:image/webp') ? 'webp' : 'jpg';
-    uploads.push(uploadDataUrl(gridDataUrl, 'grid', ext)
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('timed out')), GRID_UPLOAD_TIMEOUT_MS);
+    });
+    uploads.push(Promise.race([uploadDataUrl(gridDataUrl, 'grid', ext), timeout])
+      .finally(() => clearTimeout(timer))
       .then((url) => { gridThumbUrl = url; })
       .catch((err: unknown) => { console.warn('Grid thumbnail upload failed; the gallery falls back to the full thumbnail:', err); }));
   }
