@@ -34,5 +34,6 @@ fi
 echo "==> Build: ${BUILD_DIR} ($(du -sh "${BUILD_DIR}" | cut -f1))"
 echo "==> Uploading to ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_DIR}/play/ ..."
 ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p ${DEPLOY_DIR}/play"
+chmod -R u+rwX,go+rX "${BUILD_DIR}"
 rsync -avz --delete "${BUILD_DIR}/" "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_DIR}/play/"
 echo "==> Done: https://${EXPECTED_DOMAIN}/play/"
