@@ -52,7 +52,7 @@ npx tsx scripts/generate-sitemap.ts
 
 echo "==> Deploying dist/ to ${REMOTE}..."
 rsync -avz --delete \
-  --exclude=gallery --exclude=api --exclude=lib \
+  --exclude=gallery --exclude=api --exclude=lib --exclude=play \
   dist/ \
   "$REMOTE"
 

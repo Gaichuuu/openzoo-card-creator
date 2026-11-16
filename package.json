@@ -26,7 +26,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "deploy": "bash scripts/deploy.sh",
-    "deploy:site": "bash scripts/deploy.sh --site"
+    "deploy:site": "bash scripts/deploy.sh --site",
+    "deploy:play": "bash scripts/deploy-play.sh"
   },
   "dependencies": {
     "@google/model-viewer": "^4.1.0",
