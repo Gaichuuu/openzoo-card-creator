@@ -7,6 +7,7 @@ import { isHoloActive } from './holo/holoSettings';
 import { ensureFoil } from './holo/foilImage';
 import { BLEED, CARD_H, CARD_W } from './cardDims';
 import { edgeShowsFoil, whiteInkMaskPixels } from './printFile';
+import { fixWebKitClone } from './webkitClone';
 
 type SvgOptions = NonNullable<Parameters<typeof toSvg>[1]>;
 interface CardPngOptions extends SvgOptions {
@@ -35,10 +36,10 @@ async function cardToCanvas(el: HTMLElement, opts: CardPngOptions): Promise<HTML
   }
   const prefix = 'data:image/svg+xml;charset=utf-8,';
   const svgText = decodeURIComponent(svgDataUrl.slice(prefix.length));
-  const fixed = svgText.replace(/<[a-z]+ [^>]*data-oz-wauto="1"[^>]*>/g, (tag) =>
+  const fixed = fixWebKitClone(svgText.replace(/<[a-z]+ [^>]*data-oz-wauto="1"[^>]*>/g, (tag) =>
     tag
       .replace(/(?<![a-z-])width: [\d.]+px/g, 'width: auto')
-      .replace(/(?<![a-z-])inline-size: [\d.]+px/g, 'inline-size: auto'));
+      .replace(/(?<![a-z-])inline-size: [\d.]+px/g, 'inline-size: auto')));
   const img = await loadImage(prefix + encodeURIComponent(fixed));
   const canvas = document.createElement('canvas');
   canvas.width = opts.width * opts.pixelRatio;
