@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCardSearchText } from '@/lib/cardSearchText';
+import { buildCardSearchIndex, buildCardSearchText, normalizeSearchQuery } from '@/lib/cardSearchText';
 import { ZONE_ID_MAPS } from '@/data/layouts';
 import type { CardSnapshot } from '@/types/card';
 
@@ -53,5 +53,23 @@ describe('buildCardSearchText', () => {
   it('returns empty string when no text zones are set', () => {
     const card = makeCard('BasicAttackMain', {});
     expect(buildCardSearchText(card)).toBe('');
+  });
+});
+
+describe('buildCardSearchIndex', () => {
+  it('holds name, tribe, creator and card text, lowercased, one field per line', () => {
+    const card = { ...makeCard('BasicAttackMain', { FlavorText: '<p>Big Feet.</p>' }), cardName: 'Big\\nFoot', tribe: 'Caster', creatorName: 'Sam' };
+    expect(buildCardSearchIndex(card)).toBe('big foot\ncaster\nsam\nbig feet.');
+  });
+
+  it('does not match a query across two fields', () => {
+    const card = { ...makeCard('BasicAttackMain', {}), cardName: 'Mothman', tribe: 'Caster' };
+    expect(buildCardSearchIndex(card).includes(normalizeSearchQuery('mothman caster'))).toBe(false);
+  });
+});
+
+describe('normalizeSearchQuery', () => {
+  it('trims and lowercases', () => {
+    expect(normalizeSearchQuery('  JumpStart ')).toBe('jumpstart');
   });
 });

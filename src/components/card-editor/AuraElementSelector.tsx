@@ -6,7 +6,6 @@ import type { CustomElementDef, CustomIcon } from '@/types/customIcons';
 import { customIconToElementDef } from '@/lib/customIconUtils';
 import { t } from '@/data/locales';
 import { CustomIconPicker } from './CustomIconPicker';
-import { zoneValue } from '@/lib/zoneData';
 
 export function AuraElementSelector() {
   const setPrimaryElement = useCardStore((s) => s.setPrimaryElement);
@@ -19,15 +18,9 @@ export function AuraElementSelector() {
   const isToken = cardType === 'Token';
   const snapshotGuard = useRef(false);
   const element = useCardStore((s): ElementOrCustom => s.primaryElement ?? (isToken ? 'Neutral' : 'Spirit'));
-  const showIcon = useCardStore((s) => {
-    const style = zoneValue(s, 'Aura2', 's');
-    return !!style && !style.includes('display:none');
-  });
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const AURA_ICON_VISIBLE = '{border:1px solid rgba(0,0,0,1)}';
-
-  const applyElement = (el: ElementOrCustom, customDef?: CustomElementDef, showTokenIcon = showIcon) => {
+  const applyElement = (el: ElementOrCustom, customDef?: CustomElementDef) => {
     const colorEl = el === 'Neutral' ? null : el;
     setPrimaryElement(colorEl, customDef);
     setSecondaryElement(null);
@@ -35,13 +28,8 @@ export function AuraElementSelector() {
       const name = el === 'Custom' ? customDef?.name : t(el, locale);
       if (name) setCardName(`${name} ${t('Aura', locale)}`);
     }
-    if (cardType === 'Token') {
-      setStyleField('Aura1', '{display:none}');
-      setStyleField('Aura2', showTokenIcon ? AURA_ICON_VISIBLE : '{display:none}');
-    } else {
-      setStyleField('Aura2', AURA_ICON_VISIBLE);
-      setStyleField('Aura1', '{display:none}');
-    }
+    setStyleField('Aura1', '{display:none}');
+    setStyleField('Aura2', cardType === 'Token' ? '{display:none}' : '{border:1px solid rgba(0,0,0,1)}');
   };
 
   useEffect(() => {
@@ -57,7 +45,7 @@ export function AuraElementSelector() {
     if (useCardStore.getState()._isLoadingSnapshot) return;
     if (snapshotGuard.current) { snapshotGuard.current = false; return; }
     if (cardType === 'Token') {
-      applyElement('Cosmic', undefined, false);
+      applyElement('Cosmic');
     } else if (cardType === 'Aura') {
       applyElement('Spirit');
     }
@@ -101,19 +89,6 @@ export function AuraElementSelector() {
         >
           Change custom element…
         </button>
-      )}
-      {isToken && (
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showIcon}
-            onChange={(e) => {
-              setStyleField('Aura2', e.target.checked ? AURA_ICON_VISIBLE : '{display:none}');
-            }}
-            className="accent-gold-400"
-          />
-          <span className="text-xs text-gray-400">Show aura icon</span>
-        </label>
       )}
       <CustomIconPicker
         type="aura"

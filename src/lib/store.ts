@@ -106,6 +106,13 @@ export function elementIconFor(el: ElementOrCustom | null, def?: CustomElementDe
   return `${el}.png`;
 }
 
+export function hideTokenAuraIcons(data: CardData, layoutType: LayoutType): void {
+  for (const key of ['Aura1', 'Aura2']) {
+    const styleKey = getStyleZoneId(layoutType, key);
+    if (styleKey) data[styleKey] = '{display:none}';
+  }
+}
+
 function applyAuraColors(
   newData: CardData,
   layoutType: LayoutType,
@@ -764,6 +771,7 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     if (artKey && snapshot.cardArtUrl) {
       newData[artKey] = snapshot.cardArtUrl;
     }
+    if (snapshot.cardType === 'Token') hideTokenAuraIcons(newData, lt);
 
     const effectPatch = composeEffectBlocks(
       snapshot.effectBlocks ?? [], lt, snapshot.cardType, locale, snapshot.borderless ?? false,

@@ -29,3 +29,17 @@ export function buildCardSearchText(card: CardSnapshot): string {
     .replace(/\s+/g, ' ')
     .toLowerCase();
 }
+
+export interface SearchableCard extends CardSnapshot {
+  creatorName?: string;
+}
+
+export function buildCardSearchIndex(card: SearchableCard): string {
+  return [card.cardName.replace(/\\n/g, ' '), card.tribe ?? '', card.creatorName ?? '', buildCardSearchText(card)]
+    .join('\n')
+    .toLowerCase();
+}
+
+export function normalizeSearchQuery(query: string): string {
+  return query.trim().toLowerCase();
+}
