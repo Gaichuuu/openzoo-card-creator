@@ -13,6 +13,7 @@ import {
 } from '@/lib/effectComposer';
 import { parseSegments } from '@/lib/textParserUtils';
 import type { EffectBlock, EffectBlockType } from '@/types/effects';
+import { createDefaultBlock } from '@/types/effects';
 
 function makeBlock(overrides: Partial<EffectBlock> & { type: EffectBlockType }): EffectBlock {
   return {
@@ -405,5 +406,12 @@ describe('composeEffectBlocks for Token', () => {
   it('leaves other Aura-layout types on the plain main text', () => {
     const patch = composeEffectBlocks([attack], 'Aura', 'Special Aura');
     expect(patch.t57).toBe('');
+  });
+});
+
+describe('createDefaultBlock', () => {
+  it('shows the attack divider by default, and only on attack blocks', () => {
+    expect(createDefaultBlock('attack').showDivider).toBe(true);
+    expect(createDefaultBlock('static').showDivider).toBe(false);
   });
 });

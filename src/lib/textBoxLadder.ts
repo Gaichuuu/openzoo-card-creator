@@ -90,7 +90,7 @@ const EFFECT_SELECTOR = '[data-zone-key="AttackEffect"],[data-zone-key="AttackEf
 const ATTACK_SELECTOR = '[data-zone-key="Attack"],[data-zone-key="Attack 1"]';
 const ATTACK_NAME_SELECTOR = '[data-zone-key="Attack Name"],[data-zone-key="Attack Name 1"]';
 const ATKDMG_SELECTOR = '[data-zone-key="ATKDMG"],[data-zone-key="ATKDMG 1"]';
-const ADV_SELECTOR = '[data-zone-key^="AuraAdvantage"]';
+const ADV_SELECTOR = '[data-zone-key^="AuraAdvantage"],[data-zone-key^="Status Effect"]';
 
 const ADV_BASE_DMG = ATTACK_TIERS[0].dmg;
 
@@ -127,7 +127,8 @@ export function applyRung(el: HTMLElement, rung: FitCandidate, adjust: RungAdjus
   });
   const advScale = ((rung.attack.dmg + adjust.attackName * 0.5) / ADV_BASE_DMG) * ADV_TRIM;
   each(el, ADV_SELECTOR, (node) => {
-    if (node.dataset.ozAdvW === undefined) {
+    if (node.dataset.zoneKey?.startsWith('Status Effect') && !node.style.backgroundImage) return;
+    if (node.dataset.ozAdvW === undefined || node.style.width !== node.dataset.ozAdvWrote) {
       node.dataset.ozAdvW = String(parseFloat(node.style.width) || node.offsetWidth);
       node.dataset.ozAdvH = String(parseFloat(node.style.height) || node.offsetHeight);
     }
@@ -136,6 +137,7 @@ export function applyRung(el: HTMLElement, rung: FitCandidate, adjust: RungAdjus
     node.style.width = `${Math.round(w * 2) / 2}px`;
     node.style.height = `${Math.round(h * 2) / 2}px`;
     node.style.flexShrink = '0';
+    node.dataset.ozAdvWrote = node.style.width;
   });
 }
 
