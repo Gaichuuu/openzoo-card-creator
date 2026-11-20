@@ -10,11 +10,14 @@ interface SiteHeaderProps {
 export function SiteHeader({ sticky = false }: SiteHeaderProps) {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPathname, setMenuPathname] = useState(pathname);
+  if (menuPathname !== pathname) {
+    setMenuPathname(pathname);
+    setMenuOpen(false);
+  }
   const [hidden, setHidden] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const isMobile = useIsMobile();
-
-  useEffect(() => setMenuOpen(false), [pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -47,6 +50,9 @@ export function SiteHeader({ sticky = false }: SiteHeaderProps) {
   return (
     <header
       ref={headerRef}
+      onClick={(e) => {
+        if ((e.target as Element).closest('a')) setMenuOpen(false);
+      }}
       className={`${sticky ? 'sticky top-0 z-10 transition-transform duration-200' : 'relative'} ${hidden && isMobile && !menuOpen ? '-translate-y-full' : ''} bg-navy-950 bg-header-bar shadow-[inset_0_1px_0_rgba(255,247,207,.14)] font-body flex items-center gap-3 md:gap-5.5 h-(--site-header-h) px-4 md:px-6 shrink-0`}
     >
       <div aria-hidden="true" className="absolute left-0 right-0 bottom-0 h-0.5 bg-holo-rule holo-animate pointer-events-none" />
@@ -72,7 +78,7 @@ export function SiteHeader({ sticky = false }: SiteHeaderProps) {
         Gallery
       </Link>
       <button
-        onClick={() => setMenuOpen((open) => !open)}
+        onClick={() => setMenuOpen(!menuOpen)}
         className="md:hidden w-11 h-11 -mr-2 flex items-center justify-center text-gray-300 shrink-0"
         aria-label={menuOpen ? 'Close menu' : 'Open menu'}
         aria-expanded={menuOpen}
@@ -90,7 +96,7 @@ export function SiteHeader({ sticky = false }: SiteHeaderProps) {
       {menuOpen && (
         <nav className="md:hidden absolute top-full left-0 right-0 z-20 flex flex-col bg-navy-950 border-b border-navy-600 py-1.5">
           {NAV_LINKS.filter(({ to }) => to !== '/gallery').map(({ label, to }) => (
-            <Link key={to} to={to} onClick={() => setMenuOpen(false)} className={`px-5 py-3 text-[15px] ${linkClass(to)}`}>
+            <Link key={to} to={to} className={`px-5 py-3 text-[15px] ${linkClass(to)}`}>
               {label}
             </Link>
           ))}

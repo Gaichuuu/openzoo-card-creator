@@ -3,7 +3,7 @@ import type { Zone } from '@/types/layout';
 import type { CardData, CardFitSettings, HoloArea, HoloSettings } from '@/types/card';
 import { customNameFill, customTextOutline, customZoneStyle, type ResolvedCustomStyle } from '@/lib/customStyle';
 import { resolveImagePath } from '@/lib/imagePathResolver';
-import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE } from '@/data/constants';
+import { FONT_BODY, FONT_CAMBRIA, FONT_TITLE, SPECIAL_FIT_TYPES } from '@/data/constants';
 import { applyStrokeOutline, cssStrokeToOutline, entersBorderlessTextScope, stripInvisibleOutlines, wrapOutline, type OutlineStyle } from '@/lib/outlineUtils';
 import { useCardStore } from '@/lib/store';
 import { artPositionCss, artZoomScale } from '@/lib/cardArtFit';
@@ -11,7 +11,8 @@ import { ParsedText } from './TextParser';
 import { HoloLayer } from './HoloLayer';
 import { holoAreaOfZone, usesReverseLayer } from '@/lib/holo/holoAreas';
 import { getFitMode } from '@/lib/fitMode';
-import { fitSpecialTextBox, restoreArtWindow } from '@/lib/specialTextFit';
+import { fitSpecialTextBox, restoreArtWindow, specialTextExtraHeight } from '@/lib/specialTextFit';
+import { positionLonghands } from '@/lib/backgroundPosition';
 import { FIT_CANDIDATES, FONT_STARTS, BASE_FONT_INDEX, BASE_INDEX, TIERS_PER_CELL, pickCandidate, applyRung, snapPitchGrid, snapInlineImages, snapChildHeights, centerPillText, SNAP_PROPS, type SnapProp, type FitCandidate } from '@/lib/textBoxLadder';
 
 function AutoShrinkText({ html, origin = 'center center', marginRight = 0, outline = null, fill = null }: { html: string; origin?: string; marginRight?: number; outline?: OutlineStyle | null; fill?: CSSProperties | null }) {
@@ -151,7 +152,7 @@ function parseStyleString(str: string): CSSProperties {
 }
 
 function buildZoneStyle(zone: Zone, styleOverride: CSSProperties): CSSProperties {
-  const raw = { ...zone.style } as Record<string, any>;
+  const raw = { ...zone.style } as Record<string, unknown>;
 
   Object.assign(raw, styleOverride);
 
@@ -262,7 +263,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   const fitCardType = fitOverrides ? fitOverrides.cardType : storeCardType;
   const isSpecialTextBox = zone.type === 'text'
     && (zone.textDataKey === 'Aura/Terra Text Box' || zone.textDataKey === 'Aura/Terra Text Box 1')
-    && (fitCardType === 'Special Aura' || fitCardType === 'Special Terra');
+    && !!fitCardType && SPECIAL_FIT_TYPES.has(fitCardType);
   const isAttackSizedZone = zone.textDataKey === 'Attack Name' || zone.textDataKey === 'Attack Name 1'
     || zone.textDataKey === 'ATKDMG' || zone.textDataKey === 'ATKDMG 1';
   const ov = fitOverrides;
@@ -311,6 +312,7 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
       spacing: mainTextLetterSpacingAdj,
       nudge: mainTextBoxNudge,
       nudgeByTop: usesReverseLayer(holoAreas),
+      extraHeight: specialTextExtraHeight(fitCardType),
     });
     const root = el.closest('[data-oz-card-root]');
     run();
@@ -840,17 +842,19 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
     textContent = cardData[textKey] || null;
   }
 
+  const { backgroundPosition: stylePosition, ...baseStyle } = style;
+  const position = backgroundImage
+    ? (isCardArtZone ? artPositionCss(cardArtPositionX, cardArtPositionY) : (stylePosition || 'center'))
+    : stylePosition;
   const finalStyle: CSSProperties = {
-    ...style,
+    ...baseStyle,
     ...(backgroundImage ? {
       backgroundImage,
       backgroundSize: (zone.imageDataKey === 'SetSymbol' || zone.imageDataKey?.startsWith('Trait') || zone.imageDataKey?.startsWith('SAura') || zone.imageDataKey?.startsWith('Terra'))
         ? 'contain' : (style.backgroundSize || 'cover'),
-      backgroundPosition: isCardArtZone
-        ? artPositionCss(cardArtPositionX, cardArtPositionY)
-        : (style.backgroundPosition || 'center'),
       backgroundRepeat: 'no-repeat',
     } : {}),
+    ...(position ? positionLonghands(String(position)) : {}),
     ...(fitMode === 'zoom' && isMainTextZone && mainTextLineHeightAdj !== 0
       ? { lineHeight: `${8 + mainTextLineHeightAdj * 0.5}px` }
       : {}),
@@ -887,9 +891,9 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
 
     for (const [key, value] of Object.entries(finalStyle)) {
       if (FLEX_LAYOUT_KEYS.has(key)) {
-        (innerStyle as any)[key] = value;
+        (innerStyle as Record<string, unknown>)[key] = value;
       } else {
-        (outerStyle as any)[key] = value;
+        (outerStyle as Record<string, unknown>)[key] = value;
       }
     }
 
@@ -907,8 +911,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
   }
 
   if (isCardArtZone && cardArtZoom > 0 && backgroundImage) {
-    const { backgroundImage: bgImage, backgroundSize: bgSize, backgroundPosition: bgPos,
-      backgroundRepeat: bgRepeat, ...outerArtStyle } = finalStyle;
+    const { backgroundImage: bgImage, backgroundSize: bgSize, backgroundPositionX: bgPosX,
+      backgroundPositionY: bgPosY, backgroundRepeat: bgRepeat, ...outerArtStyle } = finalStyle;
     const origin = artPositionCss(cardArtPositionX, cardArtPositionY);
     return (
       <div
@@ -921,7 +925,8 @@ export function ZoneRenderer({ zone, cardData, borderless = false, inBorderlessT
           inset: 0,
           backgroundImage: bgImage,
           backgroundSize: bgSize,
-          backgroundPosition: bgPos,
+          backgroundPositionX: bgPosX,
+          backgroundPositionY: bgPosY,
           backgroundRepeat: bgRepeat,
           transform: `scale(${artZoomScale(cardArtZoom)})`,
           transformOrigin: origin,

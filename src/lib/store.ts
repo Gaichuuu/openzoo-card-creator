@@ -10,7 +10,7 @@ import {
   STYLE_TYPES_TRIBES, STYLE_SPELLBOOK_LIMIT, STYLE_CARD_NAME, STYLE_TNL, STYLE_LP, STYLE_FLAVOR_TEXT, FONT_BODY,
 } from '@/data/constants';
 import type { EffectBlock, EffectBlockType } from '@/types/effects';
-import { createDefaultBlock } from '@/types/effects';
+import { createDefaultBlock, TOKEN_BLOCKS } from '@/types/effects';
 import { ZONE_ID_MAPS, getTextZoneId, getImageZoneId, getStyleZoneId } from '@/data/layouts';
 import { resolveBanner } from './bannerResolver';
 import { resolveArtBorderStyle, resolveBgOverlayStyle, computeStrongAgainst } from '@/data/constants';
@@ -197,9 +197,9 @@ function applyStrongAgainst(
 
 function getTypeCapabilities(type: CardType) {
   return {
-    hasLP: type === 'Artifact' || type === 'Beastie',
+    hasLP: type === 'Artifact' || type === 'Beastie' || type === 'Token',
     hasMetadata: type === 'Beastie',
-    hasAttacks: type === 'Beastie',
+    hasAttacks: type === 'Beastie' || type === 'Token',
   };
 }
 
@@ -346,6 +346,8 @@ export const useCardStore = create<CardEditorState>((set, get) => ({
     }
     if (TYPES_WITHOUT_TRAITS.has(type)) {
       effectBlocks = [];
+    } else if (type === 'Token') {
+      effectBlocks = effectBlocks.filter((b) => TOKEN_BLOCKS.includes(b.type));
     }
     const effectPatch = composeEffectBlocks(effectBlocks, lt, type, state.locale, state.borderless);
     Object.assign(newData, effectPatch);

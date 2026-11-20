@@ -121,9 +121,9 @@ interface ParsedTextProps {
 }
 
 export function ParsedText({ html }: ParsedTextProps) {
+  const locale = useCardStore((s) => s.locale);
   if (!html) return null;
 
-  const locale = useCardStore((s) => s.locale);
   const expanded = expandVariables(html, getVariables(locale));
   const plain = stripHtml(expanded);
   const segments = parseSegments(plain);

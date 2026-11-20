@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useCardStore } from '@/lib/store';
 import type { LayoutType } from '@/types/layout';
 import type { EffectBlockType } from '@/types/effects';
-import { BLOCK_ORDER, BLOCK_LABELS } from '@/types/effects';
+import { BLOCK_ORDER, BLOCK_LABELS, TOKEN_BLOCKS } from '@/types/effects';
 import { getFitMode } from '@/lib/fitMode';
 import { sortBlocks } from '@/lib/effectComposer';
 import { EffectBlockEditor } from './EffectBlockEditor';
@@ -82,6 +82,7 @@ const AVAILABLE_BLOCKS: Partial<Record<LayoutType, EffectBlockType[]>> = {
 
 export function TextBoxBuilder() {
   const layoutType = useCardStore((s) => s.layoutType);
+  const isToken = useCardStore((s) => s.cardType === 'Token');
   const effectBlocks = useCardStore((s) => s.effectBlocks);
   const addEffectBlock = useCardStore((s) => s.addEffectBlock);
   const removeEffectBlock = useCardStore((s) => s.removeEffectBlock);
@@ -93,7 +94,7 @@ export function TextBoxBuilder() {
   const setAttackNameSize = useCardStore((s) => s.setAttackNameSize);
   const autoFitRatio = useCardStore((s) => s._autoFitRatio);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const available = AVAILABLE_BLOCKS[layoutType] || [];
+  const available = isToken ? TOKEN_BLOCKS : AVAILABLE_BLOCKS[layoutType] || [];
   const sorted = sortBlocks(effectBlocks);
   const ladder = getFitMode() === 'ladder';
   const totalRatio = ladder
@@ -134,7 +135,9 @@ export function TextBoxBuilder() {
         </div>
       </div>
 
-      {sorted.length > 0 && (
+      {sorted.length > 0 && isToken && <SpecialTextFitControls />}
+
+      {sorted.length > 0 && !isToken && (
         <FitSteppers
           shrinkLabel={<>Shrink{totalShrinkPct > 0 && <span className="text-gray-500 ml-0.5">({totalShrinkPct}%)</span>}</>}
           shrinkStep={ladder ? 5 : 1}

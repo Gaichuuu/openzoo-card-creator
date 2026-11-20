@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { ELEMENTS } from '@/data/constants';
-import { ZONE_ID_MAPS } from '@/data/layouts';
 import type { ElementOrCustom } from '@/types/card';
 import type { CustomElementDef, CustomIcon } from '@/types/customIcons';
 import { customIconToElementDef } from '@/lib/customIconUtils';
 import { t } from '@/data/locales';
 import { CustomIconPicker } from './CustomIconPicker';
+import { zoneValue } from '@/lib/zoneData';
 
 export function AuraElementSelector() {
   const setPrimaryElement = useCardStore((s) => s.setPrimaryElement);
@@ -18,8 +18,11 @@ export function AuraElementSelector() {
 
   const isToken = cardType === 'Token';
   const snapshotGuard = useRef(false);
-  const [element, setElement] = useState<ElementOrCustom>(isToken ? 'Cosmic' : 'Spirit');
-  const [showIcon, setShowIcon] = useState(false);
+  const element = useCardStore((s): ElementOrCustom => s.primaryElement ?? (isToken ? 'Neutral' : 'Spirit'));
+  const showIcon = useCardStore((s) => {
+    const style = zoneValue(s, 'Aura2', 's');
+    return !!style && !style.includes('display:none');
+  });
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const AURA_ICON_VISIBLE = '{border:1px solid rgba(0,0,0,1)}';
@@ -44,14 +47,6 @@ export function AuraElementSelector() {
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
       snapshotGuard.current = true;
-      const s = useCardStore.getState();
-      const el = s.primaryElement ?? (isToken ? 'Cosmic' : 'Spirit');
-      setElement(el);
-      if (s.cardType === 'Token') {
-        const aura2Id = ZONE_ID_MAPS[s.layoutType]?.['Aura2'];
-        const aura2Style = aura2Id != null ? s.cardData[`s${aura2Id}`] : undefined;
-        setShowIcon(!!aura2Style && !aura2Style.includes('display:none'));
-      }
       return;
     }
     if (snapshotGuard.current) return;
@@ -62,14 +57,9 @@ export function AuraElementSelector() {
     if (useCardStore.getState()._isLoadingSnapshot) return;
     if (snapshotGuard.current) { snapshotGuard.current = false; return; }
     if (cardType === 'Token') {
-      const defaultEl = 'Cosmic';
-      setElement(defaultEl);
-      setShowIcon(false);
-      applyElement(defaultEl, undefined, false);
+      applyElement('Cosmic', undefined, false);
     } else if (cardType === 'Aura') {
-      const defaultEl = 'Spirit';
-      setElement(defaultEl);
-      applyElement(defaultEl);
+      applyElement('Spirit');
     }
   }, [cardType]);
 
@@ -82,12 +72,10 @@ export function AuraElementSelector() {
 
   const handleElementChange = (el: ElementOrCustom) => {
     if (el === 'Custom') { setPickerOpen(true); return; }
-    setElement(el);
     applyElement(el);
   };
 
   const handleCustomPick = (icon: CustomIcon) => {
-    setElement('Custom');
     applyElement('Custom', customIconToElementDef(icon));
   };
 
@@ -120,7 +108,6 @@ export function AuraElementSelector() {
             type="checkbox"
             checked={showIcon}
             onChange={(e) => {
-              setShowIcon(e.target.checked);
               setStyleField('Aura2', e.target.checked ? AURA_ICON_VISIBLE : '{display:none}');
             }}
             className="accent-gold-400"

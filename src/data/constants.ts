@@ -36,12 +36,21 @@ export const TYPES_WITHOUT_TERRA = new Set<CardType>([
 ]);
 
 export const TYPES_WITHOUT_TRAITS = new Set<CardType>([
-  'Aura', 'Special Aura', 'Terra', 'Special Terra', 'Token',
+  'Aura', 'Special Aura', 'Terra', 'Special Terra',
 ]);
 
-export const SPECIAL_FIT_TYPES = new Set<CardType>(['Special Aura', 'Special Terra']);
+export const SPECIAL_FIT_TYPES = new Set<CardType>(['Special Aura', 'Special Terra', 'Token']);
 
 export const POWER_PILL_EM = 0.7;
+
+export const ATTACK_ZONE_PX = { name: 10, damage: 12, advantage: 14 } as const;
+export const ADV_TRIM = 0.8;
+export const SPECIAL_TEXT_FONT_PX = 8;
+export const DAMAGE_RED = 'rgba(223, 13, 34, 1)';
+
+export function dividerGradient(solid: string, clear: string): string {
+  return `linear-gradient(90deg, ${clear} 0%, ${solid} 45%, ${solid} 53%, ${solid} 60%, ${clear} 100%)`;
+}
 
 export const CARD_TYPE_TO_LAYOUT: Record<CardType, LayoutType> = {
   Artifact: 'BasicAttackMain',

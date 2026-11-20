@@ -44,6 +44,8 @@ export const BLOCK_ORDER: EffectBlockType[] = [
   'attack',
 ];
 
+export const TOKEN_BLOCKS: EffectBlockType[] = ['static', 'enter', 'arena', 'destroyed', 'power', 'attack'];
+
 export const BLOCK_LABELS: Record<EffectBlockType, string> = {
   'tribal-boost': 'Tribal Boost',
   'static': 'Effect',

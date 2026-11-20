@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { TERRAS } from '@/data/constants';
-import { ZONE_ID_MAPS } from '@/data/layouts';
-import { stripParagraphWrap } from '@/lib/textParserUtils';
 import type { Terra } from '@/types/card';
 import type { CustomIcon } from '@/types/customIcons';
 import { CustomIconPicker } from './CustomIconPicker';
+import { zoneText } from '@/lib/zoneData';
 
 const DEFAULT_TERRAS: [string, string] = ['Lake', 'Nighttime'];
 const DEFAULT_BONUSES = [
@@ -20,28 +19,27 @@ function formatBonus(value: string, suffix: string): string {
   return `${value} ${suffix}`;
 }
 
+function initialBonuses() {
+  const s = useCardStore.getState();
+  if (!s._isLoadingSnapshot) return DEFAULT_BONUSES;
+  const extractBonus = (key: string, suffix: string) => zoneText(s, key).replace(` ${suffix}`, '');
+  return [
+    { atk: extractBonus('Terra1ATK', 'ATK'), lp: extractBonus('Terra1LP', 'LP') },
+    { atk: extractBonus('Terra2ATK', 'ATK'), lp: extractBonus('Terra2LP', 'LP') },
+  ];
+}
+
 export function TerraSelector() {
   const terras = useCardStore((s) => s.terras);
   const setTerra = useCardStore((s) => s.setTerra);
   const setTextField = useCardStore((s) => s.setTextField);
   const setStyleField = useCardStore((s) => s.setStyleField);
   const snapshotGuard = useRef(false);
-  const [bonuses, setBonuses] = useState(DEFAULT_BONUSES);
+  const [bonuses, setBonuses] = useState(initialBonuses);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
-      const s = useCardStore.getState();
-      const map = ZONE_ID_MAPS[s.layoutType];
-      const extractBonus = (key: string, suffix: string) => {
-        const zoneId = map?.[key];
-        const text = zoneId != null ? stripParagraphWrap(s.cardData[`t${zoneId}`] || '') : '';
-        return text.replace(` ${suffix}`, '');
-      };
-      setBonuses([
-        { atk: extractBonus('Terra1ATK', 'ATK'), lp: extractBonus('Terra1LP', 'LP') },
-        { atk: extractBonus('Terra2ATK', 'ATK'), lp: extractBonus('Terra2LP', 'LP') },
-      ]);
       setStyleField('Terra1ATK', BONUS_STYLE);
       setStyleField('Terra1LP', BONUS_STYLE);
       setStyleField('Terra2ATK', BONUS_STYLE);

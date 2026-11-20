@@ -31,7 +31,7 @@ export function TraitSelector() {
       return;
     }
     if (snapshotGuard.current) return;
-    setTrait(0, 'Convert');
+    setTrait(0, cardType === 'Token' ? null : 'Convert');
     const traitStyle = '{width:20px;height:20px}';
     setStyleField('Trait1', traitStyle);
     setStyleField('Trait2', traitStyle);
@@ -55,6 +55,10 @@ export function TraitSelector() {
       setTrait(2, null);
     } else if (cardType === 'Beastie') {
       setTrait(0, 'Convert');
+      setTrait(1, null);
+      setTrait(2, null);
+    } else if (cardType === 'Token') {
+      setTrait(0, null);
       setTrait(1, null);
       setTrait(2, null);
     }

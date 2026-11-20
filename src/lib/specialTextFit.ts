@@ -1,6 +1,11 @@
 export const SPECIAL_TEXT_FONT_STEP = 0.5;
 export const SPECIAL_TEXT_MIN_FONT = 5;
 export const SPECIAL_TEXT_EXTRA_HEIGHT = 18;
+export const TOKEN_TEXT_EXTRA_HEIGHT = 40;
+
+export function specialTextExtraHeight(cardType: string | undefined): number {
+  return cardType === 'Token' ? TOKEN_TEXT_EXTRA_HEIGHT : SPECIAL_TEXT_EXTRA_HEIGHT;
+}
 
 export interface SpecialTextAdjust {
   shrink: number;
@@ -8,6 +13,7 @@ export interface SpecialTextAdjust {
   spacing: number;
   nudge: number;
   nudgeByTop?: boolean;
+  extraHeight?: number;
 }
 
 export interface SpecialTextBase {
@@ -60,7 +66,7 @@ export function pickSpecialTextFont(baseFont: number, shrink: number, fits: (fon
 
 export function fitSpecialTextBox(el: HTMLElement, base: SpecialTextBase, adj: SpecialTextAdjust): void {
   const bottom = base.top + base.height;
-  const maxHeight = base.height + SPECIAL_TEXT_EXTRA_HEIGHT;
+  const maxHeight = base.height + (adj.extraHeight ?? SPECIAL_TEXT_EXTRA_HEIGHT);
   el.style.transform = '';
   el.style.top = `${base.top}px`;
   el.style.height = 'auto';
