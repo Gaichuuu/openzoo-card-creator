@@ -80,7 +80,7 @@ export function createDefaultBlock(type: EffectBlockType): Omit<EffectBlock, 'id
     attackHasStar: type === 'attack',
     attackBonus: '',
     attackBonus2: '',
-    showDivider: false,
+    showDivider: type === 'attack',
     statusEffect: '',
     statusEffectDuration: '',
     statusEffect2: '',
