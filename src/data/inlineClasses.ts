@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { ELEMENTS, TERRAS, TRAITS, STATUS_EFFECTS, POWER_PILL_EM } from './constants';
+import { ELEMENTS, TERRAS, TRAITS, STATUS_EFFECTS, POWER_PILL_EM, ATTACK_ZONE_PX, ADV_TRIM, SPECIAL_TEXT_FONT_PX, DAMAGE_RED, dividerGradient } from './constants';
 import type { Locale } from './locales';
 import { getPSBVariable } from './locales';
 import type { OutlineStyle } from '@/lib/outlineUtils';
@@ -11,6 +11,8 @@ export const PILL_VARS = {
   text: '--oz-pill-text',
   outline: '--oz-pill-outline',
 } as const;
+
+const boxEm = (px: number) => `${Number((px / SPECIAL_TEXT_FONT_PX).toFixed(4))}em`;
 
 export const INLINE_CLASSES: Record<string, CSSProperties> = {
   LP: {
@@ -86,6 +88,43 @@ export const INLINE_CLASSES: Record<string, CSSProperties> = {
     textTransform: 'uppercase' as const,
     fontSize: `${POWER_PILL_EM}em`,
     boxShadow: '0px 0.5px 1px rgba(0, 0, 0, 0.25)',
+  },
+  AtkRow: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '0.3em',
+  },
+  AtkName: {
+    display: 'inline',
+    fontWeight: 'bold',
+    fontSize: boxEm(ATTACK_ZONE_PX.name),
+    textTransform: 'uppercase' as const,
+  },
+  AtkDmg: {
+    display: 'inline',
+    fontWeight: 'bold',
+    fontSize: boxEm(ATTACK_ZONE_PX.damage),
+    lineHeight: '1',
+    color: DAMAGE_RED,
+  },
+  AtkAdv: {
+    display: 'inline-flex',
+    fontSize: boxEm(ATTACK_ZONE_PX.advantage * ADV_TRIM),
+    lineHeight: '0',
+    outline: '1px solid rgba(0, 0, 0, 1)',
+    outlineOffset: '-1px',
+  },
+  AtkDiv: {
+    display: 'block',
+    width: '21em',
+    maxWidth: '100%',
+    height: '1px',
+    margin: '0.3em auto',
+    background: dividerGradient('var(--oz-atk-div, #000)', 'transparent'),
+  },
+  AtkEffect: {
+    display: 'block',
   },
 };
 

@@ -1,4 +1,4 @@
-import type { LayoutData, LayoutType, ZoneIdMap } from '@/types/layout';
+import type { LayoutData, LayoutType, Zone, ZoneIdMap } from '@/types/layout';
 import { BasicNoAttackLayout } from './BasicNoAttack';
 import { BasicOnlyAttackLayout } from './BasicOnlyAttack';
 import { BasicAttackMainLayout } from './BasicAttackMain';
@@ -12,6 +12,22 @@ export const LAYOUTS: Record<LayoutType, LayoutData> = {
   Aura: AuraLayout,
   Terra: TerraLayout,
 };
+
+export function findZone(zone: Zone, key: string): Zone | null {
+  if ((zone.imageDataKey || zone.textDataKey) === key) return zone;
+  for (const child of zone.childZones) {
+    const found = findZone(child, key);
+    if (found) return found;
+  }
+  return null;
+}
+
+export const TOKEN_LP_ZONE_ID = 900;
+const auraTopRight = findZone(AuraLayout.rootZone, 'TopRight');
+const beastieLp = findZone(BasicAttackMainLayout.rootZone, 'LP');
+if (auraTopRight && beastieLp && !auraTopRight.childZones.some((z) => z.id === TOKEN_LP_ZONE_ID)) {
+  auraTopRight.childZones.push({ ...structuredClone(beastieLp), id: TOKEN_LP_ZONE_ID });
+}
 
 export const ZONE_ID_MAPS: Record<LayoutType, ZoneIdMap> = {
   "BasicNoAttack": {
@@ -232,7 +248,8 @@ export const ZONE_ID_MAPS: Record<LayoutType, ZoneIdMap> = {
     "Credits": 56,
     "Artist": 55,
     "Copyright": 54,
-    "Aura/Terra Text Box": 57
+    "Aura/Terra Text Box": 57,
+    "LP": 900
   },
   "Terra": {
     "CardBorder": 0,

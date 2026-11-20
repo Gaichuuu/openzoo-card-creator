@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
-import { ZONE_ID_MAPS } from '@/data/layouts';
 import { formatMetadataLocale } from '@/data/locales';
-import { stripParagraphWrap } from '@/lib/textParserUtils';
+import { zoneText } from '@/lib/zoneData';
 
 const SLOT_CONFIG = [
   {
@@ -35,31 +34,32 @@ const SLOT_CONFIG = [
   },
 ];
 
+const DEFAULT_SLOTS = SLOT_CONFIG.map((cfg) => ({ label: cfg.defaultLabel, value: cfg.defaultValue }));
+
+function initialSlots() {
+  const s = useCardStore.getState();
+  if (!s._isLoadingSnapshot) return DEFAULT_SLOTS;
+  return SLOT_CONFIG.map((cfg) => {
+    const raw = zoneText(s, cfg.semanticKey);
+    const m = raw.match(/\{B:(.+?)(?::\s*|：)\}(.*)/);
+    if (m) {
+      const matchedOpt = cfg.options.find((opt) => raw.includes(opt)) || cfg.defaultLabel;
+      return { label: matchedOpt, value: m[2] };
+    }
+    return { label: cfg.defaultLabel, value: cfg.defaultValue };
+  });
+}
+
 export function CryptidInfoEditor() {
   const setTextField = useCardStore((s) => s.setTextField);
   const setStyleField = useCardStore((s) => s.setStyleField);
   const locale = useCardStore((s) => s.locale);
 
   const snapshotGuard = useRef(false);
-  const [slots, setSlots] = useState(
-    SLOT_CONFIG.map((cfg) => ({ label: cfg.defaultLabel, value: cfg.defaultValue }))
-  );
+  const [slots, setSlots] = useState(initialSlots);
 
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
-      const s = useCardStore.getState();
-      const map = ZONE_ID_MAPS[s.layoutType];
-      const restored = SLOT_CONFIG.map((cfg) => {
-        const zoneId = map?.[cfg.semanticKey];
-        const raw = zoneId != null ? stripParagraphWrap(s.cardData[`t${zoneId}`] || '') : '';
-        const m = raw.match(/\{B:(.+?)(?::\s*|：)\}(.*)/);
-        if (m) {
-          const matchedOpt = cfg.options.find((opt) => raw.includes(opt)) || cfg.defaultLabel;
-          return { label: matchedOpt, value: m[2] };
-        }
-        return { label: cfg.defaultLabel, value: cfg.defaultValue };
-      });
-      setSlots(restored);
       setStyleField('DOB/Discovered:', '{top:0px;left:0px}');
       setStyleField('CryptidInfoBar', '{background:linear-gradient(to top, rgb(230, 165, 10), rgb(248, 210, 50));gap:2px}');
       snapshotGuard.current = true;

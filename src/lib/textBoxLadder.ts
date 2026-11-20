@@ -1,4 +1,4 @@
-import { POWER_PILL_EM } from '@/data/constants';
+import { ADV_TRIM, POWER_PILL_EM } from '@/data/constants';
 
 export interface RungMetrics {
   font: number;
@@ -93,7 +93,6 @@ const ATKDMG_SELECTOR = '[data-zone-key="ATKDMG"],[data-zone-key="ATKDMG 1"]';
 const ADV_SELECTOR = '[data-zone-key^="AuraAdvantage"]';
 
 const ADV_BASE_DMG = ATTACK_TIERS[0].dmg;
-const ADV_TRIM = 0.8;
 
 function each(el: HTMLElement, selector: string, fn: (node: HTMLElement) => void): void {
   for (const node of Array.from(el.querySelectorAll(selector)) as HTMLElement[]) fn(node);

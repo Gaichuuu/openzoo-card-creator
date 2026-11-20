@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
 import { TERRAS } from '@/data/constants';
-import { ZONE_ID_MAPS } from '@/data/layouts';
 import type { Terra } from '@/types/card';
 import { t as translate } from '@/data/locales';
 import { isCustomIconValue } from '@/lib/customIconUtils';
 import { CustomIconPicker } from './CustomIconPicker';
+import { zoneValue } from '@/lib/zoneData';
+
+function restoredTerra(): { terra: Terra | '__custom__'; customUrl: string } | null {
+  const s = useCardStore.getState();
+  if (!s._isLoadingSnapshot) return null;
+  const img = zoneValue(s, 'TerraSymbol', 'i');
+  if (isCustomIconValue(img)) return { terra: '__custom__', customUrl: img };
+  const m = img.match(/OpenZoo Terra\/(.+)\.png/);
+  return m && TERRAS.includes(m[1] as Terra) ? { terra: m[1] as Terra, customUrl: '' } : null;
+}
 
 export function TerraCardSelector() {
   const setImageField = useCardStore((s) => s.setImageField);
@@ -14,8 +23,9 @@ export function TerraCardSelector() {
   const cardType = useCardStore((s) => s.cardType);
   const locale = useCardStore((s) => s.locale);
   const snapshotGuard = useRef(false);
-  const customRef = useRef<{ url: string; name: string } | null>(null);
-  const [terra, setTerra] = useState<Terra | '__custom__'>('Cave');
+  const [restored] = useState(restoredTerra);
+  const customRef = useRef<{ url: string; name: string } | null>(restored?.customUrl ? { url: restored.customUrl, name: '' } : null);
+  const [terra, setTerra] = useState<Terra | '__custom__'>(restored?.terra ?? 'Cave');
   const [pickerOpen, setPickerOpen] = useState(false);
   const applyTerra = (t: Terra | '__custom__') => {
     if (t === '__custom__') {
@@ -35,18 +45,6 @@ export function TerraCardSelector() {
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
       snapshotGuard.current = true;
-      const s = useCardStore.getState();
-      const map = ZONE_ID_MAPS[s.layoutType];
-      const zoneId = map?.['TerraSymbol'];
-      const img = zoneId != null ? s.cardData[`i${zoneId}`] || '' : '';
-      if (isCustomIconValue(img)) {
-        customRef.current = { url: img, name: '' };
-        setTerra('__custom__');
-        setStyleField('TerraSymbol', '{outlineWidth:0px;left:-2px}');
-        return;
-      }
-      const m = img.match(/OpenZoo Terra\/(.+)\.png/);
-      if (m && TERRAS.includes(m[1] as Terra)) setTerra(m[1] as Terra);
       setStyleField('TerraSymbol', '{outlineWidth:0px;left:-2px}');
       return;
     }

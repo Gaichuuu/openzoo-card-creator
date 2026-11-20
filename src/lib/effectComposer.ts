@@ -3,7 +3,7 @@ import type { LayoutType } from '@/types/layout';
 import type { CardType, Element } from '@/types/card';
 import { BLOCK_ORDER } from '@/types/effects';
 import { getTextZoneId, getImageZoneId, getStyleZoneId } from '@/data/layouts';
-import { AURA_COLORS } from '@/data/constants';
+import { AURA_COLORS, dividerGradient } from '@/data/constants';
 import type { Locale } from '@/data/locales';
 import { t, toSmallCapsLocale, localeColon, localeSp } from '@/data/locales';
 
@@ -139,6 +139,35 @@ export function composeAttack(blocks: EffectBlock[]): EffectBlock | null {
   return blocks.find((b) => b.type === 'attack') || null;
 }
 
+function composeAttackEffect(block: EffectBlock): string {
+  if (!block.attackEffect) return '';
+  return block.attackHasStar ? `{Star}{I:${block.attackEffect}}` : block.attackEffect;
+}
+
+function composeTokenAdvantage(element: string): string {
+  return element ? `{AtkAdv:{OpenZoo Aura/${element}.png, 1, 0}}` : '';
+}
+
+export function composeTokenAttackRow(block: EffectBlock, locale: Locale = 'en'): string {
+  const name = composeAttackName(block, locale);
+  const parts = [
+    name ? `{AtkName:${name}}` : '',
+    block.attackDamage ? `{AtkDmg:${block.attackDamage}}` : '',
+    composeTokenAdvantage(block.attackBonus) + composeTokenAdvantage(block.attackBonus2),
+  ].filter(Boolean);
+  return parts.length ? `{AtkRow:${parts.join('')}}` : '';
+}
+
+export function composeTokenText(blocks: EffectBlock[], locale: Locale = 'en'): string {
+  const main = composeMainText(blocks, locale);
+  const attack = composeAttack(blocks);
+  const row = attack ? composeTokenAttackRow(attack, locale) : '';
+  const effect = attack ? composeAttackEffect(attack) : '';
+  if (!row && !effect) return main;
+  const divider = main && attack?.showDivider ? '{AtkDiv:}' : '';
+  return [main, divider, row, effect ? `{AtkEffect:${effect}}` : ''].join('');
+}
+
 export function composeEffectBlocks(
   blocks: EffectBlock[],
   layoutType: LayoutType,
@@ -148,7 +177,9 @@ export function composeEffectBlocks(
 ): Record<string, string> {
   const patch: Record<string, string> = {};
 
-  const mainText = composeMainText(blocks, locale);
+  const mainText = cardType === 'Token' && layoutType === 'Aura'
+    ? composeTokenText(blocks, locale)
+    : composeMainText(blocks, locale);
   const mainTextKey =
     layoutType === 'BasicNoAttack'
       ? getTextZoneId(layoutType, 'MainText')
@@ -248,14 +279,8 @@ export function composeEffectBlocks(
   }
 
   if (atkEffectKey) {
-    if (attack?.attackEffect) {
-      const effectText = attack.attackHasStar
-        ? `{Star}{I:${attack.attackEffect}}`
-        : attack.attackEffect;
-      patch[atkEffectKey] = `<p>${effectText}</p>`;
-    } else {
-      patch[atkEffectKey] = '';
-    }
+    const effectText = attack ? composeAttackEffect(attack) : '';
+    patch[atkEffectKey] = effectText ? `<p>${effectText}</p>` : '';
   }
 
   if (auraAdvKey) {
@@ -287,7 +312,7 @@ export function composeEffectBlocks(
     if (!attack?.showDivider) {
       patch[dividerStyleKey] = '{background:none}';
     } else if (borderless) {
-      patch[dividerStyleKey] = `{background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 45%, rgba(255,255,255,1) 53%, rgba(255,255,255,1) 60%, rgba(255,255,255,0) 100%);${dividerMargin}}`;
+      patch[dividerStyleKey] = `{background:${dividerGradient('rgba(255,255,255,1)', 'rgba(255,255,255,0)')};${dividerMargin}}`;
     } else {
       patch[dividerStyleKey] = `{${dividerMargin}}`;
     }

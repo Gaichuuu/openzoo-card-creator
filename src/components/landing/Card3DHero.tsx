@@ -5,9 +5,16 @@ import { isHoloActive } from '@/lib/holo/holoSettings';
 import { applyHeroFoil } from './heroFoil';
 import { HeroSkeleton } from './HeroSkeleton';
 
+interface ModelViewerTexture { readonly __texture: unique symbol }
+interface ModelViewerMaterial {
+  pbrMetallicRoughness: {
+    baseColorTexture: { setTexture: (texture: ModelViewerTexture | null) => void };
+    setBaseColorFactor: (rgba: [number, number, number, number]) => void;
+  };
+}
 type ModelViewer = HTMLElement & {
-  model?: { materials: any[] };
-  createTexture: (uri: string) => Promise<any>;
+  model?: { materials: ModelViewerMaterial[] };
+  createTexture: (uri: string) => Promise<ModelViewerTexture>;
 };
 
 interface Card3DHeroProps {
@@ -129,7 +136,7 @@ export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCa
       {!revealed && <HeroSkeleton />}
 
       <model-viewer
-        ref={viewerRef as any}
+        ref={viewerRef as unknown as React.Ref<HTMLElement>}
         src="/models/card.glb?v=3"
         loading="eager"
         reveal="auto"
@@ -152,7 +159,7 @@ export function Card3DHero({ className = 'w-65 h-92.5 md:w-95 md:h-135', frontCa
           transition: 'opacity 0.5s ease-in',
           '--poster-color': 'transparent',
           '--progress-bar-color': 'transparent',
-        } as any}
+        } as React.CSSProperties}
       />
     </div>
   );

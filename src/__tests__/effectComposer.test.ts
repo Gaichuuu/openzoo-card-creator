@@ -8,7 +8,10 @@ import {
   composeAttackName,
   composeAttack,
   composeEffectBlocks,
+  composeTokenAttackRow,
+  composeTokenText,
 } from '@/lib/effectComposer';
+import { parseSegments } from '@/lib/textParserUtils';
 import type { EffectBlock, EffectBlockType } from '@/types/effects';
 
 function makeBlock(overrides: Partial<EffectBlock> & { type: EffectBlockType }): EffectBlock {
@@ -341,5 +344,66 @@ describe('composeEffectBlocks', () => {
       v.includes('linear-gradient(90deg, rgba(255,255,255,0)')
     );
     expect(hasBorderlessDivider).toBe(true);
+  });
+});
+
+describe('composeTokenAttackRow', () => {
+  it('puts the name, damage and advantage icons in one row', () => {
+    const block = makeBlock({ type: 'attack', attackName: 'Bite', attackDamage: '5', attackBonus: 'Forest' });
+    expect(composeTokenAttackRow(block)).toBe(
+      '{AtkRow:{AtkName:B{SC:ite}}{AtkDmg:5}{AtkAdv:{OpenZoo Aura/Forest.png, 1, 0}}}',
+    );
+  });
+
+  it('keeps status effects inside the name, as on a Beastie', () => {
+    const block = makeBlock({ type: 'attack', attackName: 'Bite', statusEffect: 'Poison', statusEffectDuration: '1' });
+    expect(composeTokenAttackRow(block)).toContain('{OpenZoo Status Effects/Poison.png, 0.9, 0.1}{Num:(1)}');
+  });
+
+  it('shows a damage-only attack (most tokens print no attack name)', () => {
+    expect(composeTokenAttackRow(makeBlock({ type: 'attack', attackDamage: '10' }))).toBe('{AtkRow:{AtkDmg:10}}');
+  });
+
+  it('is empty for an empty attack', () => {
+    expect(composeTokenAttackRow(makeBlock({ type: 'attack' }))).toBe('');
+  });
+});
+
+describe('composeTokenText', () => {
+  const effect = makeBlock({ type: 'arena', text: 'Draw a Page.' });
+  const attack = makeBlock({ type: 'attack', attackName: 'Hit', attackDamage: '10', attackEffect: 'Burn it.', showDivider: true });
+
+  it('is the plain main text without an attack', () => {
+    expect(composeTokenText([effect])).toBe('**ARENA:** Draw a Page.');
+  });
+
+  it('orders effect, divider, attack row, attack effect like the Beastie box', () => {
+    const text = composeTokenText([attack, effect]);
+    const classes = parseSegments(text).filter((seg) => seg.type === 'class').map((seg) => seg.type === 'class' && seg.className);
+    expect(text.startsWith('**ARENA:** Draw a Page.')).toBe(true);
+    expect(classes).toEqual(['AtkDiv', 'AtkRow', 'AtkEffect']);
+  });
+
+  it('drops the divider when there is no effect text or it is switched off', () => {
+    expect(composeTokenText([attack])).not.toContain('AtkDiv');
+    expect(composeTokenText([effect, { ...attack, showDivider: false }])).not.toContain('AtkDiv');
+  });
+
+  it('marks a starred attack effect as 4th Wall', () => {
+    expect(composeTokenText([{ ...attack, attackHasStar: true }])).toContain('{AtkEffect:{Star}{I:Burn it.}}');
+  });
+});
+
+describe('composeEffectBlocks for Token', () => {
+  const attack = makeBlock({ type: 'attack', attackDamage: '10' });
+
+  it('writes the whole box, attack included, to the Aura text box', () => {
+    const patch = composeEffectBlocks([attack], 'Aura', 'Token');
+    expect(patch.t57).toBe('<p>{AtkRow:{AtkDmg:10}}</p>');
+  });
+
+  it('leaves other Aura-layout types on the plain main text', () => {
+    const patch = composeEffectBlocks([attack], 'Aura', 'Special Aura');
+    expect(patch.t57).toBe('');
   });
 });

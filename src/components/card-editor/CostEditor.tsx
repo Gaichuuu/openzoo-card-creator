@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCardStore, elementIconFor } from '@/lib/store';
 import { ELEMENTS } from '@/data/constants';
-import { ZONE_ID_MAPS } from '@/data/layouts';
 import type { Element, ElementOrCustom } from '@/types/card';
 import type { CustomElementDef, CustomIcon } from '@/types/customIcons';
-import { stripParagraphWrap } from '@/lib/textParserUtils';
 import { isCustomIconValue, customIconToElementDef } from '@/lib/customIconUtils';
 import { CustomIconPicker } from './CustomIconPicker';
+import { zoneText, zoneValue, type ZoneSource } from '@/lib/zoneData';
+
+function readSlotElement(s: ZoneSource, slot: 1 | 2): ElementOrCustom | '' {
+  const img = zoneValue(s, `Aura${slot}`, 'i');
+  if (isCustomIconValue(img)) return 'Custom';
+  return img.replace('.png', '') as Element | '';
+}
+
+function readSlotCost(s: ZoneSource, slot: 1 | 2): string {
+  return zoneText(s, `Cost${slot}`);
+}
 
 export function CostEditor() {
   const setImageField = useCardStore((s) => s.setImageField);
@@ -22,10 +31,10 @@ export function CostEditor() {
     : ELEMENTS.filter((el) => el !== 'Special');
 
   const snapshotGuard = useRef(false);
-  const [slot1El, setSlot1El] = useState<ElementOrCustom>('Forest');
-  const [slot1Cost, setSlot1Cost] = useState('2');
-  const [slot2El, setSlot2El] = useState<ElementOrCustom | ''>('Neutral');
-  const [slot2Cost, setSlot2Cost] = useState('1');
+  const slot1El = useCardStore((s) => readSlotElement(s, 1));
+  const slot1Cost = useCardStore((s) => readSlotCost(s, 1));
+  const slot2El = useCardStore((s) => readSlotElement(s, 2));
+  const slot2Cost = useCardStore((s) => readSlotCost(s, 2));
   const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
 
   const colorElement = (el: ElementOrCustom | '' | null): ElementOrCustom | null => {
@@ -49,16 +58,6 @@ export function CostEditor() {
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
       snapshotGuard.current = true;
-      const s = useCardStore.getState();
-      const map = ZONE_ID_MAPS[s.layoutType];
-      const aura1Img = map?.['Aura1'] != null ? s.cardData[`i${map['Aura1']}`] : '';
-      const el1 = isCustomIconValue(aura1Img) ? 'Custom' : (aura1Img?.replace('.png', '') as Element) || '';
-      const cost1 = map?.['Cost1'] != null ? stripParagraphWrap(s.cardData[`t${map['Cost1']}`] || '') : '';
-      const aura2Img = map?.['Aura2'] != null ? s.cardData[`i${map['Aura2']}`] : '';
-      const el2 = isCustomIconValue(aura2Img) ? 'Custom' : (aura2Img?.replace('.png', '') as Element | '') || '';
-      const cost2 = map?.['Cost2'] != null ? stripParagraphWrap(s.cardData[`t${map['Cost2']}`] || '') : '';
-      if (el1) { setSlot1El(el1 as ElementOrCustom); setSlot1Cost(cost1); }
-      if (el2) { setSlot2El(el2 as ElementOrCustom); setSlot2Cost(cost2); } else { setSlot2El(''); setSlot2Cost(''); }
       return;
     }
     if (snapshotGuard.current) return;
@@ -67,8 +66,6 @@ export function CostEditor() {
     if (ct === 'Potion') { s1El = 'Neutral'; s1Cost = '0'; s2El = ''; s2Cost = ''; }
     else if (ct === 'Spell') { s1El = 'Flame'; s1Cost = '1'; s2El = ''; s2Cost = ''; }
     else if (ct === 'Artifact') { s1El = 'Lightning'; s1Cost = '1'; s2El = ''; s2Cost = ''; }
-    setSlot1El(s1El); setSlot1Cost(s1Cost);
-    setSlot2El(s2El); setSlot2Cost(s2Cost);
     setPrimaryElement(colorElement(s1El));
     setSecondaryElement(colorElement(s2El));
     applySlot(1, s1El, s1Cost);
@@ -80,37 +77,21 @@ export function CostEditor() {
     if (useCardStore.getState()._isLoadingSnapshot) return;
     if (snapshotGuard.current) { snapshotGuard.current = false; return; }
     if (cardType === 'Potion') {
-      setSlot1El('Neutral');
-      setSlot1Cost('0');
-      setSlot2El('');
-      setSlot2Cost('');
       setPrimaryElement(null);
       setSecondaryElement(null);
       applySlot(1, 'Neutral', '0');
       applySlot(2, '', '');
     } else if (cardType === 'Spell') {
-      setSlot1El('Flame');
-      setSlot1Cost('1');
-      setSlot2El('');
-      setSlot2Cost('');
       setPrimaryElement(colorElement('Flame'));
       setSecondaryElement(null);
       applySlot(1, 'Flame', '1');
       applySlot(2, '', '');
     } else if (cardType === 'Artifact') {
-      setSlot1El('Lightning');
-      setSlot1Cost('1');
-      setSlot2El('');
-      setSlot2Cost('');
       setPrimaryElement(colorElement('Lightning'));
       setSecondaryElement(null);
       applySlot(1, 'Lightning', '1');
       applySlot(2, '', '');
     } else if (cardType === 'Beastie') {
-      setSlot1El('Forest');
-      setSlot1Cost('2');
-      setSlot2El('Neutral');
-      setSlot2Cost('1');
       setPrimaryElement(colorElement('Forest'));
       setSecondaryElement(colorElement('Neutral'));
       applySlot(1, 'Forest', '2');
@@ -120,7 +101,6 @@ export function CostEditor() {
 
   const handleSlot1ElChange = (el: ElementOrCustom, def?: CustomElementDef) => {
     if (el === 'Custom' && !def) { setPickerSlot(1); return; }
-    setSlot1El(el);
     setPrimaryElement(colorElement(el), def);
     applySlot(1, el, slot1Cost);
     applySlot(2, slot2El, slot2Cost);
@@ -128,7 +108,6 @@ export function CostEditor() {
 
   const handleSlot2ElChange = (el: ElementOrCustom | '', def?: CustomElementDef) => {
     if (el === 'Custom' && !def) { setPickerSlot(2); return; }
-    setSlot2El(el);
     setSecondaryElement(colorElement(el), def);
     applySlot(1, slot1El, slot1Cost);
     applySlot(2, el, slot2Cost);
@@ -141,12 +120,10 @@ export function CostEditor() {
   };
 
   const handleSlot1CostChange = (cost: string) => {
-    setSlot1Cost(cost);
     applySlot(1, slot1El, cost);
   };
 
   const handleSlot2CostChange = (cost: string) => {
-    setSlot2Cost(cost);
     applySlot(2, slot2El, cost);
   };
 
@@ -173,9 +150,11 @@ export function CostEditor() {
             type="text"
             value={slot1Cost}
             onChange={(e) => handleSlot1CostChange(e.target.value)}
+            disabled={!slot1El}
+            title={slot1El ? undefined : 'Pick an Aura first'}
             placeholder="Cost"
             maxLength={2}
-            className="w-16 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
+            className="w-16 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm disabled:opacity-40"
           />
         </div>
         <div className="flex gap-2 items-center">
@@ -195,9 +174,11 @@ export function CostEditor() {
             type="text"
             value={slot2Cost}
             onChange={(e) => handleSlot2CostChange(e.target.value)}
+            disabled={!slot2El}
+            title={slot2El ? undefined : 'Pick an Aura first'}
             placeholder="Cost"
             maxLength={2}
-            className="w-16 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm"
+            className="w-16 bg-navy-800 border border-navy-600 text-white rounded px-2 py-1 text-sm disabled:opacity-40"
           />
         </div>
         {(slot1El === 'Custom' || slot2El === 'Custom') && (

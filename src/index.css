@@ -360,6 +360,10 @@ select.input-plain:focus {
   height: 86px !important;
 }
 
+.card-borderless {
+  --oz-atk-div: #fff;
+}
+
 .card-borderless [data-zone-key="Aura/Terra Text Box"],
 .card-borderless [data-zone-key="Aura/Terra Text Box 1"] {
   background: rgba(0, 0, 0, 0.3) !important;

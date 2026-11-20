@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCardStore } from '@/lib/store';
-import { ZONE_ID_MAPS } from '@/data/layouts';
 import { SETS } from '@/data/constants';
 import { isCustomIconValue } from '@/lib/customIconUtils';
 import { CustomIconPicker } from './CustomIconPicker';
 import type { CustomIcon } from '@/types/customIcons';
+import { zoneValue } from '@/lib/zoneData';
 
 function getFilename(set: string, rarity: string): string {
   const def = SETS.find((s) => s.value === set);
@@ -12,13 +12,31 @@ function getFilename(set: string, rarity: string): string {
   return `${set}.png`;
 }
 
+interface RestoredSetSymbol { set: string; rarity: string; customUrl: string }
+
+function restoredSetSymbol(): RestoredSetSymbol | null {
+  const s = useCardStore.getState();
+  if (!s._isLoadingSnapshot) return null;
+  const img = zoneValue(s, 'SetSymbol', 'i');
+  if (isCustomIconValue(img)) return { set: '__custom__', rarity: '', customUrl: img };
+  const base = img.replace('.png', '');
+  for (const def of [...SETS].sort((a, b) => b.value.length - a.value.length)) {
+    if (def.aliases?.includes(base)) return { set: def.value, rarity: def.rarities[0] ?? '', customUrl: '' };
+    if (base.startsWith(def.value)) {
+      return { set: def.value, rarity: base.slice(def.value.length) || (def.rarities[0] ?? ''), customUrl: '' };
+    }
+  }
+  return null;
+}
+
 export function SetSymbolSelector() {
   const setImageField = useCardStore((s) => s.setImageField);
   const cardType = useCardStore((s) => s.cardType);
   const snapshotGuard = useRef(false);
-  const customUrlRef = useRef('');
-  const [set, setSet] = useState('OZLegacy');
-  const [rarity, setRarity] = useState('Bronze');
+  const [restored] = useState(restoredSetSymbol);
+  const customUrlRef = useRef(restored?.customUrl ?? '');
+  const [set, setSet] = useState(restored?.set ?? 'OZLegacy');
+  const [rarity, setRarity] = useState(restored?.rarity ?? 'Bronze');
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const currentSet = SETS.find((s) => s.value === set);
@@ -35,32 +53,6 @@ export function SetSymbolSelector() {
   useEffect(() => {
     if (useCardStore.getState()._isLoadingSnapshot) {
       snapshotGuard.current = true;
-      const s = useCardStore.getState();
-      const map = ZONE_ID_MAPS[s.layoutType];
-      const zoneId = map?.['SetSymbol'];
-      const img = zoneId != null ? s.cardData[`i${zoneId}`] || '' : '';
-
-      if (isCustomIconValue(img)) {
-        customUrlRef.current = img;
-        setSet('__custom__');
-        setRarity('');
-        return;
-      }
-      const base = img.replace('.png', '');
-
-      for (const def of [...SETS].sort((a, b) => b.value.length - a.value.length)) {
-        if (def.aliases?.includes(base)) {
-          setSet(def.value);
-          setRarity(def.rarities[0] ?? '');
-          break;
-        }
-        if (base.startsWith(def.value)) {
-          setSet(def.value);
-          const rar = base.slice(def.value.length);
-          setRarity(rar || (def.rarities[0] ?? ''));
-          break;
-        }
-      }
       return;
     }
     if (snapshotGuard.current) { snapshotGuard.current = false; return; }
