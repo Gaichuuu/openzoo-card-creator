@@ -29,17 +29,12 @@ describe('generateShapes', () => {
   it.each(TEXTURED)('%s has at least 200 shapes in range with hue/glint in [0,1]', (p) => {
     const shapes = generateShapes(p, W, H);
     expect(shapes.length).toBeGreaterThanOrEqual(200);
-    for (const s of shapes) {
-      expect(s.hue).toBeGreaterThanOrEqual(0);
-      expect(s.hue).toBeLessThanOrEqual(1);
-      expect(s.glint).toBeGreaterThanOrEqual(0);
-      expect(s.glint).toBeLessThanOrEqual(1);
+    const inUnit = (v: number) => v >= 0 && v <= 1;
+    const bad = shapes.filter((s) => {
       const [x, y] = anchor(s);
-      expect(x).toBeGreaterThanOrEqual(0);
-      expect(x).toBeLessThanOrEqual(W);
-      expect(y).toBeGreaterThanOrEqual(0);
-      expect(y).toBeLessThanOrEqual(H);
-    }
+      return !inUnit(s.hue) || !inUnit(s.glint) || !(x >= 0 && x <= W) || !(y >= 0 && y <= H);
+    });
+    expect(bad).toEqual([]);
   });
 
   it('streaks all run one direction at 33 deg up and to the right', () => {
@@ -52,11 +47,11 @@ describe('generateShapes', () => {
   });
 
   it.each(TEXTURED)('%s puts no shape anchor exactly on the far edges', (p) => {
-    for (const s of generateShapes(p, W, H)) {
+    const onEdge = generateShapes(p, W, H).filter((s) => {
       const [x, y] = anchor(s);
-      expect(x).not.toBe(W);
-      expect(y).not.toBe(H);
-    }
+      return x === W || y === H;
+    });
+    expect(onEdge).toEqual([]);
   });
 
   it('diamond lattice lines share one hue and are never edge slivers', () => {
