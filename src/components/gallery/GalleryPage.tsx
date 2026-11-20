@@ -6,6 +6,8 @@ import {
   fetchCard,
   fetchGalleryCounts,
   fetchFilteredCount,
+  fetchCardsByIds,
+  searchCardIds,
   type GalleryCounts,
   type GallerySort,
   type PageCursor,
@@ -20,7 +22,7 @@ import { CARD_TYPES, ELEMENTS, TERRAS, TRAITS } from '@/data/constants';
 import { facetIcon } from '@/lib/facetIcon';
 import { useLocalStorageState } from '@/lib/useLocalStorageState';
 import { useAuthUid, useAuthReady } from '@/lib/auth';
-import { buildCardSearchText } from '@/lib/cardSearchText';
+import { normalizeSearchQuery } from '@/lib/cardSearchText';
 
 const FACET_ORDER: Element[] = [
   'Dark', 'Light', 'Water', 'Flame', 'Forest', 'Frost',
@@ -36,6 +38,8 @@ const GRID_COMFORTABLE = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid
 const GRID_COMPACT = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2.5';
 
 const FACET_HEADING_CLASS = 'font-title text-[10px] text-gold-400 uppercase tracking-[.16em] mb-2.5';
+const SEARCH_DEBOUNCE_MS = 250;
+const SEARCH_PAGE_SIZE = 24;
 const DENSITY_BUTTON_CLASS = 'px-2.25 py-0.75 rounded-[3px] cursor-pointer';
 
 type Density = 'large' | 'comfortable' | 'compact';
@@ -223,6 +227,12 @@ export function GalleryPage() {
   const [loadingCard, setLoadingCard] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchName, setSearchName] = useState('');
+  const search = normalizeSearchQuery(searchName);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), search ? SEARCH_DEBOUNCE_MS : 0);
+    return () => clearTimeout(timer);
+  }, [search]);
   const uid = useAuthUid();
   const authReady = useAuthReady();
   const [myCount, setMyCount] = useState(0);
@@ -302,8 +312,10 @@ export function GalleryPage() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null);
   const queryGenRef = useRef(0);
+  const [searchIds, setSearchIds] = useState<string[] | null>(null);
+  const searchOffsetRef = useRef(0);
 
   useEffect(() => {
     if ((loadingCard && !selectedCard) || mobileFiltersOpen) {
@@ -343,14 +355,23 @@ export function GalleryPage() {
     setCards([]);
     setCursor(null);
     setHasMore(false);
+    setSearchIds(null);
     if (filterMine && !mineUid) {
       setLoading(!authReady);
       return;
     }
     setLoading(true);
-    fetchCards(buildFilters(), null, undefined, sort)
+    const load = debouncedSearch
+      ? searchCardIds(buildFilters(), sort, debouncedSearch).then(async (ids) => {
+          const first = await fetchCardsByIds(ids.slice(0, SEARCH_PAGE_SIZE));
+          return { cards: first, cursor: null, hasMore: ids.length > SEARCH_PAGE_SIZE, ids };
+        })
+      : fetchCards(buildFilters(), null, undefined, sort).then((result) => ({ ...result, ids: null }));
+    load
       .then((result) => {
         if (queryGenRef.current !== gen) return;
+        searchOffsetRef.current = SEARCH_PAGE_SIZE;
+        setSearchIds(result.ids);
         setCards(result.cards);
         setCursor(result.cursor);
         setHasMore(result.hasMore);
@@ -362,7 +383,7 @@ export function GalleryPage() {
         setError(true);
         setLoading(false);
       });
-  }, [buildFilters, sort, refreshKey, filterMine, mineUid, authReady]);
+  }, [buildFilters, sort, refreshKey, filterMine, mineUid, authReady, debouncedSearch]);
 
   useEffect(() => {
     if (!hasFilters) { setFilteredCount(null); return; }
@@ -388,11 +409,20 @@ export function GalleryPage() {
   }, [buildFilters, hasFilters, filterTag, filterType, filterElement, filterTerra, filterTrait, filterMine, mineUid, authReady, counts]);
 
   const loadMore = useCallback(async () => {
-    if (loadingMoreRef.current || !hasMore || !cursor) return;
+    if (loadingMoreRef.current || !hasMore || (!cursor && !searchIds)) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
     const gen = queryGenRef.current;
     try {
+      if (searchIds) {
+        const offset = searchOffsetRef.current;
+        const next = await fetchCardsByIds(searchIds.slice(offset, offset + SEARCH_PAGE_SIZE));
+        if (queryGenRef.current !== gen) return;
+        searchOffsetRef.current = offset + SEARCH_PAGE_SIZE;
+        setCards((prev) => [...prev, ...next]);
+        setHasMore(offset + SEARCH_PAGE_SIZE < searchIds.length);
+        return;
+      }
       const result = await fetchCards(buildFilters(), cursor, undefined, sort);
       if (queryGenRef.current !== gen) return;
       setCards((prev) => [...prev, ...result.cards]);
@@ -404,10 +434,9 @@ export function GalleryPage() {
       loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [hasMore, cursor, buildFilters, sort]);
+  }, [hasMore, cursor, searchIds, buildFilters, sort]);
 
   useEffect(() => {
-    const sentinel = sentinelRef.current;
     if (!sentinel) return;
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) loadMore(); },
@@ -415,7 +444,7 @@ export function GalleryPage() {
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [sentinel, loadMore]);
 
   useEffect(() => {
     if (!cardId) {
@@ -439,23 +468,8 @@ export function GalleryPage() {
     return () => { stale = true; };
   }, [cardId, cards, closeModal]);
 
-  const search = searchName.trim().toLowerCase();
-  // TODO: search is limited to the currently loaded cards. We should fetch full results from server.
-  const searchTexts = useMemo(() => {
-    const texts = new Map<string, string>();
-    for (const c of cards) texts.set(c.id, buildCardSearchText(c));
-    return texts;
-  }, [cards]);
-  const filteredCards = useMemo(() => (search
-    ? cards.filter((c) =>
-        c.cardName.toLowerCase().includes(search)
-        || c.tribe.toLowerCase().includes(search)
-        || c.creatorName.toLowerCase().includes(search)
-        || (searchTexts.get(c.id) || '').includes(search))
-    : cards), [cards, search, searchTexts]);
-
-  const exactCount = search ? null : (hasFilters ? filteredCount : counts?.total) ?? null;
-  const shownCount = exactCount ?? filteredCards.length;
+  const exactCount = searchIds ? searchIds.length : (hasFilters ? filteredCount : counts?.total) ?? null;
+  const shownCount = exactCount ?? cards.length;
   const countInexact = exactCount === null && hasMore;
 
   const gridClass = density === 'compact' ? GRID_COMPACT : density === 'large' ? GRID_LARGE : GRID_COMFORTABLE;
@@ -545,29 +559,19 @@ export function GalleryPage() {
               )
             ) : error ? (
               <div className="text-center text-red-400 py-12">Failed to load cards. Check your connection and try again.</div>
-            ) : filteredCards.length === 0 ? (
+            ) : cards.length === 0 ? (
               <div className="text-center text-gold-400 py-12">
-                {cards.length === 0 ? 'No cards published yet.' : 'No cards match your filters.'}
+                {hasFilters || searchIds ? 'No cards match your filters.' : 'No cards published yet.'}
               </div>
             ) : (
               <div className={gridClass}>
-                {filteredCards.map((card, i) => (
+                {cards.map((card, i) => (
                   <GalleryCard key={card.id} card={card} onOpen={openCard} priority={i < 6} />
                 ))}
               </div>
             )}
-            {!loading && !error && hasMore && !search && (
-              <div ref={sentinelRef} className="h-1" />
-            )}
-            {!loading && !error && hasMore && search && !loadingMore && (
-              <div className="text-center pt-6">
-                <button
-                  onClick={loadMore}
-                  className="btn-tertiary px-4 py-2 text-[13px]"
-                >
-                  Search more cards
-                </button>
-              </div>
+            {!loading && !error && hasMore && (
+              <div ref={setSentinel} className="h-1" />
             )}
             {loadingMore && (
               <div className={`${gridClass} pt-4`}>

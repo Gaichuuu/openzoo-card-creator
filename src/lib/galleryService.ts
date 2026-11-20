@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  documentId,
   getCountFromServer,
   getDoc,
   getDocs,
@@ -35,6 +36,7 @@ import type { CustomElementDef } from '@/types/customIcons';
 import type { LayoutType } from '@/types/layout';
 import type { EffectBlock } from '@/types/effects';
 import type { Locale } from '@/data/locales';
+import { buildCardSearchIndex } from './cardSearchText';
 
 const GRID_UPLOAD_TIMEOUT_MS = 20000;
 
@@ -207,6 +209,7 @@ export async function publishCard(
     borderless: snapshot.borderless || false,
     thumbnailUrl,
     gridThumbUrl,
+    searchText: buildCardSearchIndex({ ...snapshot, creatorName: options.creatorName }),
     holoCardUrl,
     holoAreaUrl,
     creatorName: options.creatorName,
@@ -221,6 +224,7 @@ export async function publishCard(
 
   const writeStartedAt = performance.now();
   await setDoc(doc(db, 'cards', cardId), savedCard);
+  invalidateSearchCache();
   console.info('Publish timing (ms):', { ...client?.timing, writeMs: Math.round(performance.now() - writeStartedAt) });
   invalidateCountsCache();
   return cardId;
@@ -229,6 +233,7 @@ export async function publishCard(
 export async function deleteCard(cardId: string): Promise<void> {
   await deleteDoc(doc(db, 'cards', cardId));
   invalidateCountsCache();
+  invalidateSearchCache();
 }
 
 function blockToPlain(block: EffectBlock): Record<string, unknown> {
@@ -453,4 +458,100 @@ export async function fetchCard(id: string): Promise<SavedCard | null> {
   const snap = await getDoc(doc(db, 'cards', id));
   if (!snap.exists()) return null;
   return docToSavedCard(snap.data());
+}
+
+interface RestFilter {
+  fieldFilter?: { field: { fieldPath: string }; op: string; value: { stringValue: string } };
+  compositeFilter?: { op: 'AND' | 'OR'; filters: RestFilter[] };
+}
+
+const restField = (fieldPath: string, op: string, value: string): RestFilter =>
+  ({ fieldFilter: { field: { fieldPath }, op, value: { stringValue: value } } });
+
+function restWhere(filters?: FetchFilters): RestFilter | undefined {
+  const clauses: RestFilter[] = [];
+  if (filters?.cardType) clauses.push(restField('cardType', 'EQUAL', filters.cardType));
+  if (filters?.element) {
+    clauses.push({ compositeFilter: { op: 'OR', filters: [
+      restField('primaryElement', 'EQUAL', filters.element),
+      restField('secondaryElement', 'EQUAL', filters.element),
+    ] } });
+  }
+  if (filters?.ownerUid) clauses.push(restField('ownerUid', 'EQUAL', filters.ownerUid));
+  if (filters?.tag) clauses.push(restField('tags', 'ARRAY_CONTAINS', filters.tag));
+  else if (filters?.terra) clauses.push(restField('terras', 'ARRAY_CONTAINS', filters.terra));
+  else if (filters?.trait) clauses.push(restField('traits', 'ARRAY_CONTAINS', filters.trait));
+  if (clauses.length === 0) return undefined;
+  return clauses.length === 1 ? clauses[0] : { compositeFilter: { op: 'AND', filters: clauses } };
+}
+
+interface SearchIndexEntry {
+  id: string;
+  text: string | null;
+}
+
+const SEARCH_INDEX_TTL_MS = 5 * 60 * 1000;
+const searchIndexCache = new Map<string, { at: number; entries: Promise<SearchIndexEntry[]> }>();
+const fullCardCache = new Map<string, SavedCard>();
+const computedSearchText = new Map<string, string>();
+
+function invalidateSearchCache(): void {
+  searchIndexCache.clear();
+  fullCardCache.clear();
+  computedSearchText.clear();
+}
+
+async function fetchSearchIndex(filters: FetchFilters | undefined, sort: GallerySort): Promise<SearchIndexEntry[]> {
+  const key = JSON.stringify([filters ?? {}, sort]);
+  const cached = searchIndexCache.get(key);
+  if (cached && Date.now() - cached.at < SEARCH_INDEX_TTL_MS) return cached.entries;
+
+  const where = restWhere(filters);
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId: 'cards' }],
+      select: { fields: [{ fieldPath: 'searchText' }] },
+      ...(where ? { where } : {}),
+      orderBy: [sort === 'name'
+        ? { field: { fieldPath: 'cardName' }, direction: 'ASCENDING' }
+        : { field: { fieldPath: 'createdAt' }, direction: 'DESCENDING' }],
+    },
+  };
+  const url = `https://firestore.googleapis.com/v1/projects/${db.app.options.projectId}/databases/(default)/documents:runQuery`;
+  const entries = fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(async (res) => {
+      if (!res.ok) throw new Error(`Search index query failed: ${res.status}`);
+      const rows = await res.json() as { document?: { name: string; fields?: { searchText?: { stringValue?: string } } } }[];
+      return rows.flatMap((row) => row.document ? [{
+        id: row.document.name.split('/').pop() ?? '',
+        text: row.document.fields?.searchText?.stringValue ?? null,
+      }] : []);
+    });
+  searchIndexCache.set(key, { at: Date.now(), entries });
+  entries.catch(() => searchIndexCache.delete(key));
+  return entries;
+}
+
+const IDS_PER_QUERY = 30;
+
+export async function fetchCardsByIds(ids: string[]): Promise<SavedCard[]> {
+  const missing = ids.filter((id) => !fullCardCache.has(id));
+  const chunks: string[][] = [];
+  for (let i = 0; i < missing.length; i += IDS_PER_QUERY) chunks.push(missing.slice(i, i + IDS_PER_QUERY));
+  await Promise.all(chunks.map(async (chunk) => {
+    const snap = await getDocs(query(collection(db, 'cards'), where(documentId(), 'in', chunk)));
+    for (const d of snap.docs) fullCardCache.set(d.id, docToSavedCard(d.data()));
+  }));
+  return ids.flatMap((id) => fullCardCache.get(id) ?? []);
+}
+
+export async function searchCardIds(filters: FetchFilters | undefined, sort: GallerySort, search: string): Promise<string[]> {
+  const entries = await fetchSearchIndex(filters, sort);
+  const unindexed = entries.filter((e) => e.text === null && !computedSearchText.has(e.id)).map((e) => e.id);
+  if (unindexed.length > 0) {
+    for (const card of await fetchCardsByIds(unindexed)) computedSearchText.set(card.id, buildCardSearchIndex(card));
+  }
+  return entries
+    .filter((e) => (e.text ?? computedSearchText.get(e.id) ?? '').includes(search))
+    .map((e) => e.id);
 }

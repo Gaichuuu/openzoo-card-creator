@@ -106,3 +106,19 @@ describe('token store', () => {
     expect(useCardStore.getState().mainTextBoxExtraShrink).toBe(0);
   });
 });
+
+describe('token aura icons', () => {
+  it('are hidden when a token snapshot that showed one is loaded', () => {
+    const map = ZONE_ID_MAPS.Aura;
+    const s = useCardStore.getState();
+    s.loadSnapshot({
+      ...s.getSnapshot(),
+      cardType: 'Token',
+      layoutType: 'Aura',
+      cardData: { [`s${map.Aura2}`]: '{border:1px solid rgba(0,0,0,1)}', [`i${map.Aura2}`]: 'OpenZoo Aura/Forest.png' },
+    });
+    const data = useCardStore.getState().cardData;
+    expect(data[`s${map.Aura1}`]).toBe('{display:none}');
+    expect(data[`s${map.Aura2}`]).toBe('{display:none}');
+  });
+});

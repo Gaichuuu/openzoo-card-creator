@@ -20,6 +20,11 @@ async function cardToCanvas(el: HTMLElement, opts: CardPngOptions): Promise<HTML
   const marked: HTMLElement[] = [];
   for (const node of Array.from(el.querySelectorAll('div, span')) as HTMLElement[]) {
     const inlineW = node.style.width;
+    if (inlineW.endsWith('%') && node.classList.contains('stroked-text-stroke')) {
+      node.dataset.ozWpct = inlineW;
+      marked.push(node);
+      continue;
+    }
     if (inlineW !== '' && inlineW !== 'auto') continue;
     const cs = getComputedStyle(node);
     const collapse = cs.getPropertyValue('white-space-collapse') || cs.whiteSpace;
@@ -32,14 +37,21 @@ async function cardToCanvas(el: HTMLElement, opts: CardPngOptions): Promise<HTML
   try {
     svgDataUrl = await toSvg(el, opts);
   } finally {
-    for (const node of marked) delete node.dataset.ozWauto;
+    for (const node of marked) {
+      delete node.dataset.ozWauto;
+      delete node.dataset.ozWpct;
+    }
   }
   const prefix = 'data:image/svg+xml;charset=utf-8,';
   const svgText = decodeURIComponent(svgDataUrl.slice(prefix.length));
   const fixed = fixWebKitClone(svgText.replace(/<[a-z]+ [^>]*data-oz-wauto="1"[^>]*>/g, (tag) =>
     tag
       .replace(/(?<![a-z-])width: [\d.]+px/g, 'width: auto')
-      .replace(/(?<![a-z-])inline-size: [\d.]+px/g, 'inline-size: auto')));
+      .replace(/(?<![a-z-])inline-size: [\d.]+px/g, 'inline-size: auto'))
+    .replace(/<[a-z]+ [^>]*data-oz-wpct="([\d.]+%)"[^>]*>/g, (tag, pct: string) =>
+      tag
+        .replace(/(?<![a-z-])width: [\d.]+px/g, `width: ${pct}`)
+        .replace(/(?<![a-z-])inline-size: [\d.]+px/g, `inline-size: ${pct}`)));
   const img = await loadImage(prefix + encodeURIComponent(fixed));
   const canvas = document.createElement('canvas');
   canvas.width = opts.width * opts.pixelRatio;
